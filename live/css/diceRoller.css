@@ -1,0 +1,70 @@
+div.rowBox {
+  height:70px;
+  -moz-border-radius: 15px;
+  border-radius:15px;
+  border:1px solid #000000;
+  margin-top:5px;
+  font-weight:10px;
+  text-align:left;
+  text-overflow:ellipsis;
+  color:#FFFFFF;
+  width:98%;
+  box-shadow:5px 5px 5px #888888;
+  margin-bottom:8px;
+}
+div.column1Box {
+  float:left;
+  height:70px;
+  text-align:center;
+  width:10%;
+}
+div.column2Box {
+  float:left;
+  width:60%;
+  font-weight:10px;
+}
+div.column2HeaderA {
+  float:left;
+  line-height:35px;
+  height:70px;
+  width:34%;
+}
+div.column2HeaderB {
+  float:left;
+  line-height:35px;
+  height:70px;
+  width:33%;
+}
+select.column2ContentA {
+  vertical-align:top;
+}
+input.column2ContentB {
+  vertical-align:top;
+  width:20px;
+}
+
+div.column3ContentC {
+  float:left;
+  width:20%;
+  height:70px;
+  line-height:70px;
+  font-size:10px;
+}
+div.column3Box {
+  float:left;
+  width:30%;
+  height:70px;
+  line-height:70px;
+  text-align:left;
+  font-weight:10px;
+}
+figure.diceImg {
+  text-align:center;
+  margin:0px auto;
+  margin-top:10px;
+}
+figcaption {
+  font-size:10px;
+  text-align: center;
+}
+

@@ -1,0 +1,75 @@
+div.topBugDiv {
+  vertical-align:top;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  white-space:nowrap;
+}
+div#bugLeftPanel {
+  text-align:center;
+  display:inline-block;
+  width:160px;
+  margin:0px auto;
+}
+div#bugRightPanel {
+  display:inline-block;
+  vertical-align:top;
+  text-align:center;
+  line-spacing:30px;
+}
+img#bugImg {
+  border:1px solid #000000;
+}
+figcaption#bugCaption {
+  font-weight:bold;
+  font-family:Verdana, Geneva, sans-serif;
+  font-size:10px;
+}
+div.bugSelectPanel {
+  width:400px;
+  left:160px;
+  float:left;
+}
+div.bugSelectLabel {
+  float:left;
+  width:150px;
+}
+div.bugSelecterDiv {
+  float:left;
+  width:250px;
+}
+select.bugSelecter {
+  width:100%;
+  outline:none;
+  border:1px solid #000000;
+  font-family:Verdana, Geneva, sans-serif;
+  font-size:10px;
+  background-color:#a7a5a4;
+  color:#000000;
+}
+div.bugLabel {
+  float:right;
+  font-family:Verdana, Geneva, sans-serif;
+  font-size:10px;
+}
+textarea#bugDescrText {
+  width:98%;
+  height:100px;
+  background-color:#a7a5a4;
+  color:#000000;
+  border-radius:5px;
+}
+div#bugBottomDiv {
+  width:400px;
+  left:160px;
+  text-align:center;
+  float:left;
+}
+div#bugErrorDiv {
+  font-family:Verdana, Geneva, sans-serif;
+  font-size:10px;
+  width:100%;
+  height:30px;
+  text-align:center;
+  color:red;
+}
