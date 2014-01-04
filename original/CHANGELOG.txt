@@ -1,0 +1,16 @@
+20030131 - Optimizing session calls
+20030201 - Combined Posting scripts, 
+20030202 - Entirely new Member list code
+20030210 - add support for multiple characters per user per thread
+20030213 - membership editing scripted added for Admins and GMs
+20030217 - Updated iframe files
+	   Further XHTML compatibility fixes
+           New image and link syntax:
+		[img=./maps/ltGrey.jpg w=120 h=99 a=left/]
+		[url=http://www.startrek.com/library/xeno.asp?ID=70538/]Andorian[/url]
+	   Added support for the PRE tag:
+		[pre][/pre]
+
+20041215 - Database revisions-- feild and table renaming.
+	   Alert Email-- adding begining support for post alerts by email/txt_msg
+	   Break off user_profiles into a separate table to store email and other info

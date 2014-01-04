@@ -1,0 +1,13 @@
+<?php
+
+// read from stdin
+$fd = fopen("php://stdin", "r");
+$email = "";
+while (!feof($fd)) {
+        $email .= fread($fd, 1024);
+}
+fclose($fd);
+
+echo email;
+
+?>

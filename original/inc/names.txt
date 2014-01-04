@@ -1,0 +1,13 @@
+root
+toor
+admin
+webmaster
+postmaster
+bind
+www
+qmail
+bsd
+freebsd
+beastmeat
+beastmaster
+sysop

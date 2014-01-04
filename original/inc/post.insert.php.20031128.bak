@@ -1,0 +1,37 @@
+<?
+if( check_access($_REQUEST["id"]) )
+{
+	if( !isset($_REQUEST["id"]) || $_REQUEST["id"]=="" )
+	{
+		echo "<br /><br />A quest log has <b>not</b> been selected, this post script will fail, <a href=\"" . $CLOSE . "\">close window</a>.";
+	}
+	elseif( is_numeric($_POST["id"]) && is_numeric($_POST["char_id"]) && $_POST["post_content"]!="" )
+	{
+		$member_check_query = mysql_query("SELECT q.user_id FROM quests q WHERE q.quest_id='" . $_POST["id"] . "'") or die("an error has occured while querying the database.[1]");
+		$member_check = mysql_fetch_array($member_check_query);
+		$quest_owner_id =  $member_check["user_id"];
+		if ( $LOG_IP=="ON" ) { $ip = $_SERVER["REMOTE_ADDR"]; } else { $ip = "0.0.0.0"; }
+		$formated_content = formatContent($_POST["post_content"]);
+		$datetime = getCurrentDate();
+		mysql_query("INSERT INTO posts(quest_id,user_id,char_id,post_status,post_text,post_date,post_ip) VALUES('" . $_POST["id"] . "','" . $_SESSION["id"] . "','" . $_POST["char_id"] . "','0','" . $formated_content . "','" . $datetime . "','" . $ip . "')") or die("An error occured while posting to your quest.[2]");
+		echo $_SESSION["name"] . ", your post has been sent. <a href=\"javascript: opener.window.location.reload(); window.close();\">close window</a>";
+		echo "<script language=\"JavaScript\" type=\"text/javascript\"> opener.window.location.reload(); window.setTimeout(\"opener.window.focus(); window.close();\", ". $POPUP_CLOSE_DELAY . ");</script>";
+	}
+	else { ?>
+		<form method="post" action="<? echo $POST_TO; ?>" class="text">
+			<table border="0" cellpadding="0" cellspacing="0">
+			<tr>
+				<td><? if ( $CHARACTER_NAMES=="ON" ) { $char_id = characters($_GET["id"]); } else { echo "<input type=\"hidden\" name=\"char_id\" value=\"0\" />"; } ?></td>
+				<td><img src="./img/px.gif" width="1" height="18" border="0" /></td>
+			</tr>
+			</table>
+			<input type="hidden" name="id" value="<? echo $_GET["id"]; ?>" />
+			<textarea name="post_content" cols="55" rows="20"  class="field" style="width:390px; height:335px;"></textarea><br />
+			<div align="right"><img src="./img/px.gif" width="1" height="3" border="0" /><br />
+			<input type="submit" value="&nbsp;&nbsp;&nbsp;&nbsp;&laquo;&nbsp;post&nbsp;&raquo;&nbsp;&nbsp;&nbsp;" class="button" />&nbsp;
+			<input type="button" onclick="javascript: window.close();" value="&nbsp;&nbsp;close&nbsp;&nbsp;" class="button" />
+			</div>
+		</form>
+<?	}
+}
+else { echo $_SESSION["name"] . ", you are not authorized to edit this post. <a href=\"" . $CLOSE . "\">close</a>"; } exit;?>

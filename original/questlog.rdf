@@ -1,0 +1,37 @@
+<? echo "<?xml version=\"1.0\"?>\n";
+require("./inc/control.php");
+require($FUNCTIONS); ?>
+<rss version="2.0">
+	<channel>
+		<title><? echo $RSS_TITLE; ?></title>
+		<link><? echo $BASE_HREF; ?></link>
+		<description><? echo $RSS_TITLE; ?></description>
+		<language><? echo $LANG; ?></language>
+<?
+if ( $db = databaseConnection($DATABASE) )
+{
+	#$sql = "SELECT q.quest_id,q.user_id,q.quest_name,u.user_name,COUNT(p.post_id) AS totalposts FROM quests q,users u,posts p WHERE q.quest_status<'4' AND q.user_id=u.user_id AND q.quest_id=p.quest_id GROUP BY q.quest_id ORDER BY totalposts DESC";
+	$sql = "SELECT p.post_date,p.quest_id,q.quest_name,u.user_name FROM posts p,quests q,users u WHERE p.user_id=u.user_id AND p.quest_id=q.quest_id ORDER BY p.post_date DESC LIMIT 5";
+	$query = mysql_query($sql);
+	$count = mysql_num_rows($query);
+	if ( $count!="0" )
+	{
+		while ( $post = mysql_fetch_array($query) )
+		{
+			$seconds = substr($post_date,"17","19"); ?>
+			<item>
+				<title><? echo $post["user_name"] . " / " . $post["quest_name"] . " / " . $post["post_date"]; ?></title>
+				<description><? echo "Post to " . $post["quest_name"] . " by " . $post["user_name"] .  " at " . $post["post_date"]; ?></description>
+				<link><? echo $BASE_HREF . $QUESTLOG . "?id=" . $post["quest_id"]; ?></link>
+			</item>
+<?		}
+	}
+} else { ?>
+			<item>
+				<title>Questlog Error</title>
+				<description>Database is currently Offline!</description>
+				<link>http://www.questlog.org/</link>
+			</item>
+<?		} ?>
+	</channel>
+</rss>

@@ -1,0 +1,35 @@
+<?
+$page_title = "";
+$page_type = "index";  
+require("./inc/control.php");
+include($HTMLHEADER);
+include($JAVASCRIPT_PATH);
+include($BODYHEAD);
+if ( $LOGIN_ONLY=="OFF" )
+{ ?>
+<table border="0" cellpadding="0" cellspacing="0" class="table" width="700" class="main">
+<tr valign="top">
+    <td width="580">
+    <!-- BEGIN main body area-->
+      	 <!-- BEGIN iframe table -->
+    <?   echo $SITE_TITLE; ?> News:
+	 <table cellpadding="1" cellspacing="0" width="580" height="200" class="main">
+	 <tr>
+	 	<td bgcolor="<? echo $BORDER_COLOR; ?>"><iframe name="frame" scrolling="Yes" frameborder="0" src="./frame.php" width="100%" height="200"></iframe></td>
+	 </tr>
+	 </table>
+	 <!-- END iframe table -->
+    <?	 require($INCLUDE_PATH . "quests.all.php"); ?>
+    <!-- END main body area -->
+    </td>
+    <td width="200" align="right">
+    <!-- BEGIN tools nav bar -->
+    <?	require($INCLUDE_PATH . "menus.php");	?>
+    <!-- END tools nav bar -->
+    </td>
+</tr>
+</table>
+<?  include($COPYRIGHT);
+}
+check_include($HTMLFOOTER);
+exit; ?>
