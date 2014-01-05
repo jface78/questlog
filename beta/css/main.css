@@ -1,0 +1,33 @@
+html, body {
+  margin:0px;
+  padding:0px;
+  height:100%;
+  box-sizing:border-box;
+}
+
+body {
+  font-family : Verdana, "Bitstream Vera Sans", "DejaVu Sans", Tahoma, Geneva, Arial, Sans-serif;
+  background-color:#a7a5a4;;
+  
+}
+
+#logo {
+  position:absolute;
+  top:10px;
+  left:10px;
+}
+
+#mainContent {
+  min-height:100%;
+  margin-bottom:15px;
+}
+
+footer {
+  position:absolute;
+  width:100%;
+  bottom:0px;
+  height:15px;
+  text-align:center;
+  font-size:11px;
+  background-color:#a7a5a4;;
+}
