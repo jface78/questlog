@@ -1,0 +1,22 @@
+section.bubbleParent {
+  background-color:#F0F0F0;
+  border:1px solid #000000;
+  border-bottom-left-radius:5px;
+  border-bottom-right-radius:5px;
+  display:block;
+  position:absolute;
+}
+
+div.bubbleTopBar {
+  height:20px;
+  border-bottom:1px solid #000000;
+  font-size:11px;
+}
+div.bubbleTopBar:hover {
+  cursor:move;
+}
+div.bubbleTopBar span.tools {
+  line-height:20px;
+  float:right;
+  padding-right:5px;
+}
