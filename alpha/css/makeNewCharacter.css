@@ -1,0 +1,51 @@
+
+div#newCharacterDropBox {
+  float:left;
+  width:25%;
+}
+img#newCharacterPreview {
+  border:1px solid black;
+  width:150px;
+  height:150px;
+}
+figcaption#newCharacterDropLabel {
+  width:150px;
+}
+div#newCharacterForm {
+  float:left;
+  width:75%;
+  text-align:left;
+  line-height:22px;
+}
+div#newCharacterError {
+  text-align:center;
+  width:75%;
+  float:right;
+  color:red;
+}
+div#newCharacterBtnDiv {
+  text-align:center;
+  float:right;
+  width:75%;
+}
+input#newCharacterName {
+  width:94%;
+  font-family:Verdana, Geneva, sans-serif;
+  font-size:11px;
+}
+div.newCharacterFormLabel {
+  float:left;
+  width:25%;
+  text-align:right;
+}
+textarea.newCharacterTextArea {
+  height:100px;
+  width:95%;
+  font-family:Verdana, Geneva, sans-serif;
+  font-size:11px;
+}
+div.newCharacterTextAreaDiv {
+  float:left;
+  width:75%;
+  text-align:left;
+}
