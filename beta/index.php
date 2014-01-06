@@ -30,6 +30,7 @@
 window.jQuery || document.write('<script src="js/plugins/jquery.min.js"><\/script>');
 
 </script>
+<script type="text/javascript" src="js/Settings.js"></script>
 <script type="text/javascript" src="js/QuestlogBubble.js"></script>
 <script type="text/javascript" src="js/main.js"></script>
 

@@ -2,8 +2,8 @@ function QuestlogBubble(width, height, left, top, title, content) {
   
   var bubble = this;
   this.parent;
-  this.title = title ? title : 'Title';
-  this.content = content ? content : null;
+  this.title = title ? title : 'Questlog';
+  this.content = content ? content : 'ok';
   this.width = width ? width : 300;
   this.height = height ? height : 300;
   this.left = left ? left : 100;
@@ -89,22 +89,21 @@ function QuestlogBubble(width, height, left, top, title, content) {
         $(bubble.parent).mousedown(function(event) {
           bubble.bringToFront();
         });
-        if (bubble.content && (bubble.content.indexOf('.html') > -1 ||
-            bubble.content.indexOf('.htm') > -1)) {
-          $.ajax({
-            type: 'GET',
-            url: TEMPLATE_URL + bubble.content,
-            success : function(innerData) {
-              
-            }
-          });
+        if (bubble.content) {
         }
         $('#mainContent').append(bubble.parent);
+        $(bubble).trigger('loadComplete');
       }
     });
   };
-  this.setup();
 
+  this.setContent = function(element) {
+
+    var contentArea = $(bubble.parent).find('.bubbleContent')[0];
+    console.log('content ' + bubble.parent);
+    $(contentArea).html(element);
+  };
+  
   this.bringToFront = function() {
     var zIndexes = [];
     $('.bubbleParent').each(function(){

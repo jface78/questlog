@@ -1,4 +1,6 @@
 var TEMPLATE_URL = 'templates/';
+var SERVICE_URL = 'services/';
+
 var bubbles = [];
 
 $(document).ready(function() {
@@ -12,8 +14,16 @@ $(document).ready(function() {
 });
 
 function launchMenu() {
-  var menu = new QuestlogBubble('20%', '90%', '75%', '5%', 'Settings', 'settings.html');
-  bubbles.push(menu);
+  var settings = new Settings();
+  $(settings).on('loadComplete', function(event) {
+    var menu = new QuestlogBubble('20%', '90%', '75%', '5%', 'Settings');
+    $(menu).on('loadComplete', function(event) {
+      menu.setContent(settings.dom);
+      bubbles.push(menu);
+    });
+    menu.setup();
+  });
+  settings.setup();
 }
 
 function spawnTest() {
