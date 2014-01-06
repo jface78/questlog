@@ -4,7 +4,7 @@
   $dirs = scandir(THEME_URL);
   $xml = '<themeList>';
   for ($i=0; $i < count($dirs); $i++) {
-    if ($dirs[$i] != '.' && $dirs[$i] != '..') {
+    if ($dirs[$i] != '.' && $dirs[$i] != '..' && $dirs[$i] != $_GET['current']) {
       $xml .= '<theme>' . $dirs[$i] . '</theme>';
     }
   }

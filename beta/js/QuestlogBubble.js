@@ -107,13 +107,15 @@ function QuestlogBubble(width, height, left, top, title, content) {
   this.bringToFront = function() {
     var zIndexes = [];
     $('.bubbleParent').each(function(){
-      $(this).removeClass('ui-state-active');
-      $(this).addClass('ui-state-default');
+      //$(this).removeClass('ui-state-active');
+      //$(this).addClass('ui-state-default');
       zIndexes.push(parseInt($(this).css('z-index')));
     });
 
-    $(bubble.parent).removeClass('ui-state-default');
-    $(bubble.parent).addClass('ui-state-active');
+    //$(bubble.parent)
+    var content = $(bubble.parent).find('.bubbleContent')[0];
+    //$(content).addClass('ui-state-active');
+    //$(content).removeClass('ui-state-default');
 
     if (zIndexes.length > 0) {
       zIndexes.sort();
