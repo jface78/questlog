@@ -8,14 +8,15 @@ $(document).ready(function() {
     $(script).attr('src', 'js/plugins/jquery-ui.min.js');
     $(head[0]).append(script);
   }
-  var bubble = new QuestlogBubble();
-  bubbles.push(bubble);
-  setTimeout(function() {
-    var bubble2 = new QuestlogBubble();
-    bubbles.push(bubble2);
-  }, 1000);
+  launchMenu();
 });
 
-function init() {
-  
+function launchMenu() {
+  var menu = new QuestlogBubble('20%', '90%', '75%', '5%', 'Settings', 'settings.html');
+  bubbles.push(menu);
+}
+
+function spawnTest() {
+  var bubble2 = new QuestlogBubble();
+  bubbles.push(bubble2);
 }

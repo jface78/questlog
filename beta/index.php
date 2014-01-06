@@ -36,7 +36,8 @@ window.jQuery || document.write('<script src="js/plugins/jquery.min.js"><\/scrip
 </head>
 <body>
 <div id="mainContent">
-<img alt="QuestLog" id="logo" src="img/logo_day.png">
+<img alt="QuestLog" id="logo" src="img/logo_day.png"><br /><br /><br /><br /><br />
+<a href="javascript:spawnTest();">spawn</a>
 </div>
 <footer>
 <b>&copy;INFINITY</b> questlog.org. A real lawyer wrote this, seriously.
