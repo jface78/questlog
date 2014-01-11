@@ -13,6 +13,7 @@
 <link rel="stylesheet" type="text/css" href="css/themes/vader/jquery-ui.min.css">
 <link rel="stylesheet" type="text/css" href="css/themes/vader/jquery.ui.theme.css">
 <link rel="stylesheet" type="text/css" href="css/bubbleDefault.css">
+<link rel="stylesheet" type="text/css" href="css/menu.css">
 <link rel="stylesheet" type="text/css" href="css/main.css">
 
 <!--
@@ -30,6 +31,7 @@
 window.jQuery || document.write('<script src="js/plugins/jquery.min.js"><\/script>');
 
 </script>
+<script type="text/javascript" src="js/Menu.js"></script>
 <script type="text/javascript" src="js/Settings.js"></script>
 <script type="text/javascript" src="js/QuestlogBubble.js"></script>
 <script type="text/javascript" src="js/main.js"></script>

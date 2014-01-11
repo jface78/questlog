@@ -15,8 +15,6 @@ $(document).ready(function() {
 });
 
 function loadTheme(theme) {
-  //<link rel="stylesheet" type="text/css" href="css/themes/vader/jquery.ui.theme.css">
-  //<link rel="stylesheet" type="text/css" href="css/themes/vader/jquery-ui.min.css">
   var head = document.getElementsByTagName('head');
   var link = document.createElement('link');
   $(link).attr('rel', 'stylesheet');
@@ -40,10 +38,9 @@ function loadTheme(theme) {
 function launchMenu() {
   var settings = new Settings();
   $(settings).on('loadComplete', function(event) {
-    var menu = new QuestlogBubble('20%', '90%', '75%', '5%', 'Settings');
+    var menu = new Menu();
     $(menu).on('loadComplete', function(event) {
-      menu.setContent(settings.dom);
-      bubbles.push(menu);
+      
     });
     menu.setup();
   });

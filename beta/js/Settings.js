@@ -26,7 +26,11 @@ function Settings() {
               themesArray.push($(item).text());
             });
             themesArray.sort();
+            var folderCount = 0;
             for (var i=0; i < themesArray.length; i++) {
+              if (folderCount % 10 == 0) {
+                var ul = document.createElement('ul');
+              }
               var li = document.createElement('li');
               var a = document.createElement('a');
               $(a).data('theme', themesArray[i]);
@@ -40,7 +44,11 @@ function Settings() {
               });
               $(a).html(themesArray[i]);
               $(li).append(a);
-              $(list).append(li);
+              $(ul).append(li);
+              if (folderCount % 10 == 0) {
+                $(list).append(ul);
+              }
+              folderCount++;
             }
             $(settings.dom).menu();
             $(settings).trigger('loadComplete');

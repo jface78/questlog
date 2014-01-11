@@ -1,3 +1,8 @@
+html {
+overflow-x:hidden;
+overflow-y:scroll;
+}
+
 html, body {
   margin:0px;
   padding:0px;
@@ -8,7 +13,7 @@ html, body {
 body {
   font-family : Verdana, "Bitstream Vera Sans", "DejaVu Sans", Tahoma, Geneva, Arial, Sans-serif;
   background-color:#a7a5a4;;
-  
+
 }
 
 #logo {
@@ -20,6 +25,7 @@ body {
 #mainContent {
   min-height:100%;
   margin-bottom:15px;
+  overflow:hidden;
 }
 
 footer {

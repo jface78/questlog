@@ -1,0 +1,50 @@
+#menuBlock {
+  position:absolute !important;
+  width:300px;
+  box-sizing:border-box;
+  z-index:0;
+}
+#menuTitle {
+ display:inline-block;
+ width:25px;
+ height:100%;
+ float:left;
+ overflow:hidden;
+}
+#menuTitle:hover {
+  cursor:pointer;
+}
+#menuTitleText {
+  position:relative;
+  top:-10px;
+  left:1px;
+  display:inline-block;
+  transform: rotate(90deg);
+  transform-origin:0% 0%;
+  -moz-transform: rotate(90deg);
+  -moz-transform-origin:0% 0%;
+  -ms-transform: rotate(90deg); /* IE 9 */
+  -ms-transform-origin:0% 0%; /* IE 9 */
+  -webkit-transform: rotate(90deg); /* Safari and Chrome */
+  -webkit-transform-origin:0% 100%; /* Safari and Chrome */
+}
+#menuTitleArrow {
+  max-width:15px;
+  position:relative;
+  left:4px;
+  top:-10px;
+  display:inline-block;
+  transform: rotate(90deg);
+  transform-origin:0% 0%;
+  -ms-transform: rotate(90deg); /* IE 9 */
+  -ms-transform-origin:0% 0%; /* IE 9 */
+  -webkit-transform: rotate(90deg); /* Safari and Chrome */
+  -webkit-transform-origin:0% 100%; /* Safari and Chrome */
+}
+
+#menuContent {
+  display:inline-block;
+  height:100%;
+
+  float:left;
+}
