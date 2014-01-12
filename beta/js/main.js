@@ -36,15 +36,15 @@ function loadTheme(theme) {
 }
 
 function launchMenu() {
-  var settings = new Settings();
-  $(settings).on('loadComplete', function(event) {
+  //var settings = new Settings();
+  //$(settings).on('loadComplete', function(event) {
     var menu = new Menu();
     $(menu).on('loadComplete', function(event) {
       
     });
     menu.setup();
-  });
-  settings.setup();
+  //});
+  //settings.setup();
 }
 
 function spawnTest() {

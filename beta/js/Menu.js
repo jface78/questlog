@@ -3,6 +3,7 @@ function Menu() {
   var menu = this;
   this.parent;
   this.isOpen = false;
+  var SLIDE_TIME = 500;
   
   function menuHoverOn() {
     $('#menuBlock').css('pointer', 'cursor');
@@ -20,65 +21,72 @@ function Menu() {
   }
   
   function menuClick() {
-    $('#menuTitle').removeClass('ui-state-hover');
+    menu.bringToFront();
+    $('#menuTitle').unbind('mousedown');
     if (menu.isOpen) {
-      $('#menuContent').css('width', '');
-      $('#menuTitle').removeClass('ui-state-active');
       var destination = document.getElementById('mainContent').clientWidth - 25;
       var newX = destination - $('#menuBlock').position().left;
       $('#menuBlock').focusout();
+      $('#menuContent').animate({
+        width: '50%'
+      }, SLIDE_TIME);
       $('#menuBlock').animate({
         left: '+=' + newX
-      }, 100, function() {
+      }, SLIDE_TIME, function() {
+        $('#menuTitle').on('mousedown', function(event) {
+          menuClick();
+        });
         setTimeout(function() {
           $('#menuBlock').hover(
             menuHoverOn,
             menuHoverOff
           );
-        }, 500);
+        }, SLIDE_TIME);
       });
       $('#menuTitle').animate({
         width: '25px',
         height: '100%'
-      }, 100);
+      }, SLIDE_TIME);
       $('#menuTitleText').css('top', '-10px');
       $('#menuTitleArrow').css('top', '-10px');
       $({deg: 0}).animate({deg: 90}, {
-        duration: 100,
+        duration: SLIDE_TIME,
         step: function(now) {
-            // in the step-callback (that is fired each step of the animation),
-            // you can use the `now` paramter which contains the current
-            // animation-position (`0` up to `angle`)
-            $('#menuTitleText').css({
-                transform: 'rotate(' + now + 'deg)'
-            });
-            $('#menuTitleArrow').css({
-                transform: 'rotate(' + now + 'deg)'
-            });
+          $('#menuTitleText').css({
+              transform: 'rotate(' + now + 'deg)'
+          });
+          $('#menuTitleArrow').css({
+            transform: 'rotate(' + now + 'deg)'
+          });
         }
       });
       $('#menuTitleArrow').button("option", {
         icons: { primary: "ui-icon-triangle-1-n" }
       });
     } else {
-      $('#menuContent').css('width', '100%');
-      $('#menuTitle').addClass('ui-state-active');
+      $('#menuTitle').unbind('mousedown');
       $('#menuBlock').unbind('mouseenter mouseleave');
+      $('#menuContent').animate({
+        width: '100%'
+      }, SLIDE_TIME);
       $('#menuBlock').animate({
         left: '-=270'
-      }, 100);
+      }, SLIDE_TIME, function() {
+        $('#menuTitle').on('mousedown', function() {
+          menuClick();
+        });
+      });
       $('#menuTitle').animate({
         width: '100%',
         height: '25px'
-      }, 100);
+      }, SLIDE_TIME, function() {
+        //$('#menuTitle').addClass('ui-state-active');
+      });
       $('#menuTitleText').css('top', '0px');
       $('#menuTitleArrow').css('top', '0px');
-      $({deg: -90}).animate({deg: 0}, {
-        duration: 100,
+      $({deg: 90}).animate({deg: 0}, {
+        duration: SLIDE_TIME,
         step: function(now) {
-            // in the step-callback (that is fired each step of the animation),
-            // you can use the `now` paramter which contains the current
-            // animation-position (`0` up to `angle`)
             $('#menuTitleText').css({
                 transform: 'rotate(' + now + 'deg)'
             });
@@ -105,13 +113,16 @@ function Menu() {
         $(menu.parent).css('height', $(window).innerHeight() - 100);
         $(menu.parent).css('left', document.getElementById('mainContent').clientWidth - 25);
         $(menu.parent).css('top', 50);
-        //menu.bringToFront();
+        menu.bringToFront();
 
         $('#mainContent').append(menu.parent);
         $('#menuBlock').hover(
           menuHoverOn,
           menuHoverOff
         );
+        $('#menuBlock').click(function(event) {
+          menu.bringToFront();
+        });
         $('#menuTitle').on('mousedown', function(event) {
           event.preventDefault();
           menuClick();
@@ -127,63 +138,50 @@ function Menu() {
           url: SERVICE_URL + 'settings.php?current=' + currentTheme,
           success : function(themes) {
             var list = $(menu.parent).find('.themeList')[0];
-            var li = document.createElement('li');
-            $(li).addClass('ui-state-disabled');
-            var aTop = document.createElement('a');
-            $(aTop).attr('href', '#');
-            $(aTop).text(currentTheme);
-            $(li).append(aTop);
-            $(list).append(li);
+            $('#currentTheme').text(currentTheme);
             var themesArray = [];
             $(themes).find('theme').each(function(increment, item) {
               themesArray.push($(item).text());
             });
             themesArray.sort();
 
-            var parentLI;
-            var ul;
-            var folderCount = 1;
+            folderCount = 1;
             for (var i=0; i < themesArray.length; i++) {
               if (i % 10 == 0) {
-                parentLI = document.createElement('li');
-                $(parentLI).css('padding', '5px');
-                $(parentLI).css('cursor', 'pointer');
-                $(parentLI).css('white-space', 'nowrap');
-                $(parentLI).text('Group ' + folderCount);
-                //$(parentLI).addClass('ui-state-default');
-                ul = document.createElement('ul');
-                $(parentLI).hover(function(event) {
-                  $(this).addClass('ui-state-hover');
-                }, function(event) {
-                  $(this).removeClass('ui-state-hover');
-                });
-                
-                $(parentLI).css('padding', '5px');
-                $(parentLI).css('cursor', 'pointer');
-                $(parentLI).css('white-space', 'nowrap');
-                $(parentLI).append(ul);
+                var submenuLI = document.createElement('li');
+                var a = document.createElement('a');
+                $(a).attr('href', '#');
+                $(a).text('Group ' + folderCount);
+                var ul = document.createElement('ul');
+                $(submenuLI).append(a);
+                $(submenuLI).append(ul);
                 folderCount++;
+                $(list).append(submenuLI);
               }
               var li = document.createElement('li');
-              $(li).addClass('ui-state-active');
+              $(li).addClass('themeItem');
               var a = document.createElement('a');
+              $(a).attr('href', '#');
               $(a).data('theme', themesArray[i]);
-              $(a).css('cursor', 'pointer');
+
               $(a).click(function(event) {
                 var clicked = $(this).data('theme')
-                $(this).text($(aTop).text());
-                $(aTop).text(clicked);
+                $(this).text($('#currentTheme').text());
+                $('#currentTheme').text(clicked);
+                currentTheme = clicked;
+                $(this).data('theme', $(this).text());
                 loadTheme(clicked);
-                //$(this).parent().parent().menu('collapse');
+                $('#settingsMenu').menu('collapse');
               });
-              $(a).html(themesArray[i]);
+              $(a).text(themesArray[i]);
               $(li).append(a);
               $(ul).append(li);
-              if (i % 10 == 0) {
-                $(list).append(parentLI);
-              }
             }
-            $('#settingsMenu').menu();
+            $('#settingsMenu').menu({ icons: { submenu: "ui-icon-triangle-1-e" } });
+            $('#settingsMenu').find('.ui-menu-icon').each(function(increment, item) {
+              $(item).css('position', 'relative');
+              $(item).css('top', '5px');
+            });
             $(menu).trigger('loadComplete');
           }
         });

@@ -1,20 +1,23 @@
 <section id="menuBlock" class="ui-widget ui-corner-all">
-  <div id="menuTitle" class="ui-helper-reset ui-helper-clearfix ui-widget-header ui-state-default ui-corner-all">
+  <div id="menuTitle" class="ui-helper-reset ui-helper-clearfix ui-widget-header ui-state-default ui-corner-top">
     <span id="menuTitleArrow"></span>
     <span id="menuTitleText">Menu</span>
     
   </div>
   <div id="menuContent" class="ui-widget-content ui-corner-bottom">
-    <ul id="settingsMenu">
+    <ul id="settingsMenu" class="ui-menu">
       <li>
         <a href="#">Site Themes</a>
         <ul class="themeList">
+          <li class="ui-state-disabled">
+            <a id="currentTheme"></a>
+          </li>
         </ul>
       </li>
       <li>
         <a href="#">Settings</a>
         <ul>
-          <li>Settings 1</li>
+          <li class="ui-menu-item">Settings 1</li>
           <li>Settings 2</li>
         </ul>
       </li>

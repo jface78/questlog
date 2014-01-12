@@ -48,3 +48,8 @@
 
   float:left;
 }
+
+.themeItem {
+  padding:5px;
+  white-space:nowrap;
+}
