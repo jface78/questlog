@@ -38,11 +38,17 @@ window.jQuery || document.write('<script src="js/plugins/jquery.min.js"><\/scrip
 </head>
 <body class="ui-widget-content">
 <div id="mainContent">
+<!--
 <img alt="QuestLog" id="logo" src="img/logo_day.png"><br /><br /><br /><br /><br />
+-->
+<span id="logoWrapper">
+<span id="logo">QuestLog.org</span><span id="sublogo">BETA</span>
+</span>
+<br /><br /><br /><br /><br /><br />
 <a href="javascript:spawnTest();">spawn</a>
 </div>
 <footer>
-<b>&copy;INFINITY</b> questlog.org. A real lawyer wrote this, seriously.
+&copy;2014 questlog.org, all rights reserved, blah blah blah.
 </footer>
 </body>
 </html>

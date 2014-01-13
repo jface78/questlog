@@ -3,6 +3,8 @@ var SERVICE_URL = 'services/';
 
 var bubbles = [];
 var currentTheme = 'vader';
+var menu;
+var minimizedArray = [];
 
 $(document).ready(function() {
   if (!window.jQuery.ui) {
@@ -12,6 +14,17 @@ $(document).ready(function() {
     $(head[0]).append(script);
   }
   launchMenu();
+});
+
+$(window).resize(function(event) {
+  if (menu) {
+    menu.startingPosition = document.getElementById('mainContent').clientWidth - 25;
+    if (!menu.isOpen) {
+      $(menu.parent).css('left', menu.startingPosition);
+    } else {
+      $(menu.parent).css('left', menu.startingPosition - $(menu.parent).width());
+    }
+  }
 });
 
 function loadTheme(theme) {
@@ -38,7 +51,7 @@ function loadTheme(theme) {
 function launchMenu() {
   //var settings = new Settings();
   //$(settings).on('loadComplete', function(event) {
-    var menu = new Menu();
+    menu = new Menu();
     $(menu).on('loadComplete', function(event) {
       
     });

@@ -4,19 +4,23 @@ function Menu() {
   this.parent;
   this.isOpen = false;
   var SLIDE_TIME = 500;
+  this.startingPosition = document.getElementById('mainContent').clientWidth - 25;
   
   function menuHoverOn() {
     $('#menuBlock').css('pointer', 'cursor');
     $('#menuTitle').addClass('ui-state-hover');
-    $('#menuBlock').animate({
-      left: '-=20px'
-    }, 100);
+    if ($('#menuBlock').position().left > menu.startingPosition - 20) {
+      $('#menuBlock').animate({
+        left: '-=20px'
+      }, 100);
+    }
   }
 
   function menuHoverOff() {
     $('#menuTitle').removeClass('ui-state-hover');
+    var newX = menu.startingPosition - $('#menuBlock').position().left;
     $('#menuBlock').animate({
-      left: '+=20px'
+      left: '+=' + newX
     }, 100);
   }
   
@@ -24,8 +28,10 @@ function Menu() {
     menu.bringToFront();
     $('#menuTitle').unbind('mousedown');
     if (menu.isOpen) {
+      $('#menuTitle').removeClass('ui-corner-top');
+      $('#menuTitle').addClass('ui-corner-all');
       var destination = document.getElementById('mainContent').clientWidth - 25;
-      var newX = destination - $('#menuBlock').position().left;
+      var newX = menu.startingPosition - $('#menuBlock').position().left;
       $('#menuBlock').focusout();
       $('#menuContent').animate({
         width: '50%'
@@ -64,13 +70,16 @@ function Menu() {
         icons: { primary: "ui-icon-triangle-1-n" }
       });
     } else {
+      $('#menuTitle').addClass('ui-corner-top');
+      $('#menuTitle').removeClass('ui-corner-all');
       $('#menuTitle').unbind('mousedown');
       $('#menuBlock').unbind('mouseenter mouseleave');
       $('#menuContent').animate({
         width: '100%'
       }, SLIDE_TIME);
+      var newX = $('#menuBlock').width();
       $('#menuBlock').animate({
-        left: '-=270'
+        left: '-=' + newX
       }, SLIDE_TIME, function() {
         $('#menuTitle').on('mousedown', function() {
           menuClick();
@@ -111,10 +120,10 @@ function Menu() {
         menu.parent = $(data).first()[0];
         
         $(menu.parent).css('height', $(window).innerHeight() - 100);
-        $(menu.parent).css('left', document.getElementById('mainContent').clientWidth - 25);
+        $(menu.parent).css('left', menu.startingPosition);
+        
         $(menu.parent).css('top', 50);
-        menu.bringToFront();
-
+        
         $('#mainContent').append(menu.parent);
         $('#menuBlock').hover(
           menuHoverOn,
@@ -147,8 +156,9 @@ function Menu() {
 
             folderCount = 1;
             for (var i=0; i < themesArray.length; i++) {
-              if (i % 10 == 0) {
+              if (i % 5 == 0) {
                 var submenuLI = document.createElement('li');
+                $(submenuLI).addClass('themeItem');
                 var a = document.createElement('a');
                 $(a).attr('href', '#');
                 $(a).text('Group ' + folderCount);
@@ -171,14 +181,14 @@ function Menu() {
                 currentTheme = clicked;
                 $(this).data('theme', $(this).text());
                 loadTheme(clicked);
-                $('#settingsMenu').menu('collapse');
+                //$('#settingsMenu').menu('collapse');
               });
               $(a).text(themesArray[i]);
               $(li).append(a);
               $(ul).append(li);
             }
-            $('#settingsMenu').menu({ icons: { submenu: "ui-icon-triangle-1-e" } });
-            $('#settingsMenu').find('.ui-menu-icon').each(function(increment, item) {
+            $('#siteMenu').menu({ icons: { submenu: "ui-icon-triangle-1-e" } });
+            $('#siteMenu').find('.ui-menu-icon').each(function(increment, item) {
               $(item).css('position', 'relative');
               $(item).css('top', '5px');
             });

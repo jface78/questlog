@@ -45,11 +45,14 @@
 #menuContent {
   display:inline-block;
   height:100%;
-
   float:left;
+}
+#siteMenu {
+  height:100%;
 }
 
 .themeItem {
   padding:5px;
   white-space:nowrap;
+  min-width:100px;
 }

@@ -1,3 +1,16 @@
+@font-face {
+  font-family: 'Montserrat Alternates';
+  font-style: normal;
+  font-weight: 400;
+  src: local('MontserratAlternates-Regular'), url(../fonts/z2n1Sjxk9souK3HCtdHukiVz4wwEV01Tv2kxNh88JXM.woff) format('woff');
+}
+@font-face {
+  font-family: 'Montserrat Alternates';
+  font-style: normal;
+  font-weight: 700;
+  src: local('MontserratAlternates-Bold'), url(../fonts/YENqOGAVzwIHjYNjmKuAZgHIHA8NZDzxmj0AXZzWWdj3rGVtsTkPsbDajuO5ueQw.woff) format('woff');
+}
+
 html {
 overflow-x:hidden;
 overflow-y:scroll;
@@ -16,11 +29,24 @@ body {
 
 }
 
-#logo {
+#logoWrapper {
   position:absolute;
   top:10px;
   left:10px;
+  vertical-align:bottom;
+  white-space:nowrap;
 }
+#logo {
+  font-family: 'Montserrat Alternates', sans-serif !important;
+  font-size:48px;
+  display:inline-block;
+}
+#sublogo {
+  display:inline-block;
+  font-weight:bold;
+  font-size:12px;
+}
+
 
 #mainContent {
   min-height:100%;
@@ -34,5 +60,5 @@ footer {
   bottom:0px;
   height:15px;
   text-align:center;
-  font-size:11px;
+  font-size:10px;
 }

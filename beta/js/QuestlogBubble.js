@@ -10,6 +10,8 @@ function QuestlogBubble(width, height, left, top, title, content) {
   this.top = top ? top : 100;
   this.isMaximized = false;
   this.isMinimized = false;
+  var BUBBLE_TOOLBAR_HEIGHT = 20;
+  var BUBBLE_MINIMIZED_WIDTH = 100;
 
   /*
   if (this.width.toString().indexOf('%') > -1) {
@@ -75,6 +77,9 @@ function QuestlogBubble(width, height, left, top, title, content) {
         $(bubble.parent).find('.closeBtn').click(function(event) {
           bubble.close();
         });
+        $(bubble.parent).find('.minBtn').click(function(event) {
+          bubble.minimize();
+        });
         
         $(bubble.parent).find('.maxBtn').click(function(event) {
           bubble.maximize();
@@ -84,7 +89,11 @@ function QuestlogBubble(width, height, left, top, title, content) {
         $(bubble.parent).resizable({
           ghost: true,
           animate: true,
-          animateDuration: 'fast'
+          animateDuration: 'fast',
+          resize: function(event, ui) {
+            bubble.width = ui.size.width;
+            bubble.height = ui.size.height;
+          }
         });
         $(bubble.parent).mousedown(function(event) {
           bubble.bringToFront();
@@ -106,16 +115,16 @@ function QuestlogBubble(width, height, left, top, title, content) {
   
   this.bringToFront = function() {
     var zIndexes = [];
-    $('.bubbleParent').each(function(){
+    $('.bubbleParent').each(function(increment, item){
+      var topBar = $(item).find('.bubbleTopBar')[0];
+      $(topBar).removeClass('ui-state-focus');
       //$(this).removeClass('ui-state-active');
       //$(this).addClass('ui-state-default');
       zIndexes.push(parseInt($(this).css('z-index')));
     });
 
-    //$(bubble.parent)
-    var content = $(bubble.parent).find('.bubbleContent')[0];
-    //$(content).addClass('ui-state-active');
-    //$(content).removeClass('ui-state-default');
+    var topBar = $(bubble.parent).find('.bubbleTopBar')[0];
+    $(topBar).addClass('ui-state-focus');
 
     if (zIndexes.length > 0) {
       zIndexes.sort();
@@ -143,18 +152,69 @@ function QuestlogBubble(width, height, left, top, title, content) {
     });
   };
   
-  this.restorePositionAndSize = function() {
-    this.isMaximized = false;
-    this.isMinimized = false;
-    $(bubble.parent).css('left', bubble.left);
-    $(bubble.parent).css('top', bubble.top);
-    $(bubble.parent).css('width', bubble.width);
-    $(bubble.parent).css('height', bubble.height);
-    bubble.bringToFront();
-    $(bubble.parent).find('.maxBtn').attr('title', 'maximize');
-    $(bubble.parent).find('.maxBtn').click(function(event) {
-      bubble.maximize();
+  this.minimize = function() {
+    this.isMinimized = true;
+    $(bubble.parent).removeClass('ui-corner-bottom');
+    $(bubble.parent).addClass('ui-corner-top');
+    $(bubble.parent).find('.tools').hide();
+    $(bubble.parent).resizable('disable');
+    $(bubble.parent).draggable('disable');
+    $(bubble.parent).find('.bubbleTopBar').css('cursor', 'pointer');
+    var bottom = document.getElementById('mainContent').clientHeight -
+        BUBBLE_TOOLBAR_HEIGHT -
+        $(bubble.parent).position().top;
+    $(bubble.parent).animate({
+      left: '-=' + $(bubble.parent).position().left,
+      top: '+=' + bottom,
+      height: BUBBLE_TOOLBAR_HEIGHT,
+      width: BUBBLE_MINIMIZED_WIDTH
+    }, 500, function() {
+      $(bubble.parent).find('.bubbleTopBar').click(function(event) {
+        bubble.restorePositionAndSize();
+      });
     });
+    
+  }
+  
+  this.restorePositionAndSize = function() {
+    if (this.isMinimized) {
+      $(bubble.parent).find('.tools').show();
+      $(bubble.parent).find('.bubbleTopBar').unbind('click');
+      $(bubble.parent).addClass('ui-corner-bottom');
+      $(bubble.parent).removeClass('ui-corner-top');
+    }
+    if ($(bubble.parent).position().top > bubble.top) {
+      var topOperator = '-=';
+    } else {
+      var topOperator = '+=';
+    }
+    if ($(bubble.parent).position().left > bubble.left) {
+      var leftOperator = '-=';
+    } else {
+      var leftOperator = '+=';
+    }
+    $(bubble.parent).animate({
+      left: leftOperator + ($(bubble.parent).position().left + bubble.left),
+      top: topOperator + ($(bubble.parent).position().top - bubble.top),
+      width: bubble.width,
+      height: bubble.height
+    }, 500, function() {
+      if (bubble.isMinimized) {
+        bubble.isMinimized = false;
+        $(bubble.parent).draggable('enable');
+        $(bubble.parent).resizable('enable');
+        $(bubble.parent).find('.bubbleTopBar').css('cursor', 'move');
+      }
+      if (bubble.isMaximized) {
+        bubble.isMaximized = false;
+        $(bubble.parent).find('.maxBtn').attr('title', 'maximize');
+        $(bubble.parent).find('.maxBtn').click(function(event) {
+          bubble.maximize();
+        });
+      }
+    });
+    bubble.bringToFront();
+    
   };
 }
 
