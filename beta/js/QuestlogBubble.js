@@ -52,8 +52,10 @@ function QuestlogBubble(width, height, left, top, title, content) {
         var topBar = $(bubble.parent).find('.bubbleTopBar')[0];
         $(topBar).hover(function(event) {
           $(topBar).addClass('ui-state-hover');
+          $(topBar).removeClass('ui-state-default');
         }, function(event) {
           $(topBar).removeClass('ui-state-hover');
+          $(topBar).addClass('ui-state-default');
         });
 
         $(bubble.parent).find('.closeBtn').button({
@@ -96,7 +98,11 @@ function QuestlogBubble(width, height, left, top, title, content) {
           }
         });
         $(bubble.parent).mousedown(function(event) {
+          $(topBar).addClass('ui-state-active');
           bubble.bringToFront();
+        });
+        $(bubble.parent).mouseup(function(event) {
+          $(topBar).removeClass('ui-state-active');
         });
         if (bubble.content) {
         }
@@ -117,14 +123,10 @@ function QuestlogBubble(width, height, left, top, title, content) {
     var zIndexes = [];
     $('.bubbleParent').each(function(increment, item){
       var topBar = $(item).find('.bubbleTopBar')[0];
-      $(topBar).removeClass('ui-state-focus');
-      //$(this).removeClass('ui-state-active');
-      //$(this).addClass('ui-state-default');
       zIndexes.push(parseInt($(this).css('z-index')));
     });
 
     var topBar = $(bubble.parent).find('.bubbleTopBar')[0];
-    $(topBar).addClass('ui-state-focus');
 
     if (zIndexes.length > 0) {
       zIndexes.sort();

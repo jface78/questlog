@@ -1,3 +1,7 @@
+.ui-state-hover, .ui-state-default, .ui-state-active {
+  background-repeat:no-repeat !important;
+}
+
 @font-face {
   font-family: 'Montserrat Alternates';
   font-style: normal;
@@ -40,6 +44,7 @@ body {
   font-family: 'Montserrat Alternates', sans-serif !important;
   font-size:48px;
   display:inline-block;
+  text-shadow:3px 4px 5px rgb(136, 80, 80);
 }
 #sublogo {
   display:inline-block;
