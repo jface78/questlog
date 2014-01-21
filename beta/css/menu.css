@@ -17,14 +17,13 @@
 #menuTitleText {
   position:relative;
   top:-10px;
-  left:1px;
   display:inline-block;
   transform: rotate(90deg);
-  transform-origin:0% 0%;
+  transform-origin:0% 100%;
   -moz-transform: rotate(90deg);
-  -moz-transform-origin:0% 0%;
+  -moz-transform-origin:0% 100%;
   -ms-transform: rotate(90deg); /* IE 9 */
-  -ms-transform-origin:0% 0%; /* IE 9 */
+  -ms-transform-origin:0% 100%; /* IE 9 */
   -webkit-transform: rotate(90deg); /* Safari and Chrome */
   -webkit-transform-origin:0% 100%; /* Safari and Chrome */
 }
@@ -35,9 +34,9 @@
   top:-10px;
   display:inline-block;
   transform: rotate(90deg);
-  transform-origin:0% 0%;
+  transform-origin:0% 100%;
   -ms-transform: rotate(90deg); /* IE 9 */
-  -ms-transform-origin:0% 0%; /* IE 9 */
+  -ms-transform-origin:0% 100%; /* IE 9 */
   -webkit-transform: rotate(90deg); /* Safari and Chrome */
   -webkit-transform-origin:0% 100%; /* Safari and Chrome */
 }
@@ -50,7 +49,9 @@
 #siteMenu {
   height:100%;
 }
-
+.ui-menu-item  a{
+  white-space:nowrap;
+}
 .themeItem {
   padding:5px;
   white-space:nowrap;
