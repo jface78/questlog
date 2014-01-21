@@ -65,3 +65,9 @@ function spawnTest() {
   bubble2.setup();
   bubbles.push(bubble2);
 }
+
+function removeFromArray(array, removeItem) {
+  return $.grep(array, function(value) {
+    return value != removeItem;
+  });
+}
