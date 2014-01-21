@@ -76,10 +76,10 @@ function launchMenu() {
   //settings.setup();
 }
 
-function spawnTest() {
-  var bubble2 = new QuestlogBubble();
-  bubble2.setup();
-  bubbles.push(bubble2);
+function spawn(width, height, centered, left, top, title) {
+  var bubble = new QuestlogBubble(width, height, centered, left, top, title);
+  bubble.setup();
+  bubbles.push(bubble);
 }
 
 function removeFromArray(array, removeItem) {

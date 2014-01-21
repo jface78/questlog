@@ -1,4 +1,4 @@
-function QuestlogBubble(width, height, left, top, title, content) {
+function QuestlogBubble(width, height, centered, left, top, title, content) {
   
   var bubble = this;
   this.parent;
@@ -6,8 +6,13 @@ function QuestlogBubble(width, height, left, top, title, content) {
   this.content = content ? content : 'ok';
   this.width = width ? width : 300;
   this.height = height ? height : 300;
-  this.left = left ? left : 100;
-  this.top = top ? top : 100;
+  if (centered || (!left && !top)) {
+    this.left = $(window).innerWidth()/2 - this.width/2;
+    this.top = $(window).innerHeight()/2 - this.height/2;
+  } else {
+    this.left = left ? left : 100;
+    this.top = top ? top : 100;
+  }
   this.isMaximized = false;
   this.isMinimized = false;
 

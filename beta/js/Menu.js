@@ -192,6 +192,10 @@ function Menu() {
               $(item).css('position', 'relative');
               $(item).css('top', '5px');
             });
+            
+            $('#menuItemLogin').click(function(event) {
+              spawn(500,400,true,null,null,'Login');
+            });
             $(menu).trigger('loadComplete');
           }
         });

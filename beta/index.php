@@ -41,11 +41,9 @@ window.jQuery || document.write('<script src="js/plugins/jquery.min.js"><\/scrip
 <!--
 <img alt="QuestLog" id="logo" src="img/logo_day.png"><br /><br /><br /><br /><br />
 -->
-<span id="logoWrapper">
-<span id="logo">QuestLog.org</span><span id="sublogo">BETA</span>
-</span>
-<br /><br /><br /><br /><br /><br />
-<a href="javascript:spawnTest();">spawn</a>
+  <span id="logoWrapper">
+    <span id="logo">QuestLog.org</span><span id="sublogo">BETA</span>
+  </span>
 </div>
 <footer>
 &copy;2014 questlog.org, all rights reserved, blah blah blah.
