@@ -77,7 +77,7 @@ function Menu() {
       $('#menuContent').animate({
         width: '100%'
       }, SLIDE_TIME);
-      var newX = $('#menuBlock').width();
+      var newX = $('#menuBlock').width() - 43;
       $('#menuBlock').animate({
         left: '-=' + newX
       }, SLIDE_TIME, function() {

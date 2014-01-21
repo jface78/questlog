@@ -1,5 +1,5 @@
 .ui-state-hover, .ui-state-default, .ui-state-active {
-  background-repeat:no-repeat !important;
+  background-size:100% !important;
 }
 
 @font-face {

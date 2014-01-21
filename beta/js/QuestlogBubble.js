@@ -87,16 +87,14 @@ function QuestlogBubble(width, height, left, top, title, content) {
           bubble.maximize();
         });
         bubble.bringToFront();
-        $(bubble.parent).draggable({ handle: $(bubble.parent).find('.bubbleTopBar') });
-        $(bubble.parent).resizable({
-          ghost: true,
-          animate: true,
-          animateDuration: 'fast',
-          resize: function(event, ui) {
-            bubble.width = ui.size.width;
-            bubble.height = ui.size.height;
+        $(bubble.parent).draggable({
+          handle: $(bubble.parent).find('.bubbleTopBar'),
+          stop: function( event, ui ) {
+            bubble.left = $(bubble.parent).position().left;
+            bubble.top = $(bubble.parent).position().top;
           }
         });
+        bubble.enableResize();
         $(bubble.parent).mousedown(function(event) {
           $(topBar).addClass('ui-state-active');
           bubble.bringToFront();
@@ -111,6 +109,22 @@ function QuestlogBubble(width, height, left, top, title, content) {
       }
     });
   };
+  
+  this.disableResize = function() {
+    $(bubble.parent).resizable('destroy');
+  }
+  
+  this.enableResize = function() {
+    $(bubble.parent).resizable({
+      ghost: true,
+      animate: true,
+      animateDuration: 'fast',
+      resize: function(event, ui) {
+        bubble.width = ui.size.width;
+        bubble.height = ui.size.height;
+      }
+    });
+  }
 
   this.setContent = function(element) {
 
@@ -149,6 +163,7 @@ function QuestlogBubble(width, height, left, top, title, content) {
     $(bubble.parent).css('height', '100%');
     bubble.bringToFront();
     $(bubble.parent).find('.maxBtn').attr('title', 'restore');
+    $(bubble.parent).find('.maxBtn').unbind('click');
     $(bubble.parent).find('.maxBtn').click(function(event) {
       bubble.restorePositionAndSize();
     });
@@ -159,8 +174,8 @@ function QuestlogBubble(width, height, left, top, title, content) {
     $(bubble.parent).removeClass('ui-corner-bottom');
     $(bubble.parent).addClass('ui-corner-top');
     $(bubble.parent).find('.tools').hide();
-    $(bubble.parent).resizable('disable');
-    $(bubble.parent).draggable('disable');
+    bubble.disableResize();
+    $(bubble.parent).draggable('option', 'disabled', true);
     $(bubble.parent).find('.bubbleTopBar').css('cursor', 'pointer');
     var bottom = document.getElementById('mainContent').clientHeight -
         BUBBLE_TOOLBAR_HEIGHT -
@@ -185,31 +200,22 @@ function QuestlogBubble(width, height, left, top, title, content) {
       $(bubble.parent).addClass('ui-corner-bottom');
       $(bubble.parent).removeClass('ui-corner-top');
     }
-    if ($(bubble.parent).position().top > bubble.top) {
-      var topOperator = '-=';
-    } else {
-      var topOperator = '+=';
-    }
-    if ($(bubble.parent).position().left > bubble.left) {
-      var leftOperator = '-=';
-    } else {
-      var leftOperator = '+=';
-    }
     $(bubble.parent).animate({
-      left: leftOperator + ($(bubble.parent).position().left + bubble.left),
-      top: topOperator + ($(bubble.parent).position().top - bubble.top),
+      left: '-=' + ($(bubble.parent).position().left - bubble.left),
+      top: '-=' + ($(bubble.parent).position().top - bubble.top),
       width: bubble.width,
       height: bubble.height
     }, 500, function() {
       if (bubble.isMinimized) {
         bubble.isMinimized = false;
         $(bubble.parent).draggable('enable');
-        $(bubble.parent).resizable('enable');
+        bubble.enableResize();
         $(bubble.parent).find('.bubbleTopBar').css('cursor', 'move');
       }
       if (bubble.isMaximized) {
         bubble.isMaximized = false;
         $(bubble.parent).find('.maxBtn').attr('title', 'maximize');
+        $(bubble.parent).find('.maxBtn').unbind('click');
         $(bubble.parent).find('.maxBtn').click(function(event) {
           bubble.maximize();
         });
