@@ -10,8 +10,6 @@ function QuestlogBubble(width, height, left, top, title, content) {
   this.top = top ? top : 100;
   this.isMaximized = false;
   this.isMinimized = false;
-  var BUBBLE_TOOLBAR_HEIGHT = 20;
-  var BUBBLE_MINIMIZED_WIDTH = 100;
 
   /*
   if (this.width.toString().indexOf('%') > -1) {
@@ -219,11 +217,25 @@ function QuestlogBubble(width, height, left, top, title, content) {
       $(bubble.parent).addClass('ui-corner-bottom');
       $(bubble.parent).removeClass('ui-corner-top');
       minimizedArray = removeFromArray(minimizedArray, this);
+      /*
       for (var i=0; i < minimizedArray.length; i++) {
         var newX = i * 100;
         $(minimizedArray[i].parent).animate({
           left: newX
         }, 250);
+      }*/
+      for (var i = 0; i < minimizedArray.length; i++) {
+        var divider = Math.floor($(window).width() / BUBBLE_MINIMIZED_WIDTH);
+        var yMultiplier = Math.floor(i / divider);
+        var yPos = $(window).height() - ((yMultiplier+1) * BUBBLE_TOOLBAR_HEIGHT);
+        var arrayPos = i - (yMultiplier * divider);
+        var xPos = BUBBLE_MINIMIZED_WIDTH * arrayPos;
+        if (xPos != $(minimizedArray[i].parent).position().left || yPos != $(minimizedArray[i].parent).position().top) {
+          $(minimizedArray[i].parent).animate({
+            left: xPos,
+            top: yPos
+          }, 250);
+        }
       }
     }
     

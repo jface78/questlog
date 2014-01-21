@@ -6,6 +6,9 @@ var currentTheme = 'vader';
 var menu;
 var minimizedArray = [];
 
+var BUBBLE_MINIMIZED_WIDTH = 100;
+var BUBBLE_TOOLBAR_HEIGHT = 20;
+
 $(document).ready(function() {
   if (!window.jQuery.ui) {
     var head = document.getElementsByTagName('head');
@@ -23,6 +26,19 @@ $(window).resize(function(event) {
       $(menu.parent).css('left', menu.startingPosition);
     } else {
       $(menu.parent).css('left', menu.startingPosition - $(menu.parent).width());
+    }
+  }
+  for (var i = 0; i < minimizedArray.length; i++) {
+    var divider = Math.floor($(window).width() / BUBBLE_MINIMIZED_WIDTH);
+    var yMultiplier = Math.floor(i / divider);
+    var yPos = $(window).height() - ((yMultiplier+1) * BUBBLE_TOOLBAR_HEIGHT);
+    var arrayPos = i - (yMultiplier * divider);
+    var xPos = BUBBLE_MINIMIZED_WIDTH * arrayPos;
+    if (xPos != $(minimizedArray[i].parent).position().left || yPos != $(minimizedArray[i].parent).position().top) {
+      $(minimizedArray[i].parent).animate({
+        left: xPos,
+        top: yPos
+      }, 250);
     }
   }
 });
