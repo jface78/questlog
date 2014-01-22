@@ -25,12 +25,12 @@ html, body {
   padding:0px;
   height:100%;
   box-sizing:border-box;
+ 
 }
 
 body {
   font-family : Verdana, "Bitstream Vera Sans", "DejaVu Sans", Tahoma, Geneva, Arial, Sans-serif;
-  background-color:#a7a5a4;;
-
+  background-color:#a7a5a4;
 }
 
 #logoWrapper {
@@ -66,4 +66,14 @@ footer {
   height:15px;
   text-align:center;
   font-size:10px;
+}
+
+input[type=text],[type=password] {
+  border-radius:5px;
+  min-width:100px;
+  border:1px solid gray;
+  padding:2px;
+}
+input[type=text],[type=password]:focus {
+  outline:0;
 }

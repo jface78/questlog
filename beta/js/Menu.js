@@ -7,6 +7,7 @@ function Menu() {
   this.startingPosition = document.getElementById('mainContent').clientWidth - 25;
   
   function menuHoverOn() {
+    menu.bringToFront();
     $('#menuBlock').css('pointer', 'cursor');
     $('#menuTitle').addClass('ui-state-hover');
     if ($('#menuBlock').position().left > menu.startingPosition - 20) {
@@ -118,6 +119,9 @@ function Menu() {
       url: TEMPLATE_URL + 'menu.html',
       success : function(data) {
         menu.parent = $(data).first()[0];
+        $(menu.parent).prop('tabindex', '-1');
+        $(menu.parent).find('li').prop('tabindex', '-1');
+        $(menu.parent).find('a').prop('tabindex', '-1');
         
         $(menu.parent).css('height', $(window).innerHeight() - 100);
         $(menu.parent).css('left', menu.startingPosition);
@@ -125,6 +129,11 @@ function Menu() {
         $(menu.parent).css('top', 50);
         
         $('#mainContent').append(menu.parent);
+        
+        $('#menuContent li a').hover(function(event) {
+          menu.bringToFront();
+        });
+        
         $('#menuBlock').hover(
           menuHoverOn,
           menuHoverOff
@@ -194,7 +203,7 @@ function Menu() {
             });
             
             $('#menuItemLogin').click(function(event) {
-              spawn(500,400,true,null,null,'Login');
+              spawn(450,300,true,null,null,'Login', 'login.html');
             });
             $(menu).trigger('loadComplete');
           }

@@ -1,0 +1,77 @@
+
+<script>
+$(document).ready(function(event) {
+  $('.usernameEnter').focusout(function(event) {
+    if ($(this).val().length > 0) {
+      $('.usernameCheck').css('visibility', 'visible');
+    }
+  });
+  $('.passwordEnter').focusout(function(event) {
+    if ($(this).val().length > 0) {
+      $('.passwordCheck').css('visibility', 'visible');
+    }
+  });
+  (function(d, s, id) {
+    var js, fjs = d.getElementsByTagName(s)[0];
+    if (d.getElementById(id)) return;
+      js = d.createElement(s); js.id = id;
+      js.src = "//connect.facebook.net/en_US/all.js#xfbml=1&appId=623854231027617";
+      fjs.parentNode.insertBefore(js, fjs);
+    }(document, 'script', 'facebook-jssdk'));
+});
+
+
+window.fbAsyncInit = function() {
+  FB.init({
+    appId      : '623854231027617',
+    status     : true,
+    xfbml      : true
+  });
+};
+(function(d, s, id){
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+    js = d.createElement(s); js.id = id;
+    js.src = "//connect.facebook.net/en_US/all.js";
+    fjs.parentNode.insertBefore(js, fjs);
+  }
+(document, 'script', 'facebook-jssdk'));
+
+(function() {
+  var po = document.createElement('script');
+  po.type = 'text/javascript'; po.async = true;
+  po.src = 'https://plus.google.com/js/client:plusone.js';
+  var s = document.getElementsByTagName('script')[0];
+  s.parentNode.insertBefore(po, s);
+})();
+
+function onSignInCallback() {
+
+}
+
+</script>
+
+<div class="loginParent">
+User: <input type="text" class="usernameEnter">&nbsp;<span class="usernameCheck ui-icon ui-icon-check" style="display:inline-block;visibility:hidden;"></span><br />
+Pass: <input type="password" class="passwordEnter">&nbsp;<span class="passwordCheck ui-icon ui-icon-check" style="display:inline-block;visibility:hidden;"></span>
+<hr class="dottedDivider">
+- OR -<br />
+<div class="alternateLogins">
+  <div id="fb-root">
+    <fb:login-button size="large">
+      Sign in
+    </fb:login-button>
+  </div>
+  &nbsp;
+  <button class="g-signin"
+        data-scope="https://www.googleapis.com/auth/plus.login"
+        data-requestvisibleactions="http://schemas.google.com/AddActivity"
+        data-clientId="847781579813-2srpkm44ggci92ko0llqa2vn2s31rsra.apps.googleusercontent.com"
+        data-callback="onSignInCallback"
+        data-theme="dark"
+        data-cookiepolicy="single_host_origin">
+        
+  </button>
+</div>
+<br /><br /><br /><br />
+<div class="recoverText">Already have an <a href="#">account?</a> <a href="#">Forgot it?</a></div>

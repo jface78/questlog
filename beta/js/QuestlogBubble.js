@@ -46,6 +46,7 @@ function QuestlogBubble(width, height, centered, left, top, title, content) {
       success : function(data) {
         
         bubble.parent = $(data).first()[0];
+        $(bubble.parent).css('opacity', 0);
         $(bubble.parent).css('width', bubble.width);
         $(bubble.parent).css('height', bubble.height);
         $(bubble.parent).css('left', bubble.left);
@@ -99,10 +100,20 @@ function QuestlogBubble(width, height, centered, left, top, title, content) {
         $(bubble.parent).mouseup(function(event) {
           $(topBar).removeClass('ui-state-active');
         });
+
         if (bubble.content) {
+          $.ajax({
+            type: 'GET',
+            url: TEMPLATE_URL + bubble.content,
+            success : function(data) {
+              $(bubble.parent).find('.bubbleContent').html(data);
+              $(bubble).trigger('loadComplete');
+            }
+          });
+        } else {
+          $(bubble).trigger('loadComplete');
         }
         $('#mainContent').append(bubble.parent);
-        $(bubble).trigger('loadComplete');
       }
     });
   };

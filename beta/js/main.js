@@ -17,6 +17,11 @@ $(document).ready(function() {
     $(head[0]).append(script);
   }
   launchMenu();
+  spawn(450,300,true,null,null,'Login', 'login.html');
+});
+
+$(document).on('scroll', function() {
+  $(document).scrollLeft(0);
 });
 
 $(window).resize(function(event) {
@@ -76,8 +81,13 @@ function launchMenu() {
   //settings.setup();
 }
 
-function spawn(width, height, centered, left, top, title) {
-  var bubble = new QuestlogBubble(width, height, centered, left, top, title);
+function spawn(width, height, centered, left, top, title, content) {
+  var bubble = new QuestlogBubble(width, height, centered, left, top, title, content);
+  $(bubble).on('loadComplete', function(event) {
+    $(bubble.parent).animate({
+      opacity:1
+    }, 250);
+  });
   bubble.setup();
   bubbles.push(bubble);
 }

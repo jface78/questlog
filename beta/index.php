@@ -7,6 +7,7 @@
     Online dice and other tools to record and enhance your collaborative
     storytelling experience.">
 <meta name="robots" content="all">
+
 <title>QuestLog - Play-by-Post RPGs and Other Distractions</title>
 <link rel="shortcut icon" href="img/favicon.ico">
 
@@ -14,6 +15,7 @@
 <link rel="stylesheet" type="text/css" href="css/themes/vader/jquery.ui.theme.css">
 <link rel="stylesheet" type="text/css" href="css/bubbleDefault.css">
 <link rel="stylesheet" type="text/css" href="css/menu.css">
+<link rel="stylesheet" type="text/css" href="css/login.css">
 <link rel="stylesheet" type="text/css" href="css/main.css">
 
 <!--
