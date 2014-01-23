@@ -176,9 +176,11 @@ function QuestlogBubble(width, height, centered, left, top, title, content) {
     bubbles.splice(bubbles.indexOf(bubble), 1);
   };
   
-  this.maximize = function() {
+  this.maximize = function(passive) {
     this.isMaximized = true;
-    bubble.bringToFront();
+    if (!passive) {
+      bubble.bringToFront();
+    }
     bubble.disableResize();
     bubble.disableDraggable();
     $(bubble.parent).find('.maxBtn').attr('title', 'restore');

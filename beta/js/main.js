@@ -46,9 +46,6 @@ $(window).resize(function(event) {
       }, 250);
     }
   }
-  for (var i=0; i < bubbles.length; i++) {
-    //var diffLeft = bubbles[i].left - $(bubbles[i].parent).position().left;
-  }
 });
 
 function loadTheme(theme) {

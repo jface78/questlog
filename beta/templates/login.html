@@ -20,6 +20,9 @@ $(document).ready(function(event) {
     }(document, 'script', 'facebook-jssdk'));
 });
 
+function accountSignup() {
+  spawn(450, 300, true, null, null, 'Signup', 'signup.html');
+}
 
 window.fbAsyncInit = function() {
   FB.init({
@@ -76,4 +79,4 @@ function onSignInCallback() {
   </button>
 </div>
 </p>
-<div class="recoverText">Need an <a href="#">account?</a> <a href="#">Forgot it?</a></div>
+<div class="recoverText">Need an <a href="javascript:accountSignup();">account?</a> <a href="#">Forgot it?</a></div>
