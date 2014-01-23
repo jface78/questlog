@@ -20,8 +20,9 @@ $(document).ready(function(event) {
     }(document, 'script', 'facebook-jssdk'));
 });
 
-function accountSignup() {
+function accountSignup(event) {
   spawn(450, 300, true, null, null, 'Signup', 'signup.html');
+  $(event.target).parent().parent().parent().data('bubble').close();
 }
 
 window.fbAsyncInit = function() {
@@ -55,28 +56,25 @@ function onSignInCallback() {
 </script>
 
 <div class="loginParent">
-<p>
-  User: <input type="text" class="usernameEnter">&nbsp;<span class="usernameCheck ui-icon ui-icon-check" style="display:inline-block;visibility:hidden;"></span><br />
-  Pass: <input type="password" class="passwordEnter">&nbsp;<span class="passwordCheck ui-icon ui-icon-check" style="display:inline-block;visibility:hidden;"></span>
-</p>
-- OR -<br />
-<p>
-<div class="alternateLogins">
-  <div id="fb-root">
-    <fb:login-button size="large">
-      Sign in
-    </fb:login-button>
-  </div>
-  &nbsp;
-  <button class="g-signin"
+  <p>
+    User: <input type="text" class="usernameEnter">&nbsp;<span class="usernameCheck ui-icon ui-icon-check" style="display:inline-block;visibility:hidden;"></span><br />
+    Pass: <input type="password" class="passwordEnter">&nbsp;<span class="passwordCheck ui-icon ui-icon-check" style="display:inline-block;visibility:hidden;"></span>
+  </p>
+  <p>- OR -</p>
+  <p>
+    <div class="alternateLogins">
+      <div id="fb-root">
+        <fb:login-button size="large">Sign in</fb:login-button>
+      </div>&nbsp;
+      <button class="g-signin"
         data-scope="https://www.googleapis.com/auth/plus.login"
         data-requestvisibleactions="http://schemas.google.com/AddActivity"
         data-clientId="847781579813-2srpkm44ggci92ko0llqa2vn2s31rsra.apps.googleusercontent.com"
         data-callback="onSignInCallback"
         data-theme="dark"
-        data-cookiepolicy="single_host_origin">
-        
-  </button>
+        data-cookiepolicy="single_host_origin">  
+      </button>
+    </div>
+  </p>
+  <div class="recoverText">Need an <a href="#" onclick="accountSignup(event);">account?</a> <a href="#">Forgot it?</a>
 </div>
-</p>
-<div class="recoverText">Need an <a href="javascript:accountSignup();">account?</a> <a href="#">Forgot it?</a></div>

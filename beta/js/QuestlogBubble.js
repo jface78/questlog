@@ -107,6 +107,7 @@ function QuestlogBubble(width, height, centered, left, top, title, content) {
             url: TEMPLATE_URL + bubble.content,
             success : function(data) {
               $(bubble.parent).find('.bubbleContent').html(data);
+              $(bubble.parent).find('.bubbleContent').data('bubble', bubble);
               $(bubble).trigger('loadComplete');
             }
           });
@@ -150,7 +151,6 @@ function QuestlogBubble(width, height, centered, left, top, title, content) {
 
   this.setContent = function(element) {
     var contentArea = $(bubble.parent).find('.bubbleContent')[0];
-    console.log('content ' + bubble.parent);
     $(contentArea).html(element);
   };
   
