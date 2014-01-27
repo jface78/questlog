@@ -1,24 +1,29 @@
 <script>
 $(document).ready(function(event) {
-  $('.usernameEnter').focusout(function(event) {
+  $('.signupUsernameEnter').focusout(function(event) {
     if ($(this).val().length > 0) {
-      $('.signupUsernameCheck').css('visibility', 'visible');
+      $('.signupUsernameCheck').css('display', 'inline-block');
     }
   });
-  $('.passwordEnter').focusout(function(event) {
+  $('.signupPasswordRepeat').focusout(function(event) {
+    if ('.signupPasswordEnter').focu
     if ($(this).val().length > 0) {
-      $('.passwordCheck').css('visibility', 'visible');
+      $('.signupPasswordCheck').css('display', 'inline-block');
     }
   });
+});
+function init() {
+  alert('loaded');
+}
 </script>
 
 <div class="signupParent">
   <p>
-    <span class="formLabel">User:</span><input type="text" class="signupUsernameEnter">&nbsp;<span class="signupUsernameCheck ui-icon ui-icon-check" style="display:inline-block;visibility:hidden;"></span><br />
-    <span class="formLabel">Pass:</span><input type="password" class="signupPasswordEnter">&nbsp;<span class="signupPasswordCheck ui-icon ui-icon-check" style="display:inline-block;visibility:hidden;"></span><br />
-    <span class="formLabel">Confirm Password:</span><input type="password" class="signupPasswordRepeat">&nbsp;<span class="signupPasswordRepeatCheck ui-icon ui-icon-check" style="display:inline-block;visibility:hidden;"></span><br />
-    <span class="formLabel">Email:</span><input type="text" class="signupEmailEnter">&nbsp;<span class="emailCheck ui-icon ui-icon-check" style="display:inline-block;visibility:hidden;"></span><br />
-    <span class="formLabel">Confirm Email:</span><input type="text" class="signupEmailRepeat">&nbsp;<span class="emailCheck ui-icon ui-icon-check" style="display:inline-block;visibility:hidden;"></span>
+    <span class="formLabel">User:</span><input type="text" class="signupUsernameEnter">&nbsp;<span class="signupUsernameCheck ui-icon ui-icon-check" style="display:none;"></span><br />
+    <span class="formLabel">Pass:</span><input type="password" class="signupPasswordEnter">&nbsp;<span class="signupPasswordCheck ui-icon ui-icon-check" style="display:none;"></span><br />
+    <span class="formLabel">Confirm Password:</span><input type="password" class="signupPasswordRepeat">&nbsp;<span class="signupPasswordRepeatCheck ui-icon ui-icon-check" style="display:none;"></span><br />
+    <span class="formLabel">Email:</span><input type="text" class="signupEmailEnter">&nbsp;<span class="signupEmailCheck ui-icon ui-icon-check" style="display:none;"></span><br />
+    <span class="formLabel">Confirm Email:</span><input type="text" class="signupEmailRepeat">&nbsp;<span class="signupEmailCheck ui-icon ui-icon-check" style="display:none;"></span>
   
   </p>
 </div>

@@ -9,6 +9,9 @@ var minimizedArray = [];
 var BUBBLE_MINIMIZED_WIDTH = 100;
 var BUBBLE_TOOLBAR_HEIGHT = 20;
 
+//namespace 
+var questlog = {};
+
 $(document).ready(function() {
   if (!window.jQuery.ui) {
     var head = document.getElementsByTagName('head');
@@ -17,7 +20,7 @@ $(document).ready(function() {
     $(head[0]).append(script);
   }
   launchMenu();
-  spawn(450,300,true,null,null,'Login', 'login.html');
+  spawn(450,300,true,null,null,'Login', 'login.html', questlog.login);
 });
 
 $(document).on('scroll', function() {

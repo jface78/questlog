@@ -1,29 +1,6 @@
 
 <script>
-$(document).ready(function(event) {
-  $('.usernameEnter').focusout(function(event) {
-    if ($(this).val().length > 0) {
-      $('.usernameCheck').css('visibility', 'visible');
-    }
-  });
-  $('.passwordEnter').focusout(function(event) {
-    if ($(this).val().length > 0) {
-      $('.passwordCheck').css('visibility', 'visible');
-    }
-  });
-  (function(d, s, id) {
-    var js, fjs = d.getElementsByTagName(s)[0];
-    if (d.getElementById(id)) return;
-      js = d.createElement(s); js.id = id;
-      js.src = "//connect.facebook.net/en_US/all.js#xfbml=1&appId=623854231027617";
-      fjs.parentNode.insertBefore(js, fjs);
-    }(document, 'script', 'facebook-jssdk'));
-});
-
-function accountSignup(event) {
-  spawn(450, 300, true, null, null, 'Signup', 'signup.html');
-  $(event.target).parent().parent().parent().data('bubble').close();
-}
+questlog.login = {};
 
 window.fbAsyncInit = function() {
   FB.init({
@@ -53,6 +30,31 @@ function onSignInCallback() {
 
 }
 
+questlog.login.init = function(data) {
+  $(data).find('.usernameEnter').focusout(function(event) {
+    if ($(this).val().length > 0) {
+      $(data).find('.usernameCheck').css('visibility', 'visible');
+    }
+  });
+  $(data).find('.passwordEnter').focusout(function(event) {
+    if ($(this).val().length > 0) {
+      $(data).find('.passwordCheck').css('visibility', 'visible');
+    }
+  });
+  $('#signupClick').click(function(event) {
+    spawn(450, 300, true, null, null, 'Signup', 'signup.html', questlog.signup);
+    $(event.target).parent().parent().parent().data('bubble').close();
+  });
+
+  (function(d, s, id) {
+    var js, fjs = d.getElementsByTagName(s)[0];
+    if (d.getElementById(id)) return;
+      js = d.createElement(s); js.id = id;
+      js.src = "//connect.facebook.net/en_US/all.js#xfbml=1&appId=623854231027617";
+      fjs.parentNode.insertBefore(js, fjs);
+    }(document, 'script', 'facebook-jssdk'));
+};
+
 </script>
 
 <div class="loginParent">
@@ -76,5 +78,5 @@ function onSignInCallback() {
       </button>
     </div>
   </p>
-  <div class="recoverText">Need a <a href="#" onclick="accountSignup(event);">non-social media account?</a> <a href="#">Forgot it?</a>
+  <div class="recoverText">Need a <a href="#" id="signupClick">non-social media account?</a> <a href="#">Forgot it?</a>
 </div>

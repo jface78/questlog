@@ -1,4 +1,4 @@
-function QuestlogBubble(width, height, centered, left, top, title, content) {
+function QuestlogBubble(width, height, centered, left, top, title, content, namespace) {
   
   var bubble = this;
   this.parent;
@@ -15,6 +15,7 @@ function QuestlogBubble(width, height, centered, left, top, title, content) {
   }
   this.isMaximized = false;
   this.isMinimized = false;
+  this.namespace = namespace;
 
   /*
   if (this.width.toString().indexOf('%') > -1) {
@@ -108,6 +109,8 @@ function QuestlogBubble(width, height, centered, left, top, title, content) {
             success : function(data) {
               $(bubble.parent).find('.bubbleContent').html(data);
               $(bubble.parent).find('.bubbleContent').data('bubble', bubble);
+              namespace.init(data);
+
               $(bubble).trigger('loadComplete');
             }
           });
@@ -118,11 +121,11 @@ function QuestlogBubble(width, height, centered, left, top, title, content) {
       }
     });
   };
-  
+
   this.disableResize = function() {
     $(bubble.parent).resizable('destroy');
   }
-  
+
   this.enableResize = function() {
     $(bubble.parent).resizable({
       ghost: true,
@@ -138,7 +141,7 @@ function QuestlogBubble(width, height, centered, left, top, title, content) {
   this.disableDraggable = function() {
     $(bubble.parent).draggable('destroy');
   }
-  
+
   this.enableDraggable = function() {
     $(bubble.parent).draggable({
       handle: $(bubble.parent).find('.bubbleTopBar'),
