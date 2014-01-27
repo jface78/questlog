@@ -16,6 +16,7 @@
 <link rel="stylesheet" type="text/css" href="css/bubbleDefault.css">
 <link rel="stylesheet" type="text/css" href="css/menu.css">
 <link rel="stylesheet" type="text/css" href="css/login.css">
+<link rel="stylesheet" type="text/css" href="css/signup.css">
 <link rel="stylesheet" type="text/css" href="css/main.css">
 
 <!--
