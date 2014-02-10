@@ -9,8 +9,6 @@ var minimizedArray = [];
 var BUBBLE_MINIMIZED_WIDTH = 100;
 var BUBBLE_TOOLBAR_HEIGHT = 20;
 
-//namespace 
-var questlog = {};
 
 $(document).ready(function() {
   if (!window.jQuery.ui) {
@@ -20,7 +18,7 @@ $(document).ready(function() {
     $(head[0]).append(script);
   }
   launchMenu();
-  spawn(450,300,true,null,null,'Login', 'login.html', questlog.login);
+  spawn(450,300,true,null,null,'Login', 'login.html');
 });
 
 $(document).on('scroll', function() {
@@ -91,8 +89,9 @@ function spawn(width, height, centered, left, top, title, content) {
       opacity:1
     }, 250);
   });
-  bubble.setup();
   bubbles.push(bubble);
+  bubble.setup();
+  
 }
 
 function removeFromArray(array, removeItem) {

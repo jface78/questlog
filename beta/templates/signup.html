@@ -1,29 +1,52 @@
-<script>
-$(document).ready(function(event) {
-  $('.signupUsernameEnter').focusout(function(event) {
-    if ($(this).val().length > 0) {
-      $('.signupUsernameCheck').css('display', 'inline-block');
-    }
-  });
-  $('.signupPasswordRepeat').focusout(function(event) {
-    if ('.signupPasswordEnter').focu
-    if ($(this).val().length > 0) {
-      $('.signupPasswordCheck').css('display', 'inline-block');
-    }
-  });
-});
-function init() {
-  alert('loaded');
-}
-</script>
-
 <div class="signupParent">
-  <p>
-    <span class="formLabel">User:</span><input type="text" class="signupUsernameEnter">&nbsp;<span class="signupUsernameCheck ui-icon ui-icon-check" style="display:none;"></span><br />
-    <span class="formLabel">Pass:</span><input type="password" class="signupPasswordEnter">&nbsp;<span class="signupPasswordCheck ui-icon ui-icon-check" style="display:none;"></span><br />
-    <span class="formLabel">Confirm Password:</span><input type="password" class="signupPasswordRepeat">&nbsp;<span class="signupPasswordRepeatCheck ui-icon ui-icon-check" style="display:none;"></span><br />
-    <span class="formLabel">Email:</span><input type="text" class="signupEmailEnter">&nbsp;<span class="signupEmailCheck ui-icon ui-icon-check" style="display:none;"></span><br />
-    <span class="formLabel">Confirm Email:</span><input type="text" class="signupEmailRepeat">&nbsp;<span class="signupEmailCheck ui-icon ui-icon-check" style="display:none;"></span>
-  
-  </p>
+    <table cellspacing="0" border="0" cellpadding="0">
+      <tr valign="middle" >
+        <td class="formLabel">User:</td>
+        <td><input type="text" class="signupUsernameEnter"></td>
+        <td align="left">
+          <span class="signupUsernameCheck ui-icon ui-icon-check noDisplay"></span>
+          <span class="signupUsernameError ui-icon ui-icon-close noDisplay"></span>
+        </td>
+        <td class="errorWarning signupUsernameWarning"></td>
+      </tr>
+      <tr valign="middle" >
+        <td class="formLabel">Password:</td>
+        <td><input type="text" class="signupPasswordEnter"></td>
+        <td align="left">
+          <span class="signupPasswordCheck ui-icon ui-icon-check noDisplay"></span>
+          <span class="signupPasswordError ui-icon ui-icon-close noDisplay"></span>
+        </td>
+        <td class="errorWarning signupPasswordWarning"></td>
+      </tr>
+      <tr valign="middle" >
+        <td class="formLabel">Confirm Password:</td>
+        <td><input type="text" class="signupPasswordRepeat"></td>
+        <td align="left">
+          <span class="signupPasswordRepeatCheck ui-icon ui-icon-check noDisplay"></span>
+          <span class="signupPasswordRepeatError ui-icon ui-icon-close noDisplay"></span>
+        </td>
+        <td class="errorWarning signupPasswordRepeatWarning"></td>
+      </tr>
+      <tr valign="middle" >
+        <td class="formLabel">Email:</td>
+        <td><input type="text" class="signupEmailEnter"></td>
+        <td align="left">
+          <span class="signupEmailCheck ui-icon ui-icon-check noDisplay"></span>
+          <span class="signupEmailError ui-icon ui-icon-close noDisplay"></span>
+        </td>
+        <td class="errorWarning signupEmailWarning"></td>
+      </tr>
+      <tr valign="middle" >
+        <td class="formLabel">Confirm Email:</td>
+        <td><input type="text" class="signupEmailRepeat"></td>
+        <td align="left">
+          <span class="signupEmailRepeatCheck ui-icon ui-icon-check noDisplay"></span>
+          <span class="signupEmailRepeatError ui-icon ui-icon-close noDisplay"></span>
+        </td>
+        <td class="errorWarning"></td>
+      </tr>
+      <tr>
+        <td colspan="2" class="alignCenter"><button class="createBtn">submit</button></td><td colspan="2">&nbsp;</td>
+      </tr>
+    </table>
 </div>

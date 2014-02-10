@@ -1,4 +1,4 @@
-function QuestlogBubble(width, height, centered, left, top, title, content, namespace) {
+function QuestlogBubble(width, height, centered, left, top, title, content) {
   
   var bubble = this;
   this.parent;
@@ -15,15 +15,7 @@ function QuestlogBubble(width, height, centered, left, top, title, content, name
   }
   this.isMaximized = false;
   this.isMinimized = false;
-  this.namespace = namespace;
 
-  /*
-  if (this.width.toString().indexOf('%') > -1) {
-    this.width = percentageToPixels(this.width, 'horizontal');
-  }
-  if (this.height.toString().indexOf('%') > -1) {
-    this.height = percentageToPixels(this.height, 'vertical');
-  }*/
   if (this.left.toString().indexOf('%') > -1) {
     this.left = percentageToPixels(this.left, 'horizontal');
   }
@@ -105,13 +97,22 @@ function QuestlogBubble(width, height, centered, left, top, title, content, name
         if (bubble.content) {
           $.ajax({
             type: 'GET',
+            dataType: 'HTML',
+            async: false,
             url: TEMPLATE_URL + bubble.content,
             success : function(data) {
               $(bubble.parent).find('.bubbleContent').html(data);
               $(bubble.parent).find('.bubbleContent').data('bubble', bubble);
-              namespace.init(data);
-
-              $(bubble).trigger('loadComplete');
+              var script = bubble.content.substr(0, bubble.content.lastIndexOf('.'));
+              $.ajax({
+                url: 'js/pages/' + script + '.js',
+                dataType: "script",
+                async: false,
+                success: function() {
+                  eval(script + 'Init($(bubble.parent).find(\'.bubbleContent\'));');
+                  $(bubble).trigger('loadComplete');
+                }
+              });
             }
           });
         } else {

@@ -77,3 +77,14 @@ input[type=text],[type=password] {
 input[type=text],[type=password]:focus {
   outline:0;
 }
+
+.alignCenter {
+  text-align:center;
+}
+.alignRight {
+  text-align:right;
+}
+
+.noDisplay {
+  display:none;
+}
