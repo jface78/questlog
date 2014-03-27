@@ -1,5 +1,4 @@
 .formLabel {
-  display:inline-block;
   text-align:right;
   padding-right:5px;
   min-width:175px;
@@ -7,10 +6,11 @@
 
 .errorWarning {
   max-width:140px;
+  min-width:140px;
   min-height:10px;
   color:red;
   font-size:11px;
-  text-align:center;
+  text-align:left;
   display:inline-block;
   vertical-align:middle;
   margin-top:3px;
@@ -18,10 +18,11 @@
 
 .signupParent table {
   margin: 0 auto;
+  width:100%;
 }
 
 .signupParent input {
-  width:150px;
+  width:100%;
 }
 
 .createBtn {

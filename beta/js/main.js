@@ -18,7 +18,7 @@ $(document).ready(function() {
     $(head[0]).append(script);
   }
   launchMenu();
-  spawn(450,300,true,null,null,'Login', 'login.html');
+  spawn(450,200,true,null,null,'Login', 'login.html');
 });
 
 $(document).on('scroll', function() {
@@ -99,3 +99,4 @@ function removeFromArray(array, removeItem) {
     return value != removeItem;
   });
 }
+

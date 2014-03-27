@@ -203,11 +203,142 @@ function Menu() {
             });
             
             $('#menuItemLogin').click(function(event) {
-              spawn(450,300,true,null,null,'Login', 'login.html');
+              spawn(450,200,true,null,null,'Login', 'login.html');
             });
             $(menu).trigger('loadComplete');
           }
         });
+      }
+    });
+  };
+  
+  this.logout = function() {
+  
+  };
+
+  this.login = function() {
+    $(menu.parent).find('#menuItemLogin').text('Logout');
+    $(menu.parent).find('#menuItemLogin').unbind('click');
+    $(menu.parent).find('#menuItemLogin').click(function(event) {
+      $.ajax({
+        url: SERVICE_URL + 'users.php?request=logout',
+        success: function() {
+          menu.logout();
+        }
+      });
+    });
+    $.ajax({
+      url: SERVICE_URL + 'quests.php?request=getQuests',
+      dataType: 'xml',
+      statusCode: {
+        200: function(data) {
+          var ul = document.createElement('ul');
+          $(ul).addClass('ui-menu ui-widget ui-widget-content ui-corner-all');
+          $(ul).attr('role', 'menu');
+          $(ul).attr('aria-expanded', 'false');
+          $(ul).attr('aria-hidden', 'true');
+          $(ul).css('display', 'none');
+          var li = document.createElement('li');
+          $(li).addClass('ui-menu-item');
+          $(li).attr('tabindex', '-1');
+          $(li).attr('role', 'presentation');
+          var a = document.createElement('a');
+          $(a).attr('href', '#');
+          $(a).attr('aria-haspopup', 'true');
+          $(a).attr('tabindex', '-1');
+          $(a).addClass('ui-corner-all');
+          $(a).attr('role', 'menuitem');
+          
+          $(li).append(a);
+          $(ul).append(li);
+          $(menu.parent).find('#questsMenu').append(ul);
+          var span = document.createElement('span');
+          $(span).addClass('ui-menu-icon ui-icon ui-icon-triangle-1-e');
+          $(span).css('position', 'relative');
+          $(span).css('top', '5px');
+          $(a).html(span);
+          $(a).append('GM Quests');
+          
+          if ($(data).find('gmQuests quest').length > 0 ||
+              $(data).find('pcQuests quest').length > 0) {
+            span = document.createElement('span');
+            $(span).addClass('ui-menu-icon ui-icon ui-icon-triangle-1-e');
+            $(span).css('position', 'relative');
+            $(span).css('top', '5px');
+            $(menu.parent).find('#questsMenu a').first().prepend(span);
+            $(menu.parent).find('#questsMenu a').first().attr('aria-haspopup', 'true');
+            $(menu.parent).find('#questsMenu').removeAttr('aria-disabled');
+            $(menu.parent).find('#questsMenu').removeClass('ui-state-disabled');
+          }
+          if ($(data).find('gmQuests quest').length > 0) {
+            var innerUL = document.createElement('ul');
+            $(innerUL).addClass('ui-menu ui-front ui-widget ui-widget-content ui-corner-all');
+            $(innerUL).attr('role', 'menu');
+            $(innerUL).attr('aria-expanded', 'false');
+            $(innerUL).attr('aria-hidden', 'true');
+            $(innerUL).css('display', 'none');
+            $(data).find('gmQuests quest').each(function(increment, item) {
+              var innerLI = document.createElement('li');
+              $(innerLI).addClass('ui-menu-item');
+              $(innerLI).attr('role', 'presentation');
+              var innerA = document.createElement('a');
+              $(innerA).attr('href', '#');
+              $(innerA).attr('tabindex', '-1');
+              $(innerA).addClass('ui-corner-all');
+              $(innerA).attr('role', 'menuitem');
+              $(innerA).append($(item).find('title').text());
+              console.log('item: ' +$(item).find('title').text());
+              $(innerLI).append(innerA);
+              $(innerUL).append(innerLI);
+            });
+            $(li).append(innerUL);
+          }
+          
+          var li = document.createElement('li');
+          $(li).addClass('ui-menu-item');
+          $(li).attr('tabindex', '-1');
+          $(li).attr('role', 'presentation');
+          var a = document.createElement('a');
+          $(a).attr('href', '#');
+          $(a).attr('aria-haspopup', 'true');
+          $(a).attr('tabindex', '-1');
+          $(a).addClass('ui-corner-all');
+          $(a).attr('role', 'menuitem');
+          
+          $(li).append(a);
+          $(ul).append(li);
+          $(menu.parent).find('#questsMenu').append(ul);
+          var span = document.createElement('span');
+          $(span).addClass('ui-menu-icon ui-icon ui-icon-triangle-1-e');
+          $(span).css('position', 'relative');
+          $(span).css('top', '5px');
+          $(a).html(span);
+          $(a).append('PC Quests');
+          
+          if ($(data).find('pcQuests quest').length > 0) {
+            var innerUL = document.createElement('ul');
+            $(innerUL).addClass('ui-menu ui-front ui-widget ui-widget-content ui-corner-all');
+            $(innerUL).attr('role', 'menu');
+            $(innerUL).attr('aria-expanded', 'false');
+            $(innerUL).attr('aria-hidden', 'true');
+            $(innerUL).css('display', 'none');
+            $(data).find('pcQuests quest').each(function(increment, item) {
+              var innerLI = document.createElement('li');
+              $(innerLI).addClass('ui-menu-item');
+              $(innerLI).attr('role', 'presentation');
+              var innerA = document.createElement('a');
+              $(innerA).attr('href', '#');
+              $(innerA).attr('tabindex', '-1');
+              $(innerA).addClass('ui-corner-all');
+              $(innerA).attr('role', 'menuitem');
+              $(innerA).append($(item).find('title').text());
+              console.log('item: ' +$(item).find('title').text());
+              $(innerLI).append(innerA);
+              $(innerUL).append(innerLI);
+            });
+            $(li).append(innerUL);
+          }
+        }
       }
     });
   };

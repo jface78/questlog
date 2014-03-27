@@ -70,7 +70,7 @@ footer {
 
 input[type=text],[type=password] {
   border-radius:5px;
-  min-width:100px;
+  min-width:200px;
   border:1px solid gray;
   padding:2px;
 }
@@ -87,4 +87,7 @@ input[type=text],[type=password]:focus {
 
 .noDisplay {
   display:none;
+}
+.hidden {
+  visibility:hidden;
 }
