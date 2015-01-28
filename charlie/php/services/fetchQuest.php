@@ -22,14 +22,14 @@ if (empty($_GET['order'])) {
 try {
   $dbh = new PDO('mysql:host=' .DB_HOST . ';dbname=' . DB_DATABASE, DB_USER, DB_PASS);
   $json_array = [];
-  $query = 'SELECT quest_name FROM quests WHERE qid = :questID';
+  $query = 'SELECT qid,quest_name FROM quests WHERE qid = :questID';
   $sth = $dbh -> prepare($query);
   $sth -> execute(array(':questID' => $_GET['questID']));
   $row = $sth -> fetch();
 
   $json_array['title'] = $row['quest_name'];
-  $json_array['questID'] = $_GET['questID'];
-  //$json_array['posts'] = array();
+  $json_array['questID'] = $row['qid'];
+
   $query = 'SELECT pid,timestamp,post_text FROM posts WHERE qid=:questID ORDER BY timestamp ' . $postOrder;
   if (!empty($_GET['limit']) && is_numeric($_GET['limit'])) {
     $query .= ' LIMIT ' . $_GET['limit'];
@@ -41,7 +41,7 @@ try {
   foreach($results as $row) {
     $json_array['posts'][$index] = array();
     $json_array['posts'][$index]['id'] = $row['pid'];
-    $json_array['posts'][$index]['timestamp'] = $row['timestamp'];
+    $json_array['posts'][$index]['timestamp'] = strtotime($row['timestamp']);
     $json_array['posts'][$index]['text'] = $row['post_text'];
     
     $index++;
