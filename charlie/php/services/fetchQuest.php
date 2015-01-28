@@ -1,7 +1,7 @@
 <?php
 session_start();
 error_reporting(E_ALL);
-include('../../../credentials.php');
+include('../../../../questlog_credentials.php');
 
 // session stuff should go here later
 
@@ -47,6 +47,7 @@ try {
     $index++;
   }
   $dbh = null;
+  header('Content-Type: application/json');
   echo json_encode($json_array);
   http_response_code(200);
 } catch(PDOException $error) {
