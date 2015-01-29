@@ -15,14 +15,37 @@ try {
   $json_array = [];
   
   if (!empty($_GET['questID']) && is_numeric($_GET['questID'])) {
+    $query = 'SELECT uid FROM quests WHERE qid= :questID';
+    $sth = $dbh -> prepare($query);
+    $sth -> execute(array(':questID' => $_GET['questID']));
+    $users = $sth -> fetchAll();
     $query = 'SELECT cid FROM quest_members WHERE qid= :questID';
     $sth = $dbh -> prepare($query);
     $sth -> execute(array(':questID' => $_GET['questID']));
     $characters = $sth -> fetchAll();
+    $results = [];
     foreach($characters as $row) {
       $query = 'SELECT uid FROM characters WHERE cid= :characterID';
       $sth = $dbh -> prepare($query);
       $sth -> execute(array(':characterID' => $row['cid']));
+      array_push($users, $sth -> fetchAll()[0]);
+      
+      foreach($users as $user) {
+        $query = 'SELECT uid,login_name,user_status,timestamp FROM users WHERE uid=:userID';
+        $sth = $dbh -> prepare($query);
+        $sth -> execute(array(':userID' => $user['uid']));
+        array_push($results, $sth -> fetchAll()[0]);
+      }
+    }
+  } else if (!empty($_GET['characterID']) && is_numeric($_GET['characterID']) ) {
+    $query = 'SELECT uid FROM characters WHERE cid= :characterID';
+    $sth = $dbh -> prepare($query);
+    $sth -> execute(array(':characterID' => $_GET['characterID']));
+    $users = $sth -> fetchAll();
+    foreach($users as $user) {
+      $query = 'SELECT uid,login_name,user_status,timestamp FROM users WHERE uid=:userID';
+      $sth = $dbh -> prepare($query);
+      $sth -> execute(array(':userID' => $user['uid']));
       $results = $sth -> fetchAll();
     }
   } else {
@@ -38,7 +61,7 @@ try {
     $results = $sth -> fetchAll();
   }
   $index = 0;
-   $json_array['users'] = [];
+  $json_array['users'] = [];
   foreach($results as $row) {
     $json_array['users'][$index]['userID'] = $row['uid'];
     $json_array['users'][$index]['userName'] = $row['login_name'];
