@@ -13,10 +13,30 @@ if (!empty($_GET['userID']) && !is_numeric($_GET['userID'])) {
 try {
   $dbh = new PDO('mysql:host=' .DB_HOST . ';dbname=' . DB_DATABASE, DB_USER, DB_PASS);
   $json_array = [];
-  $query = 'SELECT uid,login_name,user_status,timestamp FROM users';
-  $sth = $dbh -> prepare($query);
-  $sth -> execute();
-  $results = $sth -> fetchAll();
+  
+  if (!empty($_GET['questID']) && is_numeric($_GET['questID'])) {
+    $query = 'SELECT cid FROM quest_members WHERE qid= :questID';
+    $sth = $dbh -> prepare($query);
+    $sth -> execute(array(':questID' => $_GET['questID']));
+    $characters = $sth -> fetchAll();
+    foreach($characters as $row) {
+      $query = 'SELECT uid FROM characters WHERE cid= :characterID';
+      $sth = $dbh -> prepare($query);
+      $sth -> execute(array(':characterID' => $row['cid']));
+      $results = $sth -> fetchAll();
+    }
+  } else {
+    $query = 'SELECT uid,login_name,user_status,timestamp FROM users';
+    if (!empty($_GET['userID'])) {
+      $query .= ' WHERE uid = :userID';
+      $sth = $dbh -> prepare($query);
+      $sth -> execute(array(':userID' => $_GET['userID']));
+    } else {
+      $sth = $dbh -> prepare($query);
+      $sth -> execute();
+    }
+    $results = $sth -> fetchAll();
+  }
   $index = 0;
    $json_array['users'] = [];
   foreach($results as $row) {

@@ -1,6 +1,7 @@
 <?php
 session_start();
 error_reporting(E_ALL);
+ini_set('error_reporting', E_ALL);
 include('../../../../questlog_credentials.php');
 
 // session stuff should go here later
