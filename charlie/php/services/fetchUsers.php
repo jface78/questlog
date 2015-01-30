@@ -19,6 +19,7 @@ try {
     $sth = $dbh -> prepare($query);
     $sth -> execute(array(':questID' => $_GET['questID']));
     $users = $sth -> fetchAll();
+
     $query = 'SELECT cid FROM quest_members WHERE qid= :questID';
     $sth = $dbh -> prepare($query);
     $sth -> execute(array(':questID' => $_GET['questID']));
@@ -59,6 +60,10 @@ try {
       $sth -> execute();
     }
     $results = $sth -> fetchAll();
+  }
+  if(!count($results)) {
+    http_response_code(404);
+    exit();
   }
   $index = 0;
   $json_array['users'] = [];

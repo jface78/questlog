@@ -38,6 +38,10 @@ try {
   $sth = $dbh -> prepare($query);
   $sth -> execute(array(':questID' => $_GET['questID']));
   $results = $sth -> fetchAll();
+  if(!count($results)) {
+    http_response_code(404);
+    exit();
+  }
   $index = 0;
   foreach($results as $row) {
     $json_array['posts'][$index] = array();
