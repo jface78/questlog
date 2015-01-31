@@ -28,6 +28,12 @@ try {
   $sth -> execute(array(':questID' => $_GET['questID']));
   $row = $sth -> fetch();
 
+  if (!$row) {
+    http_response_code(404);
+    $dbh = null;
+    exit();
+  }
+
   $json_array['title'] = $row['quest_name'];
   $json_array['questID'] = $row['qid'];
 
@@ -38,10 +44,8 @@ try {
   $sth = $dbh -> prepare($query);
   $sth -> execute(array(':questID' => $_GET['questID']));
   $results = $sth -> fetchAll();
-  if(!count($results)) {
-    http_response_code(404);
-    exit();
-  }
+  $dbh = null;
+
   $index = 0;
   foreach($results as $row) {
     $json_array['posts'][$index] = array();
@@ -51,7 +55,6 @@ try {
     
     $index++;
   }
-  $dbh = null;
   header('Content-Type: application/json');
   echo json_encode($json_array);
   http_response_code(200);
