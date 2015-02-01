@@ -28,11 +28,39 @@ button {
   cursor:pointer;
 }
 
+.wrapper {
+  position:relative;
+  min-height:100%;
+  height:auto !important;
+  height:100%;
+  margin: 0px auto -25px;
+}
+
+.push {
+  height:25px;
+}
+
+footer {
+  position:relative;
+  height:25px;
+  text-align:center;
+}
+
 .loginBox {
   float:right;
   color:#fff;
   font-weight:bold;
   text-align:right;
+}
+.greetingBox {
+  float:right;
+  color:#fff;
+  font-weight:normal;
+  text-align:left;
+  padding-right:20px;
+  height:48px;
+  line-height:14px;
+  padding-top:10px;
 }
 .loginBox input,button {
   width: 150px;
@@ -44,7 +72,14 @@ button {
   border-color: #848383;
   background-color: #000;
   color: #FFF;
+  font-size:10px;
   letter-spacing: 0.1mm;
+}
+
+#mainContent {
+  width:100%;
+  min-height:500px;
+  color:#fff;
 }
 
 .clear{clear:both;}

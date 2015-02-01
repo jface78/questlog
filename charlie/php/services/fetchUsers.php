@@ -12,7 +12,6 @@ if (!empty($_GET['userID']) && !is_numeric($_GET['userID'])) {
 
 try {
   $dbh = new PDO('mysql:host=' .DB_HOST . ';dbname=' . DB_DATABASE, DB_USER, DB_PASS);
-  $json_array = [];
   
   if (!empty($_GET['questID']) && is_numeric($_GET['questID'])) {
     $query = 'SELECT uid FROM quests WHERE qid= :questID';
@@ -66,6 +65,7 @@ try {
     exit();
   }
   $index = 0;
+  $json_array = [];
   $json_array['users'] = [];
   foreach($results as $row) {
     $json_array['users'][$index]['userID'] = $row['uid'];
