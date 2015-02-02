@@ -23,6 +23,16 @@ function generateQuestListings($results, $json_array, $type) {
       $sth = $dbh -> prepare($query);
       $sth -> execute(array(':qid' => $row['qid']));
       $cid = $sth -> fetch();
+      $query = 'SELECT login_name FROM users WHERE uid=:uid';
+      $sth = $dbh -> prepare($query);
+      $sth -> execute(array(':uid' => $row['uid']));
+      $gmName = $sth -> fetch();
+      $json_array['quests'][$type][$index]['gm'] = $gmName['login_name'];
+      $query = 'SELECT timestamp FROM posts WHERE qid=:qid ORDER BY timestamp DESC LIMIT 1';
+      $sth = $dbh -> prepare($query);
+      $sth -> execute(array(':qid' => $row['qid']));
+      $lastPostDate = $sth -> fetch();
+      $json_array['quests'][$type][$index]['lastPostDate'] = time($lastPostDate['timestamp']); 
       if ($cid['cid'] == 0) {
         $query = 'SELECT login_name FROM users WHERE uid=:uid';
         $sth = $dbh -> prepare($query);
@@ -58,10 +68,17 @@ try {
   $query = 'SELECT qid,uid,quest_name,timestamp FROM quests WHERE uid=:uid';
   $sth = $dbh -> prepare($query);
   $sth -> execute(array(':uid' => $_SESSION['uid']));
-  $results = $sth -> fetchAll();
+  $questsArr = $sth -> fetchAll();
+  $gm_quests = '0';
+  foreach ($questsArr as $quest) {
+    $gm_quests .= ',' . $quest['qid'];
+  }
   $json_array = [];
   $json_array['quests'] = [];
-  $json_array = generateQuestListings($results, $json_array, 'gmQuests');
+  usort($questsArr, function($a, $b) {
+    return $a['quest_name'] > $b['quest_name'];
+});
+  $json_array = generateQuestListings($questsArr, $json_array, 'gmQuests');
 
   // Get the user's player quests.
   $query = 'SELECT cid FROM characters WHERE uid=:uid';
@@ -70,10 +87,12 @@ try {
   $results = $sth -> fetchAll();
   $questsArr = [];
   $index=0;
+  $player_chars = '0';
   foreach ($results as $row) {
     $query = 'SELECT qid FROM quest_members WHERE cid=:cid';
     $sth = $dbh -> prepare($query);
     $sth -> execute(array(':cid' => $row['cid']));
+    $player_chars .= ',' . $row['cid'];
     $player_quests = $sth -> fetchAll();
     foreach ($player_quests as $quest) {
       $query = 'SELECT qid,uid,quest_name,timestamp FROM quests WHERE qid=:qid';
@@ -83,61 +102,33 @@ try {
       $index++;
      }
   }
+  usort($questsArr, function($a, $b) {
+    return $a['quest_name'] > $b['quest_name'];
+});
   $json_array = generateQuestListings($questsArr, $json_array, 'playerQuests');
-  
+ 
   // Get all remaining  non-player, non-GM quests.
-  $query = 'SELECT q.qid,q.uid,q.quest_name,u.login_name,COUNT(p.pid) AS totalposts FROM quests q,users u,posts p WHERE q.quest_status<4 AND q.uid=u.uid AND q.qid=p.qid';
-  
-  $refineQuery = 'SELECT m.qid FROM quest_members m,characters c,users u WHERE u.uid=:uid AND u.uid=c.uid AND c.cid=m.cid';
-  $sth = $dbh -> prepare($refineQuery);
-  $sth -> execute(array(':uid' => $_SESSION['uid']));
-  $player_quests = $sth -> fetchAll();
-  $player_qids = '0';
-  $index = 0;
-  foreach ($player_quests as $quest) {
-    $player_qids .= ",'" . $player_quests[$index]['qid'] . "'";
-    $index++;
-  }
-  $query .= " AND q.uid NOT IN ('" . $_SESSION["uid"] . "') AND q.qid NOT IN (" . $player_qids . ")";
+  $query = 'SELECT qid FROM quest_members WHERE qid NOT IN (' . $gm_quests .') AND cid NOT IN (' . $player_chars . ')';
   $sth = $dbh -> prepare($query);
   $sth -> execute();
-  $player_quests = $sth -> fetchAll();
-  echo $query;
-  print_r($player_quests);
-
-/*
-  $query = 'SELECT qid,uid,quest_name,timestamp FROM quests WHERE uid!=:uid';
-  $sth = $dbh -> prepare($query);
-  $sth -> execute(array(':uid' => $_SESSION['uid']));
-  $results = $sth -> fetchAll();
-  $query = 'SELECT cid FROM characters WHERE uid=:uid';
-  $sth = $dbh -> prepare($query);
-  $sth -> execute(array(':uid' => $_SESSION['uid']));
-  $characters = $sth -> fetchAll();
+  $non_quests = $sth -> fetchAll();
+  $questsArr = [];
   $index = 0;
-  $playerCharacters = [];
-  foreach($characters as $char) {
-    $query = 'SELECT qid FROM quest_members WHERE cid=:cid';
+  foreach ($non_quests as $quest) {
+    $query = 'SELECT qid,uid,quest_name,timestamp FROM quests WHERE qid=:qid';
     $sth = $dbh -> prepare($query);
-    $sth -> execute(array(':cid' => $char['cid']));
-    $playerCharacters[$index] = $sth -> fetchAll();
+    $sth -> execute(array(':qid' => $quest['qid']));
+    $questsArr[$index] = $sth -> fetch();
     $index++;
   }
-  $other_quests = [];
-  foreach($playerCharacters as $pc) {
-    foreach($results as $row) {
-      if ($pc['qid'] != $row['qid']) {
-        echo $row['quest_name'] . '<br>';
-      }
-    }
-  }
-*/
-
-  //$json_array = generateQuestListings($results, $json_array, 'gmQuests');
+  usort($questsArr, function($a, $b) {
+    return $a['quest_name'] > $b['quest_name'];
+});
+  $json_array = generateQuestListings($questsArr, $json_array, 'otherQuests');
   
   $dbh = null;
   header('Content-Type: application/json');
-  //echo json_encode($json_array);
+  echo json_encode($json_array);
 } catch(PDOException $error) {
   echo $error->getMessage();
   http_response_code(500);

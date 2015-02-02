@@ -15,6 +15,9 @@ hr {
   height: 1px;
   width: 100%;
   text-align: left;
+  float:left;
+  margin-top:10px;
+  margin-bottom:10px;
 }
 
 button {
@@ -28,22 +31,13 @@ button {
   cursor:pointer;
 }
 
-.wrapper {
-  position:relative;
-  min-height:100%;
-  height:auto !important;
-  height:100%;
-  margin: 0px auto -15px;
-}
-
-.push {
-  height:15px;
-}
 
 footer {
   position:relative;
   height:15px;
   text-align:center;
+  width:100%;
+  float:left;
 }
 
 .loginBox {
@@ -80,7 +74,80 @@ footer {
   width:100%;
   min-height:500px;
   color:#fff;
+  box-sizing:border-box;
 }
 
+#questListingsLeft {
+  width:80%;
+  float:left;
+}
+#questListingsRight {
+  width:20%;
+  float:right;
+  text-align:right;
+  padding-top:22px;
+}
+#questListingsRight img, span{
+  margin-right:5px;
+}
+#questListingsRight span {
+  color:#ccc;
+  cursor:pointer;
+  font-weight:bold;
+  letter-spacing: 0.1mm;
+}
+#questListingsRight span:hover {
+  color:#fff;
+}
+#questListingsLeft table {
+  width:100%;
+  border-spacing:0;
+}
+#questListingsLeft th {
+  color:#ccc;
+  text-align:left;
+  cursor:pointer;
+  border-bottom: 1px solid #000;
+  font-weight:normal;
+}
+#questListingsLeft th:hover {
+  color:#fff;
+}
+#questListingsLeft td {
+  padding:2px;
+  color:#000;
+  white-space:nowrap;
+}
+
+.logTable {
+  color: #000;
+  font-weight: normal;
+  font-size: 10px;
+  font-family: verdana,sans-serif;
+  text-decoration: none;
+  letter-spacing: 0.1mm;
+}
+.log-left {
+  border-bottom: 1px solid #000;
+  border-right: 1px solid #000;
+  border-left: 1px solid #000;
+}
+.log-left:hover {
+  color:#fff !important;
+  cursor:pointer;
+}
+.log-cell {
+  border-bottom: 1px solid #000;
+  border-right: 1px solid #000;
+}
+.log-right {
+    
+}
+.logEntry-even {
+  background-color:#535456;
+}
+.logEntry-odd {
+  background-color:#656566;
+}
 .clear{clear:both;}
 .floatLeft{float:left;}

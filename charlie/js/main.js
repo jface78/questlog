@@ -13,6 +13,7 @@ function handleLogin() {
       statusCode: {
         200: function(response) {
           addGreetingBox(response.user_details.name, response.user_details.date, response.user_details.ip);
+          $('#warningMessage').text('You are currently logged in.');
           loadQuestListings();
         },
         401: function(response) {
@@ -26,11 +27,157 @@ function handleLogin() {
   }
 }
 
+function updateRowColors(table) {
+  for (var i=1; i < $(table).find('tr').length; i++) {
+    $($(table).find('tr')[i]).removeClass('logEntry-odd logEntry-even');
+    if (i % 2 == 0) {
+      $($(table).find('tr')[i]).addClass('logEntry-even');
+    } else {
+      $($(table).find('tr')[i]).addClass('logEntry-odd');
+    }
+  }
+}
+
 function loadQuestListings() {
   $.ajax({
-    url: TEMPLATE_URL + 'questListings',
+    url: TEMPLATE_URL + 'questListings.html',
     success: function(template) {
-      
+      $('#mainContent').html(template);
+      $.ajax({
+        url: SERVICE_URL + 'fetchQuestListings.php',
+        dataType: 'json',
+        statusCode: {
+          200: function(response) {
+            for (var i=0; i < response.quests.gmQuests.length; i++) {
+              var tr = document.createElement('tr');
+              if (i % 2 == 0) {
+                $(tr).addClass('logEntry-even');
+              } else {
+                $(tr).addClass('logEntry-odd');
+              }
+              var td = document.createElement('td');
+              $(td).text(response.quests.gmQuests[i].title);
+              $(td).addClass('log-left');
+              $(tr).append(td);
+              td = document.createElement('td');
+              $(td).addClass('log-cell');
+              $(td).text(response.quests.gmQuests[i].count);
+              $(tr).append(td);
+              td = document.createElement('td');
+              $(td).addClass('log-cell');
+              $(td).text(response.quests.gmQuests[i].gm);
+              $(tr).append(td);
+              td = document.createElement('td');
+              $(td).addClass('log-cell');
+              $(td).text(response.quests.gmQuests[i].lastPostBy);
+              $(tr).append(td);
+              td = document.createElement('td');
+              $(td).addClass('log-cell');
+              $(td).text(new Date(parseInt(response.quests.gmQuests[i].lastPostDate)*1000).toDateString());
+              $(tr).append(td);
+              $('#gmQuests tbody').append(tr);
+            }
+            var table = $('#gmQuests').DataTable({
+              'paging':false,
+              'searching':false,
+              'language': {
+                'search': 'Search GM Quests: ',
+                'info': ''
+              },
+              'initComplete':function() {
+                $('#gmQuests_filter').css('text-align', 'right');
+                $('#gmQuests_filter input').addClass('field');
+              }
+            });
+            $('#gmQuests').on('order.dt', updateRowColors(this));
+            for (var i=0; i < response.quests.playerQuests.length; i++) {
+              var tr = document.createElement('tr');
+              if (i % 2 == 0) {
+                $(tr).addClass('logEntry-even');
+              } else {
+                $(tr).addClass('logEntry-odd');
+              }
+              var td = document.createElement('td');
+              $(td).text(response.quests.playerQuests[i].title);
+              $(td).addClass('log-left');
+              $(tr).append(td);
+              td = document.createElement('td');
+              $(td).addClass('log-cell');
+              $(td).text(response.quests.playerQuests[i].count);
+              $(tr).append(td);
+              td = document.createElement('td');
+              $(td).addClass('log-cell');
+              $(td).text(response.quests.playerQuests[i].gm);
+              $(tr).append(td);
+              td = document.createElement('td');
+              $(td).addClass('log-cell');
+              $(td).text(response.quests.playerQuests[i].lastPostBy);
+              $(tr).append(td);
+              td = document.createElement('td');
+              $(td).addClass('log-cell');
+              $(td).text(new Date(parseInt(response.quests.playerQuests[i].lastPostDate)*1000).toDateString());
+              $(tr).append(td);
+              $('#playerQuests tbody').append(tr);
+            }
+            $('#playerQuests').DataTable({
+              'paging':false,
+              'searching':false,
+              'language': {
+                'search': 'Search Player Quests: ',
+                'info': ''
+              },
+              'initComplete':function() {
+                $('#playerQuests_filter').css('text-align', 'right');
+                $('#playerQuests_filter input').addClass('field');
+                //$('#gmQuests_filter label').text('Filter GM Quests');
+              }
+            });
+            $('#playerQuests').on('order.dt', updateRowColors(this));
+            for (var i=0; i < response.quests.otherQuests.length; i++) {
+              var tr = document.createElement('tr');
+              if (i % 2 == 0) {
+                $(tr).addClass('logEntry-even');
+              } else {
+                $(tr).addClass('logEntry-odd');
+              }
+              var td = document.createElement('td');
+              $(td).text(response.quests.otherQuests[i].title);
+              $(td).addClass('log-left');
+              $(tr).append(td);
+              td = document.createElement('td');
+              $(td).addClass('log-cell');
+              $(td).text(response.quests.otherQuests[i].count);
+              $(tr).append(td);
+              td = document.createElement('td');
+              $(td).addClass('log-cell');
+              $(td).text(response.quests.otherQuests[i].gm);
+              $(tr).append(td);
+              td = document.createElement('td');
+              $(td).addClass('log-cell');
+              $(td).text(response.quests.otherQuests[i].lastPostBy);
+              $(tr).append(td);
+              td = document.createElement('td');
+              $(td).addClass('log-cell');
+              $(td).text(new Date(parseInt(response.quests.otherQuests[i].lastPostDate)*1000).toDateString());
+              $(tr).append(td);
+              $('#otherQuests tbody').append(tr);
+            }
+            $('#otherQuests').DataTable({
+              'paging':false,
+              'searching':false,
+              'language': {
+                'search': 'Search Other Quests: ',
+                'info': ''
+              },
+              'initComplete':function() {
+                $('#otherQuests_filter').css('text-align', 'right');
+                $('#otherQuests_filter input').addClass('field');
+              }
+            });
+            $('#otherQuests').on('order.dt', updateRowColors(this));
+          }
+        }
+      });
     }
   });
 }
@@ -167,9 +314,9 @@ $(document).ready(function() {
         $('#warningMessage').text('You are not currently logged in.');
       },
       200: function(response) {
-        
         addGreetingBox(response.user_details.name, response.user_details.date, response.user_details.ip);
         $('#warningMessage').text('You are currently logged in.');
+        loadQuestListings();
       }
     },
     error: function(response) {
