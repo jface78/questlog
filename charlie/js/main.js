@@ -147,6 +147,7 @@ function loadQuestListings() {
                 $('#otherQuests_filter input').addClass('field');
               }
             });
+            $('#mainContent').fadeIn();
           }
         }
       });
@@ -266,7 +267,7 @@ function addGreetingBox(user, date, ip) {
 }
 
 $(document).ready(function() {
-
+  $('#mainContent').hide();
   $('footer').text('Copyright ' + new Date().getFullYear() + ' QuestLog.org');
   var hour = new Date().getHours();
   if (hour < 6 || hour > 18) {
@@ -279,6 +280,7 @@ $(document).ready(function() {
       401: function() {
         addLoginBox();
         $('#warningMessage').text('You are not currently logged in.');
+        $('#mainContent').fadeIn();
       },
       200: function(response) {
         addGreetingBox(response.user_details.name, response.user_details.date, response.user_details.ip);

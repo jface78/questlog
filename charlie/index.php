@@ -4,7 +4,6 @@
     <meta charset=utf-8> 
     <title>QUESTLOG</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
-    <script src="js/jquery-ui.min.js"></script>
     <script src="//cdn.datatables.net/1.10.4/js/jquery.dataTables.min.js"></script>
     <script src="js/main.js"></script>
     <link rel="stylesheet" href="css/main.css" type="text/css">
