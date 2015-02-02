@@ -83,6 +83,7 @@ footer {
 }
 
 #questListingsLeft {
+  min-width:500px;
   width:75%;
   float:left;
 }
@@ -121,6 +122,8 @@ footer {
   padding:2px;
   color:#000;
   white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
 
 .logTable {

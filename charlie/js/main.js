@@ -66,10 +66,6 @@ function loadQuestListings() {
               $(tr).append(td);
               td = document.createElement('td');
               $(td).addClass('log-cell');
-              $(td).text(response.quests.gmQuests[i].gm);
-              $(tr).append(td);
-              td = document.createElement('td');
-              $(td).addClass('log-cell');
               $(td).text(response.quests.gmQuests[i].lastPostBy);
               $(tr).append(td);
               td = document.createElement('td');
@@ -81,10 +77,14 @@ function loadQuestListings() {
             $('#gmQuests').DataTable({
               'paging':false,
               'searching':false,
+              'autoWidth':false,
               'language': {
                 'search': 'Search GM Quests: ',
                 'info': ''
               },
+              'columnDefs': [
+                { 'width': '25%', 'targets': 0 }
+              ],
               'initComplete':function() {
                 $('#gmQuests_filter').css('text-align', 'right');
                 $('#gmQuests_filter input').addClass('field');
@@ -118,10 +118,14 @@ function loadQuestListings() {
             $('#playerQuests').DataTable({
               'paging':false,
               'searching':false,
+              'autoWidth':false,
               'language': {
                 'search': 'Search Player Quests: ',
                 'info': ''
               },
+              'columnDefs': [
+                { 'width': '25%', 'targets': 0 }
+              ],
               'initComplete':function() {
                 $('#playerQuests_filter').css('text-align', 'right');
                 $('#playerQuests_filter input').addClass('field');
@@ -155,10 +159,14 @@ function loadQuestListings() {
             $('#otherQuests').DataTable({
               'paging':false,
               'searching':false,
+              'autoWidth':false,
               'language': {
                 'search': 'Search Other Quests: ',
                 'info': ''
               },
+              'columnDefs': [
+                { 'width': '25%', 'targets': 0 }
+              ],
               'initComplete':function() {
                 $('#otherQuests_filter').css('text-align', 'right');
                 $('#otherQuests_filter input').addClass('field');
@@ -296,7 +304,7 @@ $(document).ready(function() {
     statusCode: {
       401: function() {
         addLoginBox();
-        $('#warningMessage').text('You are not currently logged in.');
+        //$('#warningMessage').text('You are not currently logged in.');
         $('#mainContent').fadeIn();
       },
       200: function(response) {
