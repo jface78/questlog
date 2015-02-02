@@ -160,7 +160,7 @@ function getRandomInt(min, max) {
 
 function generateWelcomeMessage(user) {
   var returnString;
-  switch(getRandomInt(0, 9)) {
+  switch(getRandomInt(0, 7)) {
     case 0:
       returnString = "It's been a long time, " + user + ".";
       break;
@@ -183,12 +183,6 @@ function generateWelcomeMessage(user) {
       returnString = "Well met, " + user + ".";
       break;
     case 7:
-      returnString = "When I left you I was but a learner, " + user + ". Now I am the master.";
-      break;
-    case 8:
-      returnString = "Welcome, " + user + ". I am QuestLog, protocol website, human-NPC relations.";
-      break;
-    case 9:
       returnString = "Ugh, it's you again, " + user + ".";
       break;
   }
@@ -260,6 +254,7 @@ function addGreetingBox(user, date, ip) {
   var div = document.createElement('header');
   $(div).addClass('greetingBox');
   var span = document.createElement('span');
+  $(span).css('font-size', '11px');
   $(span).html('<b>'+generateWelcomeMessage(user) + '</b>');
   $(div).append(span);
   $(div).append('<br /><br />');
