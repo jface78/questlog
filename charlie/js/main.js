@@ -27,17 +27,6 @@ function handleLogin() {
   }
 }
 
-function updateRowColors(table) {
-  for (var i=1; i < $(table).find('tr').length; i++) {
-    $($(table).find('tr')[i]).removeClass('logEntry-odd logEntry-even');
-    if (i % 2 == 0) {
-      $($(table).find('tr')[i]).addClass('logEntry-even');
-    } else {
-      $($(table).find('tr')[i]).addClass('logEntry-odd');
-    }
-  }
-}
-
 function loadQuestListings() {
   $.ajax({
     url: TEMPLATE_URL + 'questListings.html',
@@ -50,11 +39,6 @@ function loadQuestListings() {
           200: function(response) {
             for (var i=0; i < response.quests.gmQuests.length; i++) {
               var tr = document.createElement('tr');
-              if (i % 2 == 0) {
-                $(tr).addClass('logEntry-even');
-              } else {
-                $(tr).addClass('logEntry-odd');
-              }
               var td = document.createElement('td');
               $(td).text(response.quests.gmQuests[i].title);
               $(td).addClass('log-left');
@@ -77,7 +61,7 @@ function loadQuestListings() {
               $(tr).append(td);
               $('#gmQuests tbody').append(tr);
             }
-            var table = $('#gmQuests').DataTable({
+            $('#gmQuests').DataTable({
               'paging':false,
               'searching':false,
               'language': {
@@ -89,14 +73,9 @@ function loadQuestListings() {
                 $('#gmQuests_filter input').addClass('field');
               }
             });
-            $('#gmQuests').on('order.dt', updateRowColors(this));
+
             for (var i=0; i < response.quests.playerQuests.length; i++) {
               var tr = document.createElement('tr');
-              if (i % 2 == 0) {
-                $(tr).addClass('logEntry-even');
-              } else {
-                $(tr).addClass('logEntry-odd');
-              }
               var td = document.createElement('td');
               $(td).text(response.quests.playerQuests[i].title);
               $(td).addClass('log-left');
@@ -129,17 +108,11 @@ function loadQuestListings() {
               'initComplete':function() {
                 $('#playerQuests_filter').css('text-align', 'right');
                 $('#playerQuests_filter input').addClass('field');
-                //$('#gmQuests_filter label').text('Filter GM Quests');
               }
             });
-            $('#playerQuests').on('order.dt', updateRowColors(this));
+
             for (var i=0; i < response.quests.otherQuests.length; i++) {
               var tr = document.createElement('tr');
-              if (i % 2 == 0) {
-                $(tr).addClass('logEntry-even');
-              } else {
-                $(tr).addClass('logEntry-odd');
-              }
               var td = document.createElement('td');
               $(td).text(response.quests.otherQuests[i].title);
               $(td).addClass('log-left');
@@ -174,7 +147,6 @@ function loadQuestListings() {
                 $('#otherQuests_filter input').addClass('field');
               }
             });
-            $('#otherQuests').on('order.dt', updateRowColors(this));
           }
         }
       });

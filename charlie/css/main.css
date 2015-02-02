@@ -143,10 +143,10 @@ footer {
 .log-right {
     
 }
-.logEntry-even {
+.even {
   background-color:#535456;
 }
-.logEntry-odd {
+.odd {
   background-color:#656566;
 }
 .clear{clear:both;}
