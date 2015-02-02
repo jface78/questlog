@@ -24,6 +24,9 @@ switch ($_GET['request']) {
       http_response_code(200);
     }
     break;
+  case 'logout':
+    unset($_SESSION['uid']);
+    break;
   case 'login':
     if (empty($_POST['user']) || empty($_POST['pass'])) {
       http_response_code(400);
@@ -61,7 +64,7 @@ switch ($_GET['request']) {
         $_SESSION["date"] = $login_data['date'];
         $query = "INSERT INTO user_logins (date, ip) VALUES (now(),:ip)";
         $sth = $dbh->prepare($query);
-        $sth->execute(array(':ip'=>$_SERVER['REMOTE_HOST']));
+        $sth->execute(array(':ip' => $_SERVER['REMOTE_ADDR']));
         $dbh = null;
         $json_array = [];
         $json_array['user_details'] = [];

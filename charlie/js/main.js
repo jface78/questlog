@@ -1,6 +1,17 @@
 var SERVICE_URL = 'php/services/';
 var TEMPLATE_URL = 'templates/';
 
+function handleLogout() {
+  $.ajax({
+    url: SERVICE_URL + 'loginHandler.php?request=logout',
+    success: function() {
+      $('#mainContent').fadeOut('normal', function() {
+        window.location.reload();
+      });
+    }
+  });
+}
+
 function handleLogin() {
   if (!$('#user').val().trim().length || !($('#passwd').val().trim().length)) {
     $('#warningMessage').text('Fill out both fields, dummy.');
@@ -12,14 +23,17 @@ function handleLogin() {
       data: { user: $('#user').val().trim().toLowerCase(), pass: $('#passwd').val().trim()},
       statusCode: {
         200: function(response) {
-          addGreetingBox(response.user_details.name, response.user_details.date, response.user_details.ip);
-          $('#warningMessage').text('You are currently logged in.');
-          loadQuestListings();
+          $('#mainContent').fadeOut('normal', function() {
+            addGreetingBox(response.user_details.name, response.user_details.date, response.user_details.ip);
+            $('#warningMessage').text('You are currently logged in.');
+            loadQuestListings();
+          });
         },
         401: function(response) {
           $('#warningMessage').text('Does not compute.');
         },
-        500: function() {
+        500: function(error) {
+          console.log(error.responseText);
           $('#warningMessage').text('There was an error logging you in. Try again in 4-6 weeks.');
         }
       }
@@ -37,6 +51,9 @@ function loadQuestListings() {
         dataType: 'json',
         statusCode: {
           200: function(response) {
+            $('#logoutBtn').click(function(event) {
+              handleLogout();
+            });
             for (var i=0; i < response.quests.gmQuests.length; i++) {
               var tr = document.createElement('tr');
               var td = document.createElement('td');
@@ -283,9 +300,11 @@ $(document).ready(function() {
         $('#mainContent').fadeIn();
       },
       200: function(response) {
-        addGreetingBox(response.user_details.name, response.user_details.date, response.user_details.ip);
-        $('#warningMessage').text('You are currently logged in.');
-        loadQuestListings();
+        $('#mainContent').fadeOut('normal', function() {
+          addGreetingBox(response.user_details.name, response.user_details.date, response.user_details.ip);
+          $('#warningMessage').text('You are currently logged in.');
+          loadQuestListings();
+        });
       }
     },
     error: function(response) {
