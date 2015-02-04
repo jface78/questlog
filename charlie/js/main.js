@@ -1,10 +1,12 @@
 var SERVICE_URL = 'php/services/';
 var TEMPLATE_URL = 'templates/';
+var isLoggedIn = false;
 
 function handleLogout() {
   $.ajax({
     url: SERVICE_URL + 'loginHandler.php?request=logout',
     success: function() {
+      isLoggedIn = false;
       $('#mainContent').fadeOut('normal', function() {
         window.location.reload();
       });
@@ -23,11 +25,14 @@ function handleLogin() {
       data: { user: $('#user').val().trim().toLowerCase(), pass: $('#passwd').val().trim()},
       statusCode: {
         200: function(response) {
-          $('#mainContent').fadeOut('normal', function() {
-            addGreetingBox(response.user_details.name, response.user_details.date, response.user_details.ip);
-            $('#warningMessage').text('You are currently logged in.');
-            loadQuestListings();
-          });
+          if (!isLoggedIn) {
+            isLoggedIn = true;
+            $('#mainContent').fadeOut('normal', function() {
+              addGreetingBox(response.user_details.name, response.user_details.date, response.user_details.ip);
+              $('#warningMessage').text('You are currently logged in.');
+              loadQuestListings();
+            });
+          }
         },
         401: function(response) {
           $('#warningMessage').text('Does not compute.');
@@ -253,6 +258,11 @@ function addLoginBox() {
   $(input).addClass('field');
   $(input).attr('type', 'text');
   $(input).attr('id', 'user');
+  $(input).keypress(function(e) {
+    if(e.which == 13) {
+      handleLogin();
+    }
+  });
   $(div).append(input);
   $(parent).append(div);
   div = document.createElement('div');
@@ -263,6 +273,11 @@ function addLoginBox() {
   $(input).attr('type', 'password');
   $(input).attr('id', 'passwd');
   $(input).val('Igh4oosothai');
+  $(input).keypress(function(e) {
+    if(e.which == 13) {
+      handleLogin();
+    }
+  });
   $(div).append(input);
   $(parent).append(div);
   div = document.createElement('div');
@@ -272,7 +287,12 @@ function addLoginBox() {
   $(div).append(button);
   $(parent).append(div);
   $('#leftHeader').after(parent);
-  $('.loginBox button').click(handleLogin);
+  $(button).click(handleLogin);
+  $(button).keypress(function(e) {
+    if(e.which == 13) {
+      handleLogin();
+    }
+  });
 }
 
 function addGreetingBox(user, date, ip) {
