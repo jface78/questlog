@@ -82,32 +82,32 @@ footer {
   float:left;
 }
 
-#questListingsLeft {
+#questlogLeft {
   min-width:500px;
   width:75%;
   float:left;
 }
-#questListingsRight {
+#questlogRight {
   width:25%;
   float:right;
   text-align:right;
   padding-top:22px;
 }
 
-#questListingsRight span {
+#questlogRight span {
   color:#ccc;
   cursor:pointer;
   font-weight:bold;
   letter-spacing: 0.1mm;
 }
-#questListingsRight span:hover {
+#questlogRight span:hover {
   color:#fff;
 }
-#questListingsLeft table {
+#questListings table {
   width:100%;
   border-spacing:0;
 }
-#questListingsLeft th {
+#questListings th {
   color:#ccc;
   text-align:left;
   cursor:pointer;
@@ -115,10 +115,10 @@ footer {
   font-weight:normal;
   white-space:nowrap;
 }
-#questListingsLeft th:hover {
+#questListings th:hover {
   color:#fff;
 }
-#questListingsLeft td {
+#questListings td {
   padding:2px;
   color:#000;
   white-space:nowrap;
@@ -157,5 +157,17 @@ footer {
 .odd {
   background-color:#656566;
 }
+
+.questMenu {
+  color:#cccccc;
+  font-weight:bold;
+  vertical-align:middle;
+  display:inline-block;
+}
+.questMenu:hover {
+  cursor:pointer;
+  color:#FFF;
+}
+
 .clear{clear:both;}
 .floatLeft{float:left;}

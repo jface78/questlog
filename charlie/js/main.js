@@ -46,11 +46,29 @@ function handleLogin() {
   }
 }
 
+function loadQuest(questID) {
+  $.ajax({
+    url: TEMPLATE_URL + 'quest.html',
+    success: function(template) {
+      $('#questlogLeft').html(template);
+      $.ajax({
+        url: SERVICE_URL + 'fetchQuestListings.php',
+        dataType: 'json',
+        statusCode: {
+          200: function(response) {
+            $('#questlogLeft').fadeIn();
+          }
+        }
+      });
+    }
+  });
+}
+
 function loadQuestListings() {
   $.ajax({
     url: TEMPLATE_URL + 'questListings.html',
     success: function(template) {
-      $('#mainContent').html(template);
+      $('#questlogLeft').html(template);
       $.ajax({
         url: SERVICE_URL + 'fetchQuestListings.php',
         dataType: 'json',
@@ -64,6 +82,13 @@ function loadQuestListings() {
               var td = document.createElement('td');
               $(td).text(response.quests.gmQuests[i].title);
               $(td).addClass('log-left');
+              $(td).attr('data-quest-id', response.quests.gmQuests[i].questID);
+              $(td).click(function() {
+                var id = $(this).data('questId');
+                $('#questlogLeft').fadeOut('normal', function() {
+                  loadQuest($(this).data('questId'));
+                });
+              });
               $(tr).append(td);
               td = document.createElement('td');
               $(td).addClass('log-cell');
@@ -311,6 +336,79 @@ function addGreetingBox(user, date, ip) {
   $('#leftHeader').after(div);
 }
 
+function generateMenu() {
+  var div = document.createElement('div');
+  $(div).attr('id', 'questlogRight');
+  var img = document.createElement('img');
+  $(img).attr('src', 'img/player_menu_title.gif');
+  $(img).attr('alt', 'player menu');
+  $(div).append(img);
+  $(div).append('<br />');
+  var span = document.createElement('span');
+  $(span).attr('id', 'logoutBtn');
+  $(span).text('logout');
+  $(div).append(span);
+  $(div).append('<br />');
+  span = document.createElement('span');
+  $(span).text('user profile');
+  $(div).append(span);
+  $(div).append('<br />');
+  span = document.createElement('span');
+  $(span).text('list users');
+  $(div).append(span);
+  $(div).append('<br />');
+  span = document.createElement('span');
+  $(span).text('contact form');
+  $(div).append(span);
+  $(div).append('<br />');
+  span = document.createElement('span');
+  $(span).text('create character');
+  $(div).append(span);
+  $(div).append('<br />');
+  span = document.createElement('span');
+  $(span).text('edit character');
+  $(div).append(span);
+  $(div).append('<br />');
+  span = document.createElement('span');
+  $(span).text('delete character');
+  $(div).append(span);
+  $(div).append('<br />');
+  span = document.createElement('span');
+  $(span).text('view character');
+  $(div).append(span);
+  $(div).append('<br />');
+  span = document.createElement('span');
+  $(span).text('search quests');
+  $(div).append(span);
+  $(div).append('<br />');
+  span = document.createElement('span');
+  $(span).text('access logs');
+  $(div).append(span);
+  $(div).append('<br />');
+  img = document.createElement('img');
+  $(img).attr('src', 'img/gm_menu_title.gif');
+  $(img).attr('alt', 'gm menu');
+  $(div).append(img);
+  $(div).append('<br />');
+  span = document.createElement('span');
+  $(span).text('host new quest');
+  $(div).append(span);
+  $(div).append('<br />');
+  span = document.createElement('span');
+  $(span).text('edit quest');
+  $(div).append(span);
+  $(div).append('<br />');
+  span = document.createElement('span');
+  $(span).text('quest members');
+  $(div).append(span);
+  $(div).append('<br />');
+  span = document.createElement('span');
+  $(span).text('edit backstory');
+  $(div).append(span);
+  $(div).append('<br />');
+  return div;
+}
+
 $(document).ready(function() {
   $('#mainContent').hide();
   $('footer').text('Copyright ' + new Date().getFullYear() + ' QuestLog.org');
@@ -331,6 +429,10 @@ $(document).ready(function() {
         $('#mainContent').fadeOut('normal', function() {
           addGreetingBox(response.user_details.name, response.user_details.date, response.user_details.ip);
           $('#warningMessage').text('You are currently logged in.');
+          var div = document.createElement('div');
+          $(div).attr('id', 'questlogLeft');
+          $('#mainContent').html(div);
+          $('#mainContent').append(generateMenu());
           loadQuestListings();
         });
       }
