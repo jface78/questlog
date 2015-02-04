@@ -11,7 +11,7 @@ if (empty($_GET['request'])) {
 }
 switch ($_GET['request']) {
   case 'checkSession':
-    if (empty($_SESSION['uid'])) {
+    if (!isset($_SESSION['uid'])) {
       http_response_code(401);
     } else {
       $json_array = [];

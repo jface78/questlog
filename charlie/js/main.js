@@ -30,6 +30,10 @@ function handleLogin() {
             $('#mainContent').fadeOut('normal', function() {
               addGreetingBox(response.user_details.name, response.user_details.date, response.user_details.ip);
               $('#warningMessage').text('You are currently logged in.');
+              var div = document.createElement('div');
+              $(div).attr('id', 'questlogLeft');
+              $('#mainContent').html(div);
+              $('#mainContent').append(generateMenu());
               loadQuestListings();
             });
           }
@@ -116,7 +120,7 @@ function loadQuest(questID) {
                   modal: false,
                   buttons: {
                     'Edit': function() {
-                      editPost($(img).data('postId'));
+                      editPost($(this).data('postId'));
                     },
                     Cancel: function() {
                       dialog.dialog( "close" );
@@ -242,6 +246,13 @@ function loadQuestListings() {
               var td = document.createElement('td');
               $(td).text(response.quests.playerQuests[i].title);
               $(td).addClass('log-left');
+              $(td).attr('data-quest-id', response.quests.playerQuests[i].questID);
+              $(td).click(function() {
+                var id = $(this).data('questId');
+                $('#questlogLeft').fadeOut('normal', function() {
+                  loadQuest(id);
+                });
+              });
               $(tr).append(td);
               td = document.createElement('td');
               $(td).addClass('log-cell');
@@ -283,6 +294,13 @@ function loadQuestListings() {
               var td = document.createElement('td');
               $(td).text(response.quests.otherQuests[i].title);
               $(td).addClass('log-left');
+              $(td).attr('data-quest-id', response.quests.otherQuests[i].questID);
+              $(td).click(function() {
+                var id = $(this).data('questId');
+                $('#questlogLeft').fadeOut('normal', function() {
+                  loadQuest(id);
+                });
+              });
               $(tr).append(td);
               td = document.createElement('td');
               $(td).addClass('log-cell');
