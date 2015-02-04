@@ -1,3 +1,7 @@
+html {
+  overflow-y:scroll;
+}
+
 body {
   background-color:#36373B;
   font-family:Verdana,sans-serif;
@@ -73,6 +77,57 @@ footer {
   color: #FFF;
   font-size:10px;
   letter-spacing: 0.1mm;
+}
+
+.postHeader {
+  box-sizing:border-box;
+  height:20px;
+  width:100%;
+  color:#1F1F1F;
+  line-height:20px;
+  vertical-align:middle;
+  background-image:url('../img/barbg_2.gif');
+  background-repeat: repeat-x;
+  border:1px solid #000;
+  border-bottom:none;
+}
+.postHeader .floatLeft {
+  margin-left:10px;
+}
+
+.postHeader .floatRight {
+  margin-right:10px;
+}
+
+
+.characterNameLink {
+  font-weight:bold;
+  cursor:pointer;
+}
+.characterNameLink:hover {
+  color:#FFD75D;
+}
+
+#questContent {
+  margin-top:5px;
+}
+
+.postBody {
+  width:100%;
+  color:#000;
+  line-height:20px;
+  border:1px solid #000;
+  word-wrap:break-word;
+  border-bottom:none;
+  padding:20px;
+  box-sizing:border-box;
+}
+
+.postBody .odd {
+  background-color:#656566;
+}
+.postBody .even {
+  background-color:#514C4C;
 }
 
 #mainContent {
@@ -168,6 +223,7 @@ footer {
   cursor:pointer;
   color:#FFF;
 }
-
+.pointer{cursor:pointer;}
 .clear{clear:both;}
 .floatLeft{float:left;}
+.floatRight{float:right;}

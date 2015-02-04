@@ -52,10 +52,55 @@ function loadQuest(questID) {
     success: function(template) {
       $('#questlogLeft').html(template);
       $.ajax({
-        url: SERVICE_URL + 'fetchQuestListings.php',
+        url: SERVICE_URL + 'fetchQuest.php?questID=' + questID + '&limit=50',
         dataType: 'json',
         statusCode: {
           200: function(response) {
+            for (var i=0; i < response.posts.length; i++) {
+              var div = document.createElement('div');
+              $(div).attr('id', 'post_' + response.posts[i].id);
+              var header = document.createElement('header');
+              var span = document.createElement('span');
+              $(span).addClass('floatLeft');
+              $(span).text('#' + response.posts[i].id);
+              $(span).append('&nbsp;&nbsp;');
+              $(span).append('Posted&nbsp;');
+              var date = formatDate(parseInt(response.posts[i].timestamp));
+              $(span).append(date + '&nbsp;by&nbsp;');
+              var a = document.createElement('a');
+              $(a).addClass('characterNameLink');
+              $(a).text(response.posts[i].postedBy);
+              $(span).append(a);
+              $(header).append(span);
+              span = document.createElement('span');
+              $(span).addClass('floatRight');
+              var img = document.createElement('img');
+              $(img).addClass('pointer editPostBtn');
+              $(img).attr('alt', 'edit post');
+              $(img).attr('title', 'edit post');
+              $(img).attr('src', 'img/icon.edit_dark.gif');
+              $(span).append(img);
+              $(span).append('&nbsp;');
+              img = document.createElement('img');
+              $(img).attr('alt', 'delete post');
+              $(img).attr('title', 'delete post');
+              $(img).addClass('pointer deletePostBtn');
+              $(img).attr('src', 'img/icon.delete_dark.gif');
+              $(span).append(img);
+              $(header).append(span);
+              $(header).addClass('postHeader');
+              $(div).append(header);
+              var section = document.createElement('section');
+              $(section).addClass('postBody');
+              if (i % 2 == 0) {
+                $(section).addClass('even');
+              } else {
+                $(section).addClass('odd');
+              }
+              $(section).html(response.posts[i].text);
+              $(div).append(section);
+              $('#questContent').append(div);
+            }
             $('#questlogLeft').fadeIn();
           }
         }
@@ -86,7 +131,7 @@ function loadQuestListings() {
               $(td).click(function() {
                 var id = $(this).data('questId');
                 $('#questlogLeft').fadeOut('normal', function() {
-                  loadQuest($(this).data('questId'));
+                  loadQuest(id);
                 });
               });
               $(tr).append(td);
