@@ -130,6 +130,15 @@ footer {
   background-color:#514C4C;
 }
 
+.postTextArea {
+  width:98%;
+  height:90%;
+  resize:none;
+  background-color:#000;
+  color:#fff;
+  outline:none;
+}
+
 #mainContent {
   width:100%;
   min-height:500px;

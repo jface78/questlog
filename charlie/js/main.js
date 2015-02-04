@@ -46,6 +46,22 @@ function handleLogin() {
   }
 }
 
+function editPost(postID) {
+
+}
+
+function deletePost(postID) {
+  alert(postID);
+}
+
+function convertHTMLToBB(text) {
+  text = text.replace(/<b\s*[\/]?>/gi, '[b]');
+  text = text.replace(/<\/b\s*[\/]?>/gi, '[\/b]');
+  text = text.replace(/<i\s*[\/]?>/gi, '[i]');
+  text = text.replace(/<\/i\s*[\/]?>/gi, '[\/i]');
+  return text;
+}
+
 function loadQuest(questID) {
   $.ajax({
     url: TEMPLATE_URL + 'quest.html',
@@ -79,6 +95,37 @@ function loadQuest(questID) {
               $(img).attr('alt', 'edit post');
               $(img).attr('title', 'edit post');
               $(img).attr('src', 'img/icon.edit_dark.gif');
+              $(img).attr('data-post-id', response.posts[i].id);
+              $(img).click(function(event) {
+                event.preventDefault();
+                event.stopPropagation();
+                var popupContainer = document.createElement('div');
+                $(popupContainer).attr('title', 'edit post');
+                var textArea = document.createElement('textarea');
+                $(textArea).addClass('postTextArea');
+                var text = $(this).parent().parent().parent().find('.postBody').html();
+                text = convertHTMLToBB(text);
+                text = $('<div>').html(text).text();
+                console.log(text);
+                $(textArea).val(text);
+                $(popupContainer).append(textArea);
+                $(document.body).append(popupContainer);
+                var dialog = $(popupContainer).dialog({
+                  height: 300,
+                  width: 350,
+                  modal: false,
+                  buttons: {
+                    'Edit': function() {
+                      editPost($(img).data('postId'));
+                    },
+                    Cancel: function() {
+                      dialog.dialog( "close" );
+                    }
+                  },
+                  close: function() {
+                  }
+                });
+              });
               $(span).append(img);
               $(span).append('&nbsp;');
               img = document.createElement('img');
@@ -86,6 +133,30 @@ function loadQuest(questID) {
               $(img).attr('title', 'delete post');
               $(img).addClass('pointer deletePostBtn');
               $(img).attr('src', 'img/icon.delete_dark.gif');
+              $(img).attr('data-post-id', response.posts[i].id);
+              $(img).click(function(event) {
+                event.preventDefault();
+                event.stopPropagation();
+                var popupContainer = document.createElement('div');
+                $(popupContainer).attr('title', 'Sure about that?');
+                $(popupContainer).append('Delete post #' + $(this).data('postId') + '? ' + generateNPCName() + ' hasn\'t read it yet.');
+                $(document.body).append(popupContainer);
+                var dialog = $(popupContainer).dialog({
+                  height: 200,
+                  width: 350,
+                  modal: false,
+                  buttons: {
+                    'Delete': function() {
+                      deletePost($(img).data('postId'));
+                    },
+                    Cancel: function() {
+                      dialog.dialog( "close" );
+                    }
+                  },
+                  close: function() {
+                  }
+                });
+              });
               $(span).append(img);
               $(header).append(span);
               $(header).addClass('postHeader');
@@ -257,6 +328,37 @@ function loadQuestListings() {
 
 function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function generateNPCName() {
+  var returnString;
+  switch(getRandomInt(0, 7)) {
+    case 0:
+      returnString = 'Fiseus';
+      break;
+    case 1:
+      returnString = 'Luthien';
+      break;
+    case 2:
+      returnString = 'Ar Awn';
+      break;
+    case 3:
+      returnString = 'Sir Kalar';
+      break;
+    case 4:
+      returnString = 'Shanksmow';
+      break;
+    case 5:
+      returnString = 'Adon';
+      break;
+    case 6:
+      returnString = 'Inspector Doffman';
+      break;
+    case 7:
+      returnString = 'The Elf';
+      break;
+  }
+  return returnString;
 }
 
 function generateWelcomeMessage(user) {
