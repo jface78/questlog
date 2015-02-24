@@ -222,6 +222,9 @@ function loadQuestListings() {
               $(td).addClass('log-cell');
               $(td).text(new Date(parseInt(response.quests.gmQuests[i].lastPostDate)*1000).toDateString());
               $(tr).append(td);
+               td = document.createElement('td');
+              $(td).text(response.quests.gmQuests[i].sortable);
+              $(tr).append(td);
               $('#gmQuests tbody').append(tr);
             }
             $('#gmQuests').DataTable({
@@ -233,8 +236,11 @@ function loadQuestListings() {
                 'info': ''
               },
               'columnDefs': [
-                { 'width': '25%', 'targets': 0 }
+                { 'width': '25%', 'targets': 0 },
+                { 'visible': false, 'targets':[4]},
+                { "iDataSort": 4, "targets": [ 0 ] }
               ],
+              "order": [[ 0, "asc" ]],
               'initComplete':function() {
                 $('#gmQuests_filter').css('text-align', 'right');
                 $('#gmQuests_filter input').addClass('field');
@@ -270,6 +276,9 @@ function loadQuestListings() {
               $(td).addClass('log-cell');
               $(td).text(new Date(parseInt(response.quests.playerQuests[i].lastPostDate)*1000).toDateString());
               $(tr).append(td);
+               td = document.createElement('td');
+              $(td).text(response.quests.playerQuests[i].sortable);
+              $(tr).append(td);
               $('#playerQuests tbody').append(tr);
             }
             $('#playerQuests').DataTable({
@@ -281,8 +290,11 @@ function loadQuestListings() {
                 'info': ''
               },
               'columnDefs': [
-                { 'width': '25%', 'targets': 0 }
+                { 'width': '25%', 'targets': 0 },
+                { 'visible': false, 'targets':[5]},
+                { "iDataSort": 5, "targets": [ 0 ] }
               ],
+              "order": [[ 0, "asc" ]],
               'initComplete':function() {
                 $('#playerQuests_filter').css('text-align', 'right');
                 $('#playerQuests_filter input').addClass('field');
@@ -318,6 +330,9 @@ function loadQuestListings() {
               $(td).addClass('log-cell');
               $(td).text(new Date(parseInt(response.quests.otherQuests[i].lastPostDate)*1000).toDateString());
               $(tr).append(td);
+              td = document.createElement('td');
+              $(td).text(response.quests.otherQuests[i].sortable);
+              $(tr).append(td);
               $('#otherQuests tbody').append(tr);
             }
             $('#otherQuests').DataTable({
@@ -329,8 +344,11 @@ function loadQuestListings() {
                 'info': ''
               },
               'columnDefs': [
-                { 'width': '25%', 'targets': 0 }
+                { 'width': '25%', 'targets': 0 },
+                { 'visible': false, 'targets':[5]},
+                { "iDataSort": 5, "targets": [ 0 ] }
               ],
+              "order": [[ 0, "asc" ]],
               'initComplete':function() {
                 $('#otherQuests_filter').css('text-align', 'right');
                 $('#otherQuests_filter input').addClass('field');

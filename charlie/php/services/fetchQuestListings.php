@@ -4,6 +4,18 @@ date_default_timezone_set('UTC');
 include('../../../../questlog_credentials.php');
 include '../utils.php';
 
+function getSortableTitle($title) {
+  if (strpos(strtolower($title), 'an ') === 0) {
+    return substr($title, 3, strlen($title)-1) . ', An';
+  } else if (strpos(strtolower($title), 'a ') === 0) {
+    return substr($title, 2, strlen($title)-1) . ', A';
+  } else if (strpos(strtolower($title), 'the ') === 0) {
+    return substr($title, 4, strlen($title)-1) . ', The';
+  } else {
+    return $title;
+  }
+}
+
 function generateQuestListings($results, $json_array, $type) {
   try {
     $dbh = new PDO('mysql:host=' .DB_HOST . ';dbname=' . DB_DATABASE, DB_USER, DB_PASS);
@@ -13,6 +25,7 @@ function generateQuestListings($results, $json_array, $type) {
     }
     foreach ($results as $row) {
       $json_array['quests'][$type][$index]['title'] = $row['quest_name'];
+      $json_array['quests'][$type][$index]['sortable'] = getSortableTitle($row['quest_name']);
       $json_array['quests'][$type][$index]['questID'] = $row['qid'];
       $json_array['quests'][$type][$index]['created'] = strtotime($row['timestamp']);
       $query = 'SELECT count(pid) FROM posts WHERE qid=:qid';
@@ -33,7 +46,7 @@ function generateQuestListings($results, $json_array, $type) {
       $sth = $dbh -> prepare($query);
       $sth -> execute(array(':qid' => $row['qid']));
       $lastPostDate = $sth -> fetch();
-      $json_array['quests'][$type][$index]['lastPostDate'] = time($lastPostDate['timestamp']); 
+      $json_array['quests'][$type][$index]['lastPostDate'] = time($lastPostDate['timestamp']);
       if ($cid['cid'] == 0) {
         $query = 'SELECT login_name FROM users WHERE uid=:uid';
         $sth = $dbh -> prepare($query);
@@ -78,9 +91,6 @@ try {
   }
   $json_array = [];
   $json_array['quests'] = [];
-  usort($questsArr, function($a, $b) {
-    return $a['quest_name'] > $b['quest_name'];
-});
   $json_array = generateQuestListings($questsArr, $json_array, 'gmQuests');
 
   // Get the user's player quests.
@@ -105,11 +115,8 @@ try {
       $index++;
      }
   }
-  usort($questsArr, function($a, $b) {
-    return $a['quest_name'] > $b['quest_name'];
-});
   $json_array = generateQuestListings($questsArr, $json_array, 'playerQuests');
- 
+
   // Get all remaining  non-player, non-GM quests.
   $query = 'SELECT qid FROM quest_members WHERE qid NOT IN (' . $gm_quests .') AND cid NOT IN (' . $player_chars . ')';
   $sth = $dbh -> prepare($query);
@@ -118,10 +125,13 @@ try {
   $questsArr = [];
   $index = 0;
   foreach ($non_quests as $quest) {
-    $query = 'SELECT qid,uid,quest_name,timestamp FROM quests WHERE qid=:qid';
+    $query = 'SELECT qid,uid,quest_name,timestamp FROM quests WHERE qid=:qid AND quest_status != :disabled';
     $sth = $dbh -> prepare($query);
-    $sth -> execute(array(':qid' => $quest['qid']));
-    $questsArr[$index] = $sth -> fetch();
+    $sth -> execute(array(':qid' => $quest['qid'], ':disabled' => 3));
+    $results = $sth -> fetch(PDO::FETCH_ASSOC);
+    if ($results['quest_name'] != null) {
+      $questsArr[$index] = $results;
+    }
     $index++;
   }
   usort($questsArr, function($a, $b) {
