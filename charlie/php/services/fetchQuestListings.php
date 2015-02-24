@@ -2,6 +2,7 @@
 session_start();
 date_default_timezone_set('UTC');
 include('../../../../questlog_credentials.php');
+include '../utils.php';
 
 function generateQuestListings($results, $json_array, $type) {
   try {
@@ -57,10 +58,12 @@ function generateQuestListings($results, $json_array, $type) {
   }
 }
 
-if (empty($_SESSION['uid'])) {
+// Check that the session is active.
+if (!checkSession()) {
   http_response_code(401);
   exit();
 }
+
 try {
   $dbh = new PDO('mysql:host=' .DB_HOST . ';dbname=' . DB_DATABASE, DB_USER, DB_PASS);
   
@@ -123,10 +126,11 @@ try {
   }
   usort($questsArr, function($a, $b) {
     return $a['quest_name'] > $b['quest_name'];
-});
+  });
   $json_array = generateQuestListings($questsArr, $json_array, 'otherQuests');
-  
   $dbh = null;
+  $_SESSION['last_activity'] = time();
+  http_response_code(200);
   header('Content-Type: application/json');
   echo json_encode($json_array);
 } catch(PDOException $error) {

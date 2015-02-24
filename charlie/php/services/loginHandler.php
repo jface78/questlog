@@ -11,7 +11,7 @@ if (empty($_GET['request'])) {
 }
 switch ($_GET['request']) {
   case 'checkSession':
-    if (!isset($_SESSION['uid'])) {
+    if (!checkSession()) {
       http_response_code(401);
     } else {
       $json_array = [];
@@ -25,7 +25,7 @@ switch ($_GET['request']) {
     }
     break;
   case 'logout':
-    unset($_SESSION['uid']);
+    killSession();
     break;
   case 'login':
     if (empty($_POST['user']) || empty($_POST['pass'])) {
@@ -73,6 +73,7 @@ switch ($_GET['request']) {
         $json_array['user_details']['date'] = $login_data['date'];
         header('Content-Type: application/json');
         echo json_encode($json_array);
+        $_SESSION['last_activity'] = time();
         http_response_code(200);
       }
     } catch(PDOException $error) {

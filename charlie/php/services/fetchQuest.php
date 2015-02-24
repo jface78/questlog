@@ -3,8 +3,13 @@ session_start();
 error_reporting(E_ALL);
 ini_set('error_reporting', E_ALL);
 include('../../../../questlog_credentials.php');
+include '../utils.php';
 
-// session stuff should go here later
+// Check that the session is active.
+if (!checkSession()) {
+  http_response_code(401);
+  exit();
+}
 
 if (empty($_GET['questID']) || !is_numeric($_GET['questID'])) {
   http_response_code(400);
@@ -81,6 +86,7 @@ try {
   $dbh = null;
   header('Content-Type: application/json');
   echo json_encode($json_array);
+  $_SESSION['last_activity'] = time();
   http_response_code(200);
 } catch(PDOException $error) {
   echo $error->getMessage();
