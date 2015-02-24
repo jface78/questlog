@@ -50,12 +50,105 @@ function handleLogin() {
   }
 }
 
-function editPost(postID) {
+function renderNewPostWindow(questID) {
+  var popupContainer = document.createElement('div');
+  $(popupContainer).attr('title', 'new post');
+  var textArea = document.createElement('textarea');
+  $(textArea).addClass('postTextArea');
+  $(popupContainer).append(textArea);
+  $(document.body).append(popupContainer);
+  var dialog = $(popupContainer).dialog({
+    height: 300,
+    width: 350,
+    modal: false,
+    buttons: {
+      'Post': function() {
+        newPost(questID);
+      },
+      Cancel: function() {
+        dialog.dialog( "close" );
+      }
+    },
+    close: function() {
+    }
+  });
+}
 
+function renderEditWindow(button) {
+  var popupContainer = document.createElement('div');
+  $(popupContainer).attr('title', 'edit post #' + $(button).data('postId'));
+  var textArea = document.createElement('textarea');
+  $(textArea).addClass('postTextArea');
+  var text = $(button).parent().parent().parent().find('.postBody').html();
+  text = convertHTMLToBB(text);
+  text = $('<div>').html(text).text();
+  $(textArea).val(text);
+  $(popupContainer).append(textArea);
+  $(document.body).append(popupContainer);
+  var dialog = $(popupContainer).dialog({
+    height: 300,
+    width: 350,
+    modal: false,
+    buttons: {
+      'Edit': function() {
+        editPost($(button).data('postId'));
+      },
+      Cancel: function() {
+        dialog.dialog( "close" );
+      }
+    },
+    close: function() {
+    }
+  });
+}
+
+function renderDeletePostWindow(button) {
+  var popupContainer = document.createElement('div');
+  $(popupContainer).attr('title', 'Sure about that?');
+  $(popupContainer).append('Delete post #' + $(button).data('postId') + '? ' + generateNPCName() + ' hasn\'t read it yet.');
+  $(document.body).append(popupContainer);
+  var dialog = $(popupContainer).dialog({
+    height: 200,
+    width: 350,
+    modal: false,
+    buttons: {
+      'Delete': function() {
+        deletePost($(button).data('postId'));
+        dialog.dialog('close');
+      },
+      Cancel: function() {
+        dialog.dialog('close');
+      }
+    },
+    close: function() {
+    }
+  });
+}
+
+function newPost(questID) {
+  alert(questID);
+}
+
+function editPost(postID) {
+  alert(postID);
 }
 
 function deletePost(postID) {
-  alert(postID);
+  $.ajax({
+    url: SERVICE_URL + 'managePosts.php?postID=' + postID,
+    method: 'DELETE',
+    success: function(data) {
+      $('#post_' + postID).remove();
+      $('.postBody').each(function(index, item) {
+        $(item).removeClass('even odd');
+        if (index % 2 == 0) {
+          $(item).addClass('even');
+        } else {
+          $(item).addClass('odd');
+        }
+      });
+    }
+  });
 }
 
 function convertHTMLToBB(text) {
@@ -66,13 +159,41 @@ function convertHTMLToBB(text) {
   return text;
 }
 
-function loadQuest(questID) {
+function loadQuest(questID, order) {
   $.ajax({
     url: TEMPLATE_URL + 'quest.html',
     success: function(template) {
       $('#questlogLeft').html(template);
+      var buttons = $('.questMenu');
+      $(buttons[0]).click(function() {
+        $('#mainContent').fadeOut('normal', function() {
+          loadQuestListings();
+        });
+      });
+      $(buttons[2]).click(function() {
+        $('#questlogLeft').fadeOut('normal', function() {
+          if (order == 'ASC') {
+            loadQuest(questID, 'DESC');
+          } else {
+            loadQuest(questID, 'ASC');
+          }
+        });
+      });
+      $(buttons[4]).click(function() {
+        $('#questlogLeft').fadeOut('normal', function() {
+          loadQuest(questID, 'ASC');
+        });
+      });
+      $(buttons[6]).click(function() {
+        $('#questlogLeft').fadeOut('normal', function() {
+          loadQuest(questID, order);
+        });
+      });
+      $(buttons[7]).click(function() {
+        renderNewPostWindow(questID, order);
+      });
       $.ajax({
-        url: SERVICE_URL + 'fetchQuest.php?questID=' + questID + '&limit=50',
+        url: SERVICE_URL + 'fetchQuest.php?questID=' + questID + '&limit=50&order=' + order,
         dataType: 'json',
         statusCode: {
           200: function(response) {
@@ -103,32 +224,7 @@ function loadQuest(questID) {
               $(img).click(function(event) {
                 event.preventDefault();
                 event.stopPropagation();
-                var popupContainer = document.createElement('div');
-                $(popupContainer).attr('title', 'edit post');
-                var textArea = document.createElement('textarea');
-                $(textArea).addClass('postTextArea');
-                var text = $(this).parent().parent().parent().find('.postBody').html();
-                text = convertHTMLToBB(text);
-                text = $('<div>').html(text).text();
-                console.log(text);
-                $(textArea).val(text);
-                $(popupContainer).append(textArea);
-                $(document.body).append(popupContainer);
-                var dialog = $(popupContainer).dialog({
-                  height: 300,
-                  width: 350,
-                  modal: false,
-                  buttons: {
-                    'Edit': function() {
-                      editPost($(this).data('postId'));
-                    },
-                    Cancel: function() {
-                      dialog.dialog( "close" );
-                    }
-                  },
-                  close: function() {
-                  }
-                });
+                renderEditWindow(this);
               });
               $(span).append(img);
               $(span).append('&nbsp;');
@@ -141,25 +237,7 @@ function loadQuest(questID) {
               $(img).click(function(event) {
                 event.preventDefault();
                 event.stopPropagation();
-                var popupContainer = document.createElement('div');
-                $(popupContainer).attr('title', 'Sure about that?');
-                $(popupContainer).append('Delete post #' + $(this).data('postId') + '? ' + generateNPCName() + ' hasn\'t read it yet.');
-                $(document.body).append(popupContainer);
-                var dialog = $(popupContainer).dialog({
-                  height: 200,
-                  width: 350,
-                  modal: false,
-                  buttons: {
-                    'Delete': function() {
-                      deletePost($(img).data('postId'));
-                    },
-                    Cancel: function() {
-                      dialog.dialog( "close" );
-                    }
-                  },
-                  close: function() {
-                  }
-                });
+                renderDeletePostWindow(this, questID, order);
               });
               $(span).append(img);
               $(header).append(span);
@@ -206,7 +284,7 @@ function loadQuestListings() {
               $(td).click(function() {
                 var id = $(this).data('questId');
                 $('#questlogLeft').fadeOut('normal', function() {
-                  loadQuest(id);
+                  loadQuest(id, 'DESC');
                 });
               });
               $(tr).append(td);
@@ -256,7 +334,7 @@ function loadQuestListings() {
               $(td).click(function() {
                 var id = $(this).data('questId');
                 $('#questlogLeft').fadeOut('normal', function() {
-                  loadQuest(id);
+                  loadQuest(id, 'DESC');
                 });
               });
               $(tr).append(td);
@@ -310,7 +388,7 @@ function loadQuestListings() {
               $(td).click(function() {
                 var id = $(this).data('questId');
                 $('#questlogLeft').fadeOut('normal', function() {
-                  loadQuest(id);
+                  loadQuest(id, 'DESC');
                 });
               });
               $(tr).append(td);

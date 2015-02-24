@@ -193,3 +193,4 @@ try {
   echo $error->getMessage();
   http_response_code(500);
 }
+?>
