@@ -2,8 +2,13 @@
 session_start();
 error_reporting(E_ALL);
 include('../../../../questlog_credentials.php');
+include '../utils.php';
 
-// session stuff should go here later
+// Check that the session is active.
+if (!checkSession()) {
+  http_response_code(401);
+  exit();
+}
 
 if (!empty($_GET['userID']) && !is_numeric($_GET['userID'])) {
   http_response_code(400);
@@ -75,6 +80,7 @@ try {
     $index++;
   }
   $dbh = null;
+  $_SESSION['last_activity'] = time();
   header('Content-Type: application/json');
   echo json_encode($json_array);
   http_response_code(200);
@@ -82,3 +88,4 @@ try {
   echo $error->getMessage();
   http_response_code(500);
 }
+?>
