@@ -14,6 +14,7 @@ function ucwords(str) {
 
 function fetchCharacters() {
   $('#characterList').empty();
+  for (var i=0; i < 5; i++) {
     var div = document.createElement('div');
     $(div).css('border', '1px solid black');
     $(div).css('padding', '10px');
@@ -23,14 +24,14 @@ function fetchCharacters() {
     $(div).append('<br />');
     $(div).append(ucwords(char.getNumerator(char.job)) + ' ' + char.job + ' of ' + char.jobSkill + ' skill with ' + char.getNumerator(char.trait1) +
                            ' ' + char.trait1 + ' and ' + char.trait2 + ' demeanor.');
-    $(div).append('<br><br>');
     $(div).append(char.description);
     $('#characterList').append(div);
+  }
 }
 </script>
 </head>
 <body>
-<button onclick="javascript:fetchCharacters();">generate a random NPC</button><br />
+<button onclick="javascript:fetchCharacters();">generate 5 random NPCs</button><br />
 <div id="characterList"></div>
 </body>
 </html>

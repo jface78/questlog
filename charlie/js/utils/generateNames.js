@@ -83,7 +83,7 @@ var prettyNames = ["beautiful","beauteous","lovely","comely","fair","handsome","
  'hesitant','honest','hopeful','hopeless','hospitable','hot-tempered','humble','humorous','ignorant','ill-bred','imaginative','immature',
  'immobile','impartial','impatient','impolite','impudent','impulsive','inactive','inconsiderate','inconsistent','indecisive','independent',
  'indiscriminate','indolent','industrious','inefficient','innocent','insecure','insincere','insipid','insistent','insolent',
- 'intolerant','intrepid','inventive','jealous','jolly','jovial','joyful','keen','kind','kindly','lackadaisical','languid','lazy','leader','left-brained','licentious',
+ 'intolerant','intrepid','inventive','jealous','jolly','jovial','joyful','keen','kind','kindly','lackadaisical','languid','lazy','leader','licentious',
  'light','light-hearted','limited','lively','lonely','loquacious','loud','lovable','loving','loyal','lucky','malicious','mannerly',
  'mature','mean','meek','merciful','messy','meticulous','mischievous','miserable','moody','mysterious','nagging','naïve','naughty','neat',
  'negligent','nervous','nice','purposeless','noisy','not trustworthy','obedient','obliging','observant','open','optimistic','organised',
@@ -113,6 +113,15 @@ var prettyNames = ["beautiful","beauteous","lovely","comely","fair","handsome","
  function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
+
+var hairColors = ['ash-colored', 'bronze-colored', 'ginger', 'golden', 'honey-colored','flaxen', 'platinum','tawny','wheat-colored','auburn',
+                  'copper-colored','flaming red','sandy','chestnut','russet-colored','jet black','sooty black','salt and pepper','iron gray',
+                  'silver','pearly white','snowy white'];
+var hairStyles = ['an afro','a bob-cut','a bowl cut','braids','a buzz cut','a chonmage','a comb-over','a cornrow','a crewcut','a crown braid',
+                  'a curtained style','a devil lock','dreadlocks','a feathery style','a flattop','a french braid','a hi-top','a jheri curl','spikes',
+                  'a mullet','a mohawk','a mop-top','a pageboy','pigtails','a pompadour','a ponytail','a rat tail','a slicked back style', 'bald'];
+var beardStyles = ['flowing', 'chin curtain','chin strap','mutton chop','goat patch','goatee','soul patch','stubble'];
+var mustacheStyles = ['handlebar','horseshoe','walrus','pencil','toothbrush','Fu Manchu'];
 
 this.generate = function() {
   this.makeCharacterVitals();
@@ -280,6 +289,9 @@ this.makeCharacterPhys = function() {
         break;
     }
   }
+  if (this.isStrong || this.isWeak || this.isSmart || this.isDumb || this.isPretty || this.isUgly) {
+    this.description += '<br><br>';
+  }
   if (this.isStrong) {
     this.description += ucwords(this.getPronoun(this.gender) ) + ' is ' + strongAdverb() + ' strong. ';
   }
@@ -297,6 +309,33 @@ this.makeCharacterPhys = function() {
   }
   if (this.isUgly) {
     this.description += ucwords(this.getPronoun(this.gender) ) + ' is ' + uglyAdverb() + ' ugly. ';
+  }
+  var hair = hairStyles[getRandomInt(0,hairStyles.length-1)];
+  this.description += '<br><br>';
+  if (hair != 'bald') {
+    var hairColor = hairColors[getRandomInt(0,hairColors.length-1)];
+    this.description += ucwords(this.getPronoun(this.gender)) + ' has ' + hairColor + ' hair in ' + hair + '.';
+  } else {
+    this.description += ucwords(this.getPronoun(this.gender)) + ' has a bald head.';
+  }
+  if (this.gender == 'male') {
+    var hasBeard = false;
+    if (getRandomInt(0,2) <= 1) {
+      hasBeard = true;
+      this.description += ' He has a ' + beardStyles[getRandomInt(0,beardStyles.length-1)] + ' beard';
+    }
+    if (getRandomInt(0,2) <= 1) {
+      if (hasBeard) {
+        this.description += ' and a ';
+      } else {
+        this.description += ' He has a ';
+      }
+      this.description += mustacheStyles[getRandomInt(0,mustacheStyles.length-1)] + ' mustache.';
+    } else {
+      if (hasBeard) {
+        this.description += '.';
+      }
+    }
   }
 };
 
