@@ -5,21 +5,32 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
 <script src="generateNames.js"></script>
 <script>
+function ucwords(str) {
+  return (str + '')
+    .replace(/^([a-z\u00E0-\u00FC])|\s+([a-z\u00E0-\u00FC])/g, function($1) {
+      return $1.toUpperCase();
+    });
+}
+
 function fetchCharacters() {
   $('#characterList').empty();
-  for (var i=0; i < 10; i++) {
     var div = document.createElement('div');
     $(div).css('border', '1px solid black');
     $(div).css('padding', '10px');
-    $(div).append('<b>' + makeCharacterName() + '</b><br />');
-    $(div).append(makeCharacterTraits());
+    var char = new RandomNPC();
+    char.generate();
+    $(div).append('<b>' + char.name + ' ' + char.title + ', </b>' + char.getNumerator(char.age) + ' ' + char.age + ' ' + char.gender + ' ' + char.race + '.' );
+    $(div).append('<br />');
+    $(div).append(ucwords(char.getNumerator(char.job)) + ' ' + char.job + ' of ' + char.jobSkill + ' skill with ' + char.getNumerator(char.trait1) +
+                           ' ' + char.trait1 + ' and ' + char.trait2 + ' demeanor.');
+    $(div).append('<br><br>');
+    $(div).append(char.description);
     $('#characterList').append(div);
-  }
 }
 </script>
 </head>
 <body>
-<button onclick="javascript:fetchCharacters();">generate 10 random NPCs</button><br />
+<button onclick="javascript:fetchCharacters();">generate a random NPC</button><br />
 <div id="characterList"></div>
 </body>
 </html>
