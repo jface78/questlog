@@ -1,6 +1,5 @@
 <?php
-abstract class API
-{
+abstract class API {
     /**
      * Property: method
      * The HTTP method this request was made in, either GET, POST, PUT or DELETE
@@ -73,7 +72,8 @@ abstract class API
             break;
         }
     }
-     public function processAPI() {
+
+    public function processAPI() {
         if ((int)method_exists($this, $this->endpoint) > 0) {
             return $this->_response($this->{$this->endpoint}($this->args));
         }
@@ -100,6 +100,7 @@ abstract class API
     private function _requestStatus($code) {
         $status = array(  
             200 => 'OK',
+            400 => 'Bad Request',
             404 => 'Not Found',   
             405 => 'Method Not Allowed',
             500 => 'Internal Server Error',
