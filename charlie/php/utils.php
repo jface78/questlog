@@ -67,7 +67,6 @@ function generateQuestListings($results, $json_array, $type) {
     $dbh = null;
     return $json_array;
   } catch(PDOException $error) {
-    echo $error->getMessage();
     http_response_code(500);
     exit();
   }
@@ -78,6 +77,7 @@ function checkSession() {
     killSession();
     return false;
   } else {
+    $_SESSION['last_activity'] = time();
     return true;
   }
 }

@@ -1,4 +1,4 @@
-var SERVICE_URL = 'php/services/';
+var SERVICE_URL = 'api/v1/';
 var TEMPLATE_URL = 'templates/';
 var isLoggedIn = false;
 
@@ -35,6 +35,19 @@ function handleLogin() {
               $('#mainContent').html(div);
               $('#mainContent').append(generateMenu());
               loadQuestListings();
+                require(['converse'], function (converse) {
+                  alert('ok');
+    converse.initialize({
+        auto_list_rooms: false,
+        auto_subscribe: false,
+        bosh_service_url: 'https://bind.conversejs.org', // Please use this connection manager only for testing purposes
+        hide_muc_server: false,
+        i18n: locales.en, // Refer to ./locale/locales.js to see which locales are supported
+        prebind: false,
+        show_controlbox_by_default: true,
+        roster_groups: true
+    });
+});
             });
           }
         },
@@ -193,7 +206,9 @@ function loadQuest(questID, order) {
         renderNewPostWindow(questID, order);
       });
       $.ajax({
-        url: SERVICE_URL + 'fetchQuest.php?questID=' + questID + '&limit=50&order=' + order,
+        url: SERVICE_URL + 'quest/' + questID + '/limit/50/' + order,
+        method: 'GET',
+        data: {apiKey: 1},
         dataType: 'json',
         statusCode: {
           200: function(response) {
@@ -268,7 +283,9 @@ function loadQuestListings() {
     success: function(template) {
       $('#questlogLeft').html(template);
       $.ajax({
-        url: SERVICE_URL + 'fetchQuestListings.php',
+        url: SERVICE_URL + 'quests',
+        method: 'GET',
+        data: {apiKey: 1},
         dataType: 'json',
         statusCode: {
           200: function(response) {
@@ -678,7 +695,7 @@ $(document).ready(function() {
     $('#titleImg').attr('src', 'img/title.06.gif');
   }
   $.ajax({
-    url: SERVICE_URL + 'loginHandler.php?request=checkSession',
+    url: 'php/services/loginHandler.php?request=checkSession',
     dataType: 'json',
     statusCode: {
       401: function() {
@@ -694,6 +711,19 @@ $(document).ready(function() {
           $(div).attr('id', 'questlogLeft');
           $('#mainContent').html(div);
           $('#mainContent').append(generateMenu());
+          require(['converse'], function (converse) {
+            alert('ok');
+            converse.initialize({
+              auto_list_rooms: false,
+              auto_subscribe: false,
+              bosh_service_url: 'https://bind.conversejs.org', // Please use this connection manager only for testing purposes
+              hide_muc_server: false,
+              i18n: locales.en, // Refer to ./locale/locales.js to see which locales are supported
+              prebind: false,
+              show_controlbox_by_default: true,
+              roster_groups: true
+            });
+          });
           loadQuestListings();
         });
       }
