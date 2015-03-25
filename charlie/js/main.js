@@ -36,7 +36,7 @@ function handleLogin() {
               var div = document.createElement('div');
               $(div).attr('id', 'questlogLeft');
               $('#mainContent').html(div);
-              $('#mainContent').append(generateMenu());
+              generateMenu();
               loadQuestListings();
               /*
                 require(['converse'], function (converse) {
@@ -281,6 +281,85 @@ function loadQuest(questID, order) {
   });
 }
 
+function generateRandomNPC(div) {
+  var char = new RandomNPC();
+  if ($(div).closest('.ui-dialog').find('.genRaceSelect').val() != 'random') {
+    char.race = $(div).closest('.ui-dialog').find('.genRaceSelect').val();
+  }
+  char.generate();
+  $(div).attr('title', char.name + ' ' + char.title);
+  $(div).closest('.ui-dialog').find('.ui-dialog-title').text(char.name + ' ' + char.title);
+  $($(div).find('.chargenContent')[0]).html('');
+  var htmlString = ucwords(char.getNumerator(char.age)) + ' ' + char.age + ' ' + char.gender + ' ' + char.race + '. ' +
+                   ucwords(char.getPronoun(char.gender)) + '\'s ' + char.getNumerator(char.job) + ' ' + char.job + ' of ' +
+                   char.jobSkill + ' skill with ' + char.getNumerator(char.trait1) + ' ' + char.trait1 + ' and ' + 
+                   char.trait2 + ' demeanor. ' + char.description;
+                   console.log(htmlString);
+  $($(div).find('.chargenContent')[0]).html(htmlString);
+  console.log($(div).find('.chargenContent').length);
+}
+
+function renderRandomNPC() {
+  var char = new RandomNPC();
+  var div = document.createElement('div');
+  var controls = document.createElement('div');
+  $(controls).text('race: ');
+  var select = document.createElement('select');
+  $(select).addClass('genRaceSelect');
+  var option = document.createElement('option');
+  $(option).val('random');
+  $(option).text('Random');
+  $(select).append(option);
+  option = document.createElement('option');
+  $(option).val('elf');
+  $(option).text('Elf');
+  $(select).append(option);
+  option = document.createElement('option');
+  $(option).val('dwarf');
+  $(option).text('Dwarf');
+  $(select).append(option);
+  option = document.createElement('option');
+  $(option).val('gnome');
+  $(option).text('Gnome');
+  $(select).append(option);
+  option = document.createElement('option');
+  $(option).val('human');
+  $(option).text('Human');
+  $(select).append(option);
+  option = document.createElement('option');
+  $(option).val('other');
+  $(option).text('Other');
+  $(select).append(option);
+  $(controls).append(select);
+  $(select).change(function() {
+    console.log($(this).val());
+  });
+  $(div).html(controls);
+  var contentDiv = document.createElement('div');
+  $(contentDiv).addClass('chargenContent');
+  $(div).append(contentDiv);
+  generateRandomNPC(div);
+  $(document.body).append(div);
+
+  var dialog = $(div).dialog({
+    height: 300,
+    width: 350,
+    modal: false,
+    buttons: {
+      'regenerate': function() {
+        generateRandomNPC(div);
+      },
+      'ok': function() {
+        dialog.dialog( "close" );
+      }
+    },
+    close: function() {
+    }
+  });
+  
+    
+}
+
 function loadQuestListings() {
   $.ajax({
     url: TEMPLATE_URL + 'questListings.html',
@@ -295,6 +374,9 @@ function loadQuestListings() {
           200: function(response) {
             $('#logoutBtn').click(function(event) {
               handleLogout();
+            });
+            $('#generateNPCBtn').click(function(event) {
+              renderRandomNPC();
             });
             for (var i=0; i < response.quests.gmQuests.length; i++) {
               var tr = document.createElement('tr');
@@ -621,74 +703,13 @@ function addGreetingBox(user, date, ip) {
 function generateMenu() {
   var div = document.createElement('div');
   $(div).attr('id', 'questlogRight');
-  var img = document.createElement('img');
-  $(img).attr('src', 'img/player_menu_title.gif');
-  $(img).attr('alt', 'player menu');
-  $(div).append(img);
-  $(div).append('<br />');
-  var span = document.createElement('span');
-  $(span).attr('id', 'logoutBtn');
-  $(span).text('logout');
-  $(div).append(span);
-  $(div).append('<br />');
-  span = document.createElement('span');
-  $(span).text('user profile');
-  $(div).append(span);
-  $(div).append('<br />');
-  span = document.createElement('span');
-  $(span).text('list users');
-  $(div).append(span);
-  $(div).append('<br />');
-  span = document.createElement('span');
-  $(span).text('contact form');
-  $(div).append(span);
-  $(div).append('<br />');
-  span = document.createElement('span');
-  $(span).text('create character');
-  $(div).append(span);
-  $(div).append('<br />');
-  span = document.createElement('span');
-  $(span).text('edit character');
-  $(div).append(span);
-  $(div).append('<br />');
-  span = document.createElement('span');
-  $(span).text('delete character');
-  $(div).append(span);
-  $(div).append('<br />');
-  span = document.createElement('span');
-  $(span).text('view character');
-  $(div).append(span);
-  $(div).append('<br />');
-  span = document.createElement('span');
-  $(span).text('search quests');
-  $(div).append(span);
-  $(div).append('<br />');
-  span = document.createElement('span');
-  $(span).text('access logs');
-  $(div).append(span);
-  $(div).append('<br />');
-  img = document.createElement('img');
-  $(img).attr('src', 'img/gm_menu_title.gif');
-  $(img).attr('alt', 'gm menu');
-  $(div).append(img);
-  $(div).append('<br />');
-  span = document.createElement('span');
-  $(span).text('host new quest');
-  $(div).append(span);
-  $(div).append('<br />');
-  span = document.createElement('span');
-  $(span).text('edit quest');
-  $(div).append(span);
-  $(div).append('<br />');
-  span = document.createElement('span');
-  $(span).text('quest members');
-  $(div).append(span);
-  $(div).append('<br />');
-  span = document.createElement('span');
-  $(span).text('edit backstory');
-  $(div).append(span);
-  $(div).append('<br />');
-  return div;
+  $.ajax({
+    url: TEMPLATE_URL + 'menu.html',
+    success: function(template) {
+      $(div).html(template);
+      $('#mainContent').append(div);
+    }
+  });
 }
 
 $(document).ready(function() {
@@ -717,7 +738,7 @@ $(document).ready(function() {
           var div = document.createElement('div');
           $(div).attr('id', 'questlogLeft');
           $('#mainContent').html(div);
-          $('#mainContent').append(generateMenu());
+          generateMenu();
           /*
           require(['converse'], function (converse) {
             alert('ok');

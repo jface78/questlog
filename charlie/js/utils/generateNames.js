@@ -110,9 +110,6 @@ var prettyNames = ["beautiful","beauteous","lovely","comely","fair","handsome","
  var monsterNames = ["ogg", "nuk", "grak", "cor", "thud", "burd", "cro", "den", "ock", "mor", "dun", "starn", "vex", "pud", "duff", "nash", "pox",
                                     "grel", "tosh", "del", "rok", "muk", "fud", "nik", "nek", "voc", "grel", "kord", "zord", "lof", "hud", "pock", "zukk","gnash"];
  
- function getRandomInt(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
 
 var hairColors = ['ash-colored', 'bronze-colored', 'ginger', 'golden', 'honey-colored','flaxen', 'platinum','tawny','wheat-colored','auburn',
                   'copper-colored','flaming red','sandy','chestnut','russet-colored','jet black','sooty black','salt and pepper','iron gray',
@@ -139,54 +136,66 @@ this.makeCharacterVitals = function() {
       break;
   }
   var prefixArray, suffixArray;
-  var racePercent = getRandomInt(0,99);
+  
   //50% gnome
   //25% human
   //15% dwarf
   //5% elf
   //5% other
-  var name;
-  if (racePercent <= 49) {
-    this.race = 'gnome';
-    this.name = ucwords(gnomePrefix[getRandomInt(0,gnomePrefix.length-1)] + gnomeSuffix[getRandomInt(0,gnomeSuffix.length-1)]);
-  } else if (racePercent <= 74) {
-    this.race = 'human';
-    if (this.gender == 'male') {
-      this.name = ucwords(humanFirstNameM[getRandomInt(0,humanFirstNameM.length-1)]);
-      if (getRandomInt(1,4) == 1) {
-        this.name += ' ' + ucwords(humanFirstNameM[getRandomInt(0,humanFirstNameM.length-1)]);
-      }
-    } else {
-      this.name = ucwords(humanFirstNameF[getRandomInt(0,humanFirstNameF.length-1)]);
-      if (getRandomInt(1,4) == 1) {
-        this.name += ' ' + ucwords(humanFirstNameF[getRandomInt(0,humanFirstNameF.length-1)]);
-      }
+  if (!this.race) {
+    var racePercent = getRandomInt(0,99);
+    if (racePercent <= 49) {
+      this.race = 'gnome';
+    } else if (racePercent <= 74) {
+      this.race = 'human';
+    } else if (racePercent <= 89) {
+      this.race = 'dwarf';
+    } else if (racePercent <= 94) {
+      this.race = 'elf';
     }
-  } else if (racePercent <= 89) {
-    this.race = 'dwarf';
-    this.name = ucwords(dwarfFirstPrefix[getRandomInt(0,dwarfFirstPrefix.length-1)] + dwarfFirstSuffix[getRandomInt(0,dwarfFirstSuffix.length-1)]);
-  } else if (racePercent <= 94) {
-    this.race = 'elf';
-    this.name = ucwords(elfPrefix[getRandomInt(0,elfPrefix.length-1)] + elfSuffix[getRandomInt(0,elfSuffix.length-1)]);
-  } else {
-    this.race = monsterRaces[getRandomInt(0, monsterRaces.length-1)];
-    this.name = monsterNames[getRandomInt(0,monsterNames.length-1)];
-    var syllables = getRandomInt(0, 4);
-    for (var i=0; i < syllables; i++) {
-      switch(getRandomInt(0,3)) {
-        case 0:
-          this.name += ' ';
-          break;
-        case 1:
-          this.name += '~';
-          break;
-        case 2:
-          this.name += "'";
-          break;
+  }
+  switch(this.race) {
+    case 'gnome':
+      this.name = ucwords(gnomePrefix[getRandomInt(0,gnomePrefix.length-1)] + gnomeSuffix[getRandomInt(0,gnomeSuffix.length-1)]);
+      break;
+    case 'human':
+      if (this.gender == 'male') {
+        this.name = ucwords(humanFirstNameM[getRandomInt(0,humanFirstNameM.length-1)]);
+        if (getRandomInt(1,4) == 1) {
+          this.name += ' ' + ucwords(humanFirstNameM[getRandomInt(0,humanFirstNameM.length-1)]);
+        }
+      } else {
+        this.name = ucwords(humanFirstNameF[getRandomInt(0,humanFirstNameF.length-1)]);
+        if (getRandomInt(1,4) == 1) {
+          this.name += ' ' + ucwords(humanFirstNameF[getRandomInt(0,humanFirstNameF.length-1)]);
+        }
       }
-      this.name += monsterNames[getRandomInt(0,monsterNames.length-1)];
-    }
-    this.name = ucwords(this.name);
+      break;
+    case 'dwarf':
+      this.name = ucwords(dwarfFirstPrefix[getRandomInt(0,dwarfFirstPrefix.length-1)] + dwarfFirstSuffix[getRandomInt(0,dwarfFirstSuffix.length-1)]);
+      break;
+    case 'elf':
+      this.name = ucwords(elfPrefix[getRandomInt(0,elfPrefix.length-1)] + elfSuffix[getRandomInt(0,elfSuffix.length-1)]);
+      break;
+    default:
+      this.race = monsterRaces[getRandomInt(0, monsterRaces.length-1)];
+      this.name = monsterNames[getRandomInt(0,monsterNames.length-1)];
+      var syllables = getRandomInt(0, 4);
+      for (var i=0; i < syllables; i++) {
+        switch(getRandomInt(0,3)) {
+          case 0:
+            this.name += ' ';
+            break;
+          case 1:
+            this.name += '~';
+            break;
+          case 2:
+            this.name += "'";
+            break;
+        }
+        this.name += monsterNames[getRandomInt(0,monsterNames.length-1)];
+      }
+      break;
   }
 
   if (this.gender == 'female' && this.race != 'human' && this.race != 'gnome' && monsterRaces.indexOf(this.race) == -1 ) {
@@ -529,116 +538,5 @@ this.getNumerator = function(text) {
   } else {
     return 'a';
   }
+};
 }
-
-function ucwords(str) {
-  return (str + '')
-    .replace(/^([a-z\u00E0-\u00FC])|\s+([a-z\u00E0-\u00FC])/g, function($1) {
-      return $1.toUpperCase();
-    });
-}
-}
-/*
-function generateNames(){
-  var prefArray = new Array();
-  var suffArray = new Array();
-  
-  if (race != "null"){
-    switch(race){
-      case "elf":
-      prefArray = elfPrefix;
-      suffArray = elfSuffix;
-      break;
-      case "dwarf":
-      prefArray = dwarfPrefix;
-      suffArray = dwarfSuffix;
-      break;
-      case "gnome":
-      prefArray = gnomePrefix;
-      suffArray = gnomeSuffix;
-      break;
-      default:
-      prefArray = elfPrefix;
-      suffArray = elfSuffix;
-      break;
-    }
-    var totalPref = prefArray.length;
-    var totalSuff = suffArray.length;
-    
-    var roll1 = rollDice(totalPref-1,1);
-    roll1 = roll1 - 1;
-    var roll2 = rollDice(totalSuff-1,1);
-    roll2 = roll2 - 1;
-    var name = prefArray[roll1] + suffArray[roll2];
-    if (gender == 'female'){
-    	var flip = makeRandom(3);
-    	switch(flip){
-		case 1:
-		name += "a";
-		break;
-		case 2:
-		name += "y";
-		break;
-		case 3:
-		name += "o";
-		break;
-	}
-    }
-    var c = name.charAt(0).toUpperCase();
-    name = name.replace(name.charAt(0),c);
-    if (race == "dwarf"){
-      totalPref = dwarfLastPref.length;
-      totalSuff = dwarfLastSuff.length;
-      roll1 = rollDice(totalPref-1,1);
-      roll2 = rollDice(totalSuff-1,1);
-      roll1 = roll1 - 1;
-      roll2 = roll2 - 1;
-      name += " " + dwarfLastPref[roll1] + dwarfLastSuff[roll2];
-    }
-    var rollFame = rollDice(100,1);
-    if (rollFame <= 25){
-      var isStrong = false;
-      var isWeak = false;
-      var isSmart = false;
-      var isDumb = false;
-      var isPretty = false;
-      var isUgly = false;
-      var arrays = new Array();
-      if ( (int <= 6) || (wis <= 6)){
-        arrays.push(dumbNames);
-        isDumb = true;
-      }
-      if (str <= 6){
-        arrays.push(weakNames);
-        isWeak = true;
-      }
-      if ( int >= 15) {
-        arrays.push(smartNames);
-        isSmart = true;
-      }
-      if ( str >= 15 ){
-        arrays.push(strongNames);
-        isStrong = true;
-      }
-      if (cha <= 6){
-        arrays.push(uglyNames);
-        isUgly = true;
-      }
-      if (cha >= 15){
-        arrays.push(prettyNames);
-        isPretty = true;
-      }
-      if ( (isStrong == true) || (isWeak == true) || (isSmart == true) || (isDumb == true) || (isPretty == true) || (isUgly == true) ){
-        var fameArray = new Array();  
-        var rollType = rollDice(arrays.length-1,1);
-        rollType = rollType-1;
-        fameArray = arrays[rollType];
-        var totalFame = fameArray.length;
-        var roll = rollDice(totalFame-1,1);
-        roll = roll-1;
-        name += " the " + fameArray[roll];
-      }
-    }
-    return name;
-  }
-}*/
