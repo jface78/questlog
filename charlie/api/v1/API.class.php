@@ -75,10 +75,27 @@ abstract class API {
 
     public function processAPI() {
       // Check that the session is active.
-      if (!checkSession()) {
+      if ($this -> endpoint != 'login' && $this -> endpoint != 'session' && !checkSession()) {
         return $this->_response("Not logged in.", 401);
       }
       switch($this ->endpoint) {
+        case 'session':
+          if (!checkSession()) {
+            return $this->_response("Not logged in.", 401);
+          } else {
+            $json_array = [];
+            $json_array['user_details'] = [];
+            $json_array['user_details']['name'] = $_SESSION['login'];
+            $json_array['user_details']['ip'] = $_SESSION['ip'];
+            $json_array['user_details']['date'] = $_SESSION['date'];
+            return json_encode($json_array);
+          }
+          break;
+        case 'login':
+          if (empty($this->args[0]) || empty($this->args[1])) {
+            return $this->_response("Invalid parameter(s)", 400);
+          }
+          break;
         case 'quest':
           if (empty($this->args[0]) || !is_numeric($this->args[0])) {
             return $this->_response("Invalid parameter(s)", 400);

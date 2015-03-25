@@ -3,7 +3,6 @@ define('SESSION_TIMEOUT', 3600);
 
 function killSession() {
   session_unset();
-  session_destroy();
 }
 
 function getSortableTitle($title) {

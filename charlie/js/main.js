@@ -1,11 +1,13 @@
 var SERVICE_URL = 'api/v1/';
 var TEMPLATE_URL = 'templates/';
+var LOCAL_API_KEY = 1;
 var isLoggedIn = false;
 
 function handleLogout() {
   $.ajax({
-    url: SERVICE_URL + 'loginHandler.php?request=logout',
-    success: function() {
+    url: SERVICE_URL + '/logout',
+    data: { apiKey: LOCAL_API_KEY},
+    success: function(response) {
       isLoggedIn = false;
       $('#mainContent').fadeOut('normal', function() {
         window.location.reload();
@@ -19,10 +21,11 @@ function handleLogin() {
     $('#warningMessage').text('Fill out both fields, dummy.');
   } else {
     $.ajax({
-      url: SERVICE_URL + 'loginHandler.php?request=login',
-      type: 'POST',
+      url: SERVICE_URL + 'login/' + $('#user').val().trim().toLowerCase() + '/' + $('#passwd').val().trim(),
+      //url: SERVICE_URL + 'loginHandler.php?request=login',
+      type: 'GET',
       dataType: 'json',
-      data: { user: $('#user').val().trim().toLowerCase(), pass: $('#passwd').val().trim()},
+      data: { apiKey: LOCAL_API_KEY},
       statusCode: {
         200: function(response) {
           if (!isLoggedIn) {
@@ -35,6 +38,7 @@ function handleLogin() {
               $('#mainContent').html(div);
               $('#mainContent').append(generateMenu());
               loadQuestListings();
+              /*
                 require(['converse'], function (converse) {
                   alert('ok');
     converse.initialize({
@@ -47,7 +51,7 @@ function handleLogin() {
         show_controlbox_by_default: true,
         roster_groups: true
     });
-});
+});*/
             });
           }
         },
@@ -208,7 +212,7 @@ function loadQuest(questID, order) {
       $.ajax({
         url: SERVICE_URL + 'quest/' + questID + '/limit/50/' + order,
         method: 'GET',
-        data: {apiKey: 1},
+        data: {apiKey: LOCAL_API_KEY},
         dataType: 'json',
         statusCode: {
           200: function(response) {
@@ -285,7 +289,7 @@ function loadQuestListings() {
       $.ajax({
         url: SERVICE_URL + 'quests',
         method: 'GET',
-        data: {apiKey: 1},
+        data: {apiKey: LOCAL_API_KEY},
         dataType: 'json',
         statusCode: {
           200: function(response) {
@@ -695,7 +699,9 @@ $(document).ready(function() {
     $('#titleImg').attr('src', 'img/title.06.gif');
   }
   $.ajax({
-    url: 'php/services/loginHandler.php?request=checkSession',
+    url: SERVICE_URL + '/session',
+    method: 'GET',
+    data: {apiKey: LOCAL_API_KEY},
     dataType: 'json',
     statusCode: {
       401: function() {
@@ -704,6 +710,7 @@ $(document).ready(function() {
         $('#mainContent').fadeIn();
       },
       200: function(response) {
+        console.log(response);
         $('#mainContent').fadeOut('normal', function() {
           addGreetingBox(response.user_details.name, response.user_details.date, response.user_details.ip);
           $('#warningMessage').text('You are currently logged in.');
@@ -711,6 +718,7 @@ $(document).ready(function() {
           $(div).attr('id', 'questlogLeft');
           $('#mainContent').html(div);
           $('#mainContent').append(generateMenu());
+          /*
           require(['converse'], function (converse) {
             alert('ok');
             converse.initialize({
@@ -723,7 +731,7 @@ $(document).ready(function() {
               show_controlbox_by_default: true,
               roster_groups: true
             });
-          });
+          });*/
           loadQuestListings();
         });
       }
