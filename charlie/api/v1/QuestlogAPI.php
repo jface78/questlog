@@ -153,17 +153,21 @@ class QuestlogAPI extends API {
     protected function quest($args) {
       if ($this->method == 'GET') {
         $postOrder = 'DESC';
-        if (in_array('ASC',$args)) {
-          $postOrder = 'ASC';
+        $limit = null;
+        $page = 1;
+        if (in_array('ORDER', $args)) {
+          $pos = array_search('ORDER', $args) + 1;
+          $postOrder = strtoupper($args[$pos]);
         }
         if (in_array('LIMIT', $args)) {
           $pos = array_search('LIMIT', $args) + 1;
           $limit = $args[$pos];
-      } else if (in_array('ASC', $args)) {
-        $postOrder = 'ASC';
-      } else {
-        $postOrder = 'DESC';
-      }
+        }
+        if (in_array('PAGE', $args)) {
+          $pos = array_search('PAGE', $args) + 1;
+          $page = $args[$pos];
+        }
+
         try {
           $dbh = new PDO('mysql:host=' .DB_HOST . ';dbname=' . DB_DATABASE, DB_USER, DB_PASS);
           $json_array = [];
@@ -178,20 +182,26 @@ class QuestlogAPI extends API {
           }
           $json_array['title'] = $row['quest_name'];
           $json_array['questID'] = $row['qid'];
+          $json_array['currentPage'] = $page;
 
-          if (!isset($limit)) {
+          if (is_null($limit)) {
             $json_array['pageCount'] = 1;
+            $json_array['delimiter'] = 0;
+            $startingIndex = 0;
           } else {
             $query = 'SELECT COUNT(pid) FROM posts WHERE qid=:questID';
             $sth = $dbh -> prepare($query);
             $sth -> execute(array(':questID' => $args[0]));
             $total = $sth -> fetch();
             $json_array['pageCount'] = ceil($total['COUNT(pid)']/$limit);
+            $json_array['delimiter'] = $limit;
+            $startingIndex = $limit * $page;
           }
           $query = 'SELECT pid,uid,cid,timestamp,post_text FROM posts WHERE qid=:questID ORDER BY timestamp ' . $postOrder;
-          if (isset($limit)) {
+          if (!is_null($limit)) {
             $query .= ' LIMIT ' . $limit;
           }
+          $query .= ' OFFSET ' . $startingIndex;
           $sth = $dbh -> prepare($query);
           $sth -> execute(array(':questID' => $args[0]));
           $results = $sth -> fetchAll();
@@ -218,6 +228,9 @@ class QuestlogAPI extends API {
               $json_array['posts'][$index]['postedBy'] = $character['char_name'];
             }
             $index++;
+            if ($index == count($results)) {
+            
+            }
           }
           $dbh = null;
           return $json_array;

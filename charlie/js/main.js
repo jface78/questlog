@@ -1,5 +1,6 @@
 var SERVICE_URL = 'api/v1/';
 var TEMPLATE_URL = 'templates/';
+var EVENT_LOADED = 'loaded';
 var LOCAL_API_KEY = 1;
 var isLoggedIn = false;
 
@@ -176,6 +177,113 @@ function convertHTMLToBB(text) {
   return text;
 }
 
+function addPagination(questID, pageCount, limit, order) {
+  $('.questNavigation').empty();
+  
+  function addClickEvent(btn) {
+    $(btn).click(function(event) {
+      $('#questContent').fadeOut('fast', function() {
+        $('#questContent').empty();
+        $('#questlogLeft').on(EVENT_LOADED, function() {
+          $('#questlogLeft').off();
+          $('#questContent').fadeIn();
+        });
+        getPostsByPage(questID, limit, $(btn).text(), order); 
+      });
+    });
+  }
+  for (var i=0; i < 6; i++) {
+    var btn = document.createElement('button');
+    $(btn).addClass('questNavButton');
+    $(btn).text(i+1);
+    addClickEvent(btn);
+    $('.questNavigation').append(btn);
+  }
+}
+
+function getPostsByPage(questID, limit, page, order) {
+  var service = SERVICE_URL + 'quest/' + questID;
+  if (limit) {
+    service += '/limit/' + limit;
+  }
+  if (page) {
+    service += '/page/' + page;
+  }
+  if (order) {
+    service += '/order/' + order;
+  }
+  
+  $.ajax({
+    url: service,
+    method: 'GET',
+    data: {apiKey: LOCAL_API_KEY},
+    dataType: 'json',
+    statusCode: {
+      200: function(response) {
+        for (var i=0; i < response.posts.length; i++) {
+          var div = document.createElement('div');
+          $(div).attr('id', 'post_' + response.posts[i].id);
+          var header = document.createElement('header');
+          var span = document.createElement('span');
+          $(span).addClass('floatLeft');
+          $(span).text('#' + response.posts[i].id);
+          $(span).append('&nbsp;&nbsp;');
+          $(span).append('Posted&nbsp;');
+          var date = formatDate(parseInt(response.posts[i].timestamp));
+          $(span).append(date + '&nbsp;by&nbsp;');
+          var a = document.createElement('a');
+          $(a).addClass('characterNameLink');
+          $(a).text(response.posts[i].postedBy);
+          $(span).append(a);
+          $(header).append(span);
+          span = document.createElement('span');
+          $(span).addClass('floatRight');
+          var img = document.createElement('img');
+          $(img).addClass('pointer editPostBtn');
+          $(img).attr('alt', 'edit post');
+          $(img).attr('title', 'edit post');
+          $(img).attr('src', 'img/icon.edit_dark.gif');
+          $(img).attr('data-post-id', response.posts[i].id);
+          $(img).click(function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            renderEditWindow(this);
+          });
+          $(span).append(img);
+          $(span).append('&nbsp;');
+          img = document.createElement('img');
+          $(img).attr('alt', 'delete post');
+          $(img).attr('title', 'delete post');
+          $(img).addClass('pointer deletePostBtn');
+          $(img).attr('src', 'img/icon.delete_dark.gif');
+          $(img).attr('data-post-id', response.posts[i].id);
+          $(img).click(function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            renderDeletePostWindow(this, questID, order);
+          });
+          $(span).append(img);
+          $(header).append(span);
+          $(header).addClass('postHeader');
+          $(div).append(header);
+          var section = document.createElement('section');
+          $(section).addClass('postBody');
+          if (i % 2 == 0) {
+            $(section).addClass('even');
+          } else {
+            $(section).addClass('odd');
+          }
+          $(section).html(response.posts[i].text);
+          $(div).append(section);
+          $('#questContent').append(div);
+        }
+        addPagination(response.questID, response.pageCount, response.delimiter, response.order);
+        $('#questlogLeft').trigger(EVENT_LOADED);
+      }
+    }
+  });
+}
+
 function loadQuest(questID, order) {
   $.ajax({
     url: TEMPLATE_URL + 'quest.html',
@@ -209,73 +317,10 @@ function loadQuest(questID, order) {
       $(buttons[7]).click(function() {
         renderNewPostWindow(questID, order);
       });
-      $.ajax({
-        url: SERVICE_URL + 'quest/' + questID + '/limit/50/' + order,
-        method: 'GET',
-        data: {apiKey: LOCAL_API_KEY},
-        dataType: 'json',
-        statusCode: {
-          200: function(response) {
-            for (var i=0; i < response.posts.length; i++) {
-              var div = document.createElement('div');
-              $(div).attr('id', 'post_' + response.posts[i].id);
-              var header = document.createElement('header');
-              var span = document.createElement('span');
-              $(span).addClass('floatLeft');
-              $(span).text('#' + response.posts[i].id);
-              $(span).append('&nbsp;&nbsp;');
-              $(span).append('Posted&nbsp;');
-              var date = formatDate(parseInt(response.posts[i].timestamp));
-              $(span).append(date + '&nbsp;by&nbsp;');
-              var a = document.createElement('a');
-              $(a).addClass('characterNameLink');
-              $(a).text(response.posts[i].postedBy);
-              $(span).append(a);
-              $(header).append(span);
-              span = document.createElement('span');
-              $(span).addClass('floatRight');
-              var img = document.createElement('img');
-              $(img).addClass('pointer editPostBtn');
-              $(img).attr('alt', 'edit post');
-              $(img).attr('title', 'edit post');
-              $(img).attr('src', 'img/icon.edit_dark.gif');
-              $(img).attr('data-post-id', response.posts[i].id);
-              $(img).click(function(event) {
-                event.preventDefault();
-                event.stopPropagation();
-                renderEditWindow(this);
-              });
-              $(span).append(img);
-              $(span).append('&nbsp;');
-              img = document.createElement('img');
-              $(img).attr('alt', 'delete post');
-              $(img).attr('title', 'delete post');
-              $(img).addClass('pointer deletePostBtn');
-              $(img).attr('src', 'img/icon.delete_dark.gif');
-              $(img).attr('data-post-id', response.posts[i].id);
-              $(img).click(function(event) {
-                event.preventDefault();
-                event.stopPropagation();
-                renderDeletePostWindow(this, questID, order);
-              });
-              $(span).append(img);
-              $(header).append(span);
-              $(header).addClass('postHeader');
-              $(div).append(header);
-              var section = document.createElement('section');
-              $(section).addClass('postBody');
-              if (i % 2 == 0) {
-                $(section).addClass('even');
-              } else {
-                $(section).addClass('odd');
-              }
-              $(section).html(response.posts[i].text);
-              $(div).append(section);
-              $('#questContent').append(div);
-            }
-            $('#questlogLeft').fadeIn();
-          }
-        }
+      getPostsByPage(questID, 50, 1, 'ASC');
+      $('#questlogLeft').on(EVENT_LOADED, function() {
+        $('#questlogLeft').off();
+        $('#questlogLeft').fadeIn();
       });
     }
   });

@@ -97,12 +97,9 @@ abstract class API {
           }
           break;
         case 'quest':
+          $this->args = array_map('strtoupper', $this->args);
           if (empty($this->args[0]) || !is_numeric($this->args[0])) {
             return $this->_response("Invalid parameter(s)", 400);
-          }
-          if (in_array('limit',$this->args)) {
-            $nextPos = array_search('limit',$this->args);
-            $this->args[$nextPos] = 'LIMIT';
           }
           if (in_array('LIMIT',$this->args)) {
             $nextPos = array_search('LIMIT',$this->args)+1;
@@ -110,13 +107,17 @@ abstract class API {
               return $this->_response("Invalid parameter(s)", 400);
             }
           }
-          if (in_array('desc',$this->args)) {
-            $nextPos = array_search('desc',$this->args);
-            $this->args[$nextPos] = 'DESC';
+          if (in_array('ORDER', $this->args)) {
+            $nextPos = array_search('ORDER', $this->args) + 1;
+            if (count($this->args) >= $nextPos+1 && strtoupper($this->args[$nextPos]) != 'ASC' && strtoupper($this->args[$nextPos]) != 'DESC') {
+              return $this->_response("Invalid parameter(s)", 400);
+            }
           }
-          if (in_array('asc',$this->args)) {
-            $nextPos = array_search('asc',$this->args);
-            $this->args[$nextPos] = 'ASC';
+          if (in_array('PAGE', $this->args)) {
+            $nextPos = array_search('PAGE', $this->args) + 1;
+            if (count($this->args) >= $nextPos+1 && !is_numeric($this->args[$nextPos])) {
+              return $this->_response("Invalid parameter(s)", 400);
+            }
           }
           break;
         case 'users':
