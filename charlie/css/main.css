@@ -10,6 +10,7 @@ body {
   letter-spacing: 0.1mm;
   line-height:20px;
   box-sizing:border-box;
+  position:relative;
 }
 
 hr {
@@ -143,6 +144,8 @@ footer {
 #mainContent {
   width:100%;
   min-height:500px;
+  height:100%;
+  margin-bottom:30px;
   color:#fff;
   float:left;
 }
@@ -168,24 +171,34 @@ footer {
 #questlogRight span:hover {
   color:#fff;
 }
+#quest {
+  position:relative;
+  min-height:600px;
+}
 .questNavigation {
+  position:absolute;
+  right:-5px;
   text-align:center;
-  float:right;
   vertical-align:middle;
 }
 .questNavButton {
   color:#cccccc;
-  background-color:#838282;
-  border-color:#131313;
+  background-color:#656566;;
+  border:1px solid #939393;
   font-size:12px;
   width:40px;
-  height:30px;
+  height:18px;
   border-radius:5px;
   margin-left:5px;
   margin-right:5px;
 }
+.questNavButton.disabled {
+  cursor:default;
+  opacity:0.5;
+}
 .questNavButton:hover {
   color:#fff;
+  background-color:#535456;
 }
 #questListings table {
   width:100%;
@@ -247,8 +260,8 @@ footer {
   font-weight:bold;
   vertical-align:middle;
   display:inline-block;
-  height:30px;
-  line-height:30px;
+  height:18px;
+  line-height:18px;
 }
 .questMenu:hover {
   cursor:pointer;

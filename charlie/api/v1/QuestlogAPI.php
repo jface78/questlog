@@ -183,6 +183,7 @@ class QuestlogAPI extends API {
           $json_array['title'] = $row['quest_name'];
           $json_array['questID'] = $row['qid'];
           $json_array['currentPage'] = $page;
+          $json_array['order'] = $postOrder;
 
           if (is_null($limit)) {
             $json_array['pageCount'] = 1;
@@ -195,13 +196,16 @@ class QuestlogAPI extends API {
             $total = $sth -> fetch();
             $json_array['pageCount'] = ceil($total['COUNT(pid)']/$limit);
             $json_array['delimiter'] = $limit;
-            $startingIndex = $limit * $page;
+            if ($postOrder == 'DESC') {
+              $startingIndex = $limit * ($page-1);
+            } else {
+              $startingIndex = ($limit * $page) - $limit;
+            }
           }
           $query = 'SELECT pid,uid,cid,timestamp,post_text FROM posts WHERE qid=:questID ORDER BY timestamp ' . $postOrder;
           if (!is_null($limit)) {
-            $query .= ' LIMIT ' . $limit;
+            $query .= ' LIMIT ' . $limit . ' OFFSET ' . $startingIndex;
           }
-          $query .= ' OFFSET ' . $startingIndex;
           $sth = $dbh -> prepare($query);
           $sth -> execute(array(':questID' => $args[0]));
           $results = $sth -> fetchAll();
