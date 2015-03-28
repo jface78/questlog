@@ -28,12 +28,21 @@ hr {
 button {
   border-width: 1px;
   border-style: outset inset inset outset;
-  border-color: #848383;
+  border: 1px solid #848383;
   background-color: #3B3B3B;
   font-size: 10px;
   font-weight: bold;
-  color: #FFF;
+  color: #cccccc;
   cursor:pointer;
+  border-radius:4px;
+}
+button:hover {
+  color:#FFF;
+}
+.smallButton {
+  padding-top:1px;
+  padding-bottom:1px;
+  font-weight:normal;
 }
 
 
@@ -66,9 +75,14 @@ footer {
   line-height:14px;
   padding-top:10px;
 }
-.loginBox input,button {
+.loginBox input, .loginBox button {
   width: 150px;
+  border-color:#fff;
+  border-radius:0px;
 }
+ .loginBox button {
+   width:154px;
+ }
 
 .field {
   border-width: 1px;
@@ -107,6 +121,23 @@ footer {
 }
 .characterNameLink:hover {
   color:#FFD75D;
+}
+
+.randomPostTitle {
+  font-size: 16px;
+  font-weight: bold;
+  text-shadow: #000 9px 6px 12px;
+  color: #B4B4B4;
+}
+
+.randomPostContainer {
+  width:75%;
+  margin:0 auto;
+  margin-top:25px;
+  border-bottom-left-radius:20px;
+  border-bottom-right-radius:20px;
+  overflow:hidden;
+  border-bottom:1px solid #000;
 }
 
 #questContent {
@@ -271,3 +302,4 @@ footer {
 .clear{clear:both;}
 .floatLeft{float:left;}
 .floatRight{float:right;}
+.alignCenter{text-align:center;}

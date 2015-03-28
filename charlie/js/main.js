@@ -1,5 +1,6 @@
-var SERVICE_URL = 'api/v1/';
+var API_URL = 'api/v1/';
 var TEMPLATE_URL = 'templates/';
+var SERVICE_URL = 'php/services/';
 var EVENT_LOADED = 'loaded';
 var LOCAL_API_KEY = 1;
 var isLoggedIn = false;
@@ -20,7 +21,7 @@ function resetQuestVars() {
 
 function handleLogout() {
   $.ajax({
-    url: SERVICE_URL + '/logout',
+    url: API_URL + '/logout',
     data: { apiKey: LOCAL_API_KEY},
     success: function(response) {
       isLoggedIn = false;
@@ -37,8 +38,7 @@ function handleLogin() {
     $('#warningMessage').text('Fill out both fields, dummy.');
   } else {
     $.ajax({
-      url: SERVICE_URL + 'login/' + $('#user').val().trim().toLowerCase() + '/' + $('#passwd').val().trim(),
-      //url: SERVICE_URL + 'loginHandler.php?request=login',
+      url: API_URL + 'login/' + $('#user').val().trim().toLowerCase() + '/' + $('#passwd').val().trim(),
       type: 'GET',
       dataType: 'json',
       data: { apiKey: LOCAL_API_KEY},
@@ -60,7 +60,7 @@ function handleLogin() {
     converse.initialize({
         auto_list_rooms: false,
         auto_subscribe: false,
-        bosh_service_url: 'https://bind.conversejs.org', // Please use this connection manager only for testing purposes
+        bosh_API_URL: 'https://bind.conversejs.org', // Please use this connection manager only for testing purposes
         hide_muc_server: false,
         i18n: locales.en, // Refer to ./locale/locales.js to see which locales are supported
         prebind: false,
@@ -75,7 +75,6 @@ function handleLogin() {
           $('#warningMessage').text('Does not compute.');
         },
         500: function(error) {
-          console.log(error.responseText);
           $('#warningMessage').text('There was an error logging you in. Try again in 4-6 weeks.');
         }
       }
@@ -253,7 +252,7 @@ function addPagination() {
 function getPostsByPage() {
   $('#questContent').fadeOut('fast', function() {
     $('#questContent').empty();
-    var service = SERVICE_URL + 'quest/' + currentQuestID;
+    var service = API_URL + 'quest/' + currentQuestID;
     if (currentQuestLimiter) {
       service += '/limit/' + currentQuestLimiter;
     }
@@ -458,7 +457,7 @@ function loadQuestListings() {
     success: function(template) {
       $('#questlogLeft').html(template);
       $.ajax({
-        url: SERVICE_URL + 'quests',
+        url: API_URL + 'quests',
         method: 'GET',
         data: {apiKey: LOCAL_API_KEY},
         dataType: 'json',
@@ -495,6 +494,18 @@ function loadQuestListings() {
               $(td).addClass('log-cell');
               $(td).text(new Date(parseInt(response.quests.gmQuests[i].lastPostDate)*1000).toDateString());
               $(tr).append(td);
+              td = document.createElement('td');
+              $(td).addClass('log-cell');
+              var btn = document.createElement('button');
+              $(btn).addClass('smallButton');
+              $(btn).css('margin-right', '5px');
+              $(btn).text('edit');
+              $(td).append(btn);
+              btn = document.createElement('button');
+              $(btn).addClass('smallButton');
+              $(btn).text('delete');
+              $(td).append(btn);
+              $(tr).append(td);
                td = document.createElement('td');
               $(td).text(response.quests.gmQuests[i].sortable);
               $(tr).append(td);
@@ -509,9 +520,11 @@ function loadQuestListings() {
                 'info': ''
               },
               'columnDefs': [
+                {'class': 'alignCenter', 'targets':[4]},
                 { 'width': '25%', 'targets': 0 },
-                { 'visible': false, 'targets':[4]},
-                { "iDataSort": 4, "targets": [ 0 ] }
+                { 'width': '150px', 'targets': 4},
+                { 'visible': false, 'targets':[5]},
+                { "iDataSort": 5, "targets": [ 0 ] }
               ],
               "order": [[ 0, "asc" ]],
               'initComplete':function() {
@@ -720,6 +733,14 @@ function ucwords(str) {
     });
 }
 
+function leadWithZero(numberString) {
+  if (parseInt(numberString) < 10) {
+    return '0' + numberString;
+  } else {
+    return numberString;
+  }
+}
+
 function formatDate(dateStr) {
   if (dateStr) {
     var date = new Date(parseInt(dateStr)*1000);
@@ -804,6 +825,53 @@ function generateMenu() {
   });
 }
 
+function fetchRandomPost() {
+  $.ajax({
+    url: SERVICE_URL + '/fetchRandomPost.php',
+    dataType: 'json',
+    success: function(data) {
+      var div = document.createElement('div');
+      $(div).addClass('randomPostContainer');
+      var subdiv = document.createElement('subdiv');
+      $(subdiv).css('margin-left', '3px');
+      var span = document.createElement('span');
+      $(span).addClass('randomPostTitle');
+      $(span).text('Random Post');
+      $(subdiv).append(span);
+      $(subdiv).append('<br />');
+      span = document.createElement('span');
+      $(span).css('margin-left', '3px');
+      $(span).append('From <i>' + data.name + ',</i> ' + data.post_number +' of ' + data.total_posts + ' total entries.');
+      $(subdiv).append(span);
+      $(div).append(subdiv);
+      subdiv = document.createElement('div');
+      $(subdiv).addClass('postHeader');
+      var date = new Date(parseInt(data.date)*1000);
+      console.log(date.toDateString());
+      if (date.getFullYear() < 2015) {
+        var now = new Date();
+        if (date.getMonth() > now.getMonth() || (date.getMonth() == now.getMonth() && date.getDate() > now.getDate())) {
+          date.setFullYear(2014);
+        } else {
+          date.setFullYear(2015);
+        }
+      }
+      console.log(date.toDateString());
+      var header = '&nbsp;' + data.post_id + '&nbsp;&nbsp;Posted on ' + date.toDateString() + ' at ' +
+                            date.toLocaleTimeString() + ' by <a class="characterNameLink">' + data.poster_name + '</a>';
+      $(subdiv).append(header);
+      $(div).append(subdiv);
+      subdiv = document.createElement('div');
+      $(subdiv).addClass('postBody odd');
+      $(subdiv).html(data.text);
+      $(subdiv).find('img').remove();
+      $(div).append(subdiv);
+      $('#mainContent').html(div);
+    }
+  });
+  
+}
+
 $(document).ready(function() {
   $('#mainContent').hide();
   $('footer').text('Copyright ' + new Date().getFullYear() + ' QuestLog.org');
@@ -812,18 +880,19 @@ $(document).ready(function() {
     $('#titleImg').attr('src', 'img/title.06.gif');
   }
   $.ajax({
-    url: SERVICE_URL + '/session',
+    url: API_URL + '/session',
     method: 'GET',
     data: {apiKey: LOCAL_API_KEY},
     dataType: 'json',
     statusCode: {
       401: function() {
+        isLoggedIn = false;
         addLoginBox();
-        //$('#warningMessage').text('You are not currently logged in.');
+        fetchRandomPost();
         $('#mainContent').fadeIn();
       },
       200: function(response) {
-        console.log(response);
+        isLoggedIn = true;
         $('#mainContent').fadeOut('normal', function() {
           addGreetingBox(response.user_details.name, response.user_details.date, response.user_details.ip);
           $('#warningMessage').text('You are currently logged in.');

@@ -18,11 +18,13 @@
   <body>
     <header class="floatLeft" id="leftHeader">
       <img src="img/title.05.gif" alt="QuestLog" id="titleImg"><br />
-      <div id="warningMessage">This is QuestLog</div>
+      <div id="warningMessage">This is QuestLog. RPGs and collaborative storytelling.<br>
+      <span style="color:#fff;font-size:14px;">Current Status: <b>CLOSED BETA</b></span>
+      </div>
     </header>
     <hr class="clear"></hr>
     <section id="mainContent">
-    Filler text for non-logged in users. Blah blah blah, questlog is great.
+
     </section>
     <hr></hr>
     
