@@ -25,43 +25,45 @@ function generateQuestListings($results, $json_array, $type) {
       $json_array['quests'][$type] = [];
     }
     foreach ($results as $row) {
-      $json_array['quests'][$type][$index]['title'] = $row['quest_name'];
-      $json_array['quests'][$type][$index]['sortable'] = getSortableTitle($row['quest_name']);
-      $json_array['quests'][$type][$index]['questID'] = $row['qid'];
-      $json_array['quests'][$type][$index]['created'] = strtotime($row['timestamp']);
-      $query = 'SELECT count(pid) FROM posts WHERE qid=:qid';
-      $sth = $dbh -> prepare($query);
-      $sth -> execute(array(':qid' => $row['qid']));
-      $count = $sth -> fetch();
-      $json_array['quests'][$type][$index]['count'] = $count['count(pid)'];
-      $query = 'SELECT cid FROM posts WHERE qid=:qid ORDER BY post_date DESC LIMIT 1';
-      $sth = $dbh -> prepare($query);
-      $sth -> execute(array(':qid' => $row['qid']));
-      $cid = $sth -> fetch();
-      $query = 'SELECT login_name FROM users WHERE uid=:uid';
-      $sth = $dbh -> prepare($query);
-      $sth -> execute(array(':uid' => $row['uid']));
-      $gmName = $sth -> fetch();
-      $json_array['quests'][$type][$index]['gm'] = $gmName['login_name'];
-      $query = 'SELECT timestamp FROM posts WHERE qid=:qid ORDER BY timestamp DESC LIMIT 1';
-      $sth = $dbh -> prepare($query);
-      $sth -> execute(array(':qid' => $row['qid']));
-      $lastPostDate = $sth -> fetch();
-      $json_array['quests'][$type][$index]['lastPostDate'] = time($lastPostDate['timestamp']);
-      if ($cid['cid'] == 0) {
+      if (!empty($row)) {
+        $json_array['quests'][$type][$index]['title'] = $row['quest_name'];
+        $json_array['quests'][$type][$index]['sortable'] = getSortableTitle($row['quest_name']);
+        $json_array['quests'][$type][$index]['questID'] = $row['qid'];
+        $json_array['quests'][$type][$index]['created'] = strtotime($row['timestamp']);
+        $query = 'SELECT count(pid) FROM posts WHERE qid=:qid';
+        $sth = $dbh -> prepare($query);
+        $sth -> execute(array(':qid' => $row['qid']));
+        $count = $sth -> fetch();
+        $json_array['quests'][$type][$index]['count'] = $count['count(pid)'];
+        $query = 'SELECT cid FROM posts WHERE qid=:qid ORDER BY post_date DESC LIMIT 1';
+        $sth = $dbh -> prepare($query);
+        $sth -> execute(array(':qid' => $row['qid']));
+        $cid = $sth -> fetch();
         $query = 'SELECT login_name FROM users WHERE uid=:uid';
         $sth = $dbh -> prepare($query);
         $sth -> execute(array(':uid' => $row['uid']));
-        $uname = $sth -> fetch();
-        $json_array['quests'][$type][$index]['lastPostBy'] = $uname['login_name'];
-      } else {
-        $query = 'SELECT char_name FROM characters WHERE cid=:cid';
+        $gmName = $sth -> fetch();
+        $json_array['quests'][$type][$index]['gm'] = $gmName['login_name'];
+        $query = 'SELECT timestamp FROM posts WHERE qid=:qid ORDER BY timestamp DESC LIMIT 1';
         $sth = $dbh -> prepare($query);
-        $sth -> execute(array(':cid' => $cid['cid']));
-        $cname = $sth -> fetch();
-        $json_array['quests'][$type][$index]['lastPostBy'] = $cname['char_name'];
+        $sth -> execute(array(':qid' => $row['qid']));
+        $lastPostDate = $sth -> fetch();
+        $json_array['quests'][$type][$index]['lastPostDate'] = time($lastPostDate['timestamp']);
+        if ($cid['cid'] == 0) {
+          $query = 'SELECT login_name FROM users WHERE uid=:uid';
+          $sth = $dbh -> prepare($query);
+          $sth -> execute(array(':uid' => $row['uid']));
+          $uname = $sth -> fetch();
+          $json_array['quests'][$type][$index]['lastPostBy'] = $uname['login_name'];
+        } else {
+          $query = 'SELECT char_name FROM characters WHERE cid=:cid';
+          $sth = $dbh -> prepare($query);
+          $sth -> execute(array(':cid' => $cid['cid']));
+          $cname = $sth -> fetch();
+          $json_array['quests'][$type][$index]['lastPostBy'] = $cname['char_name'];
+        }
+        $index++;
       }
-      $index++;
     }
     $dbh = null;
     return $json_array;

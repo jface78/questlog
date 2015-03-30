@@ -111,16 +111,17 @@ class QuestlogAPI extends API {
           $sth -> execute(array(':cid' => $row['cid']));
           $player_chars .= ',' . $row['cid'];
           $player_quests = $sth -> fetchAll();
-          foreach ($player_quests as $quest) {
-            $query = 'SELECT qid,uid,quest_name,timestamp FROM quests WHERE qid=:qid AND status > 0';
-            $sth = $dbh -> prepare($query);
-            $sth -> execute(array(':qid' => $quest['qid']));
-            $questsArr[$index] = $sth -> fetch();
-            $index++;
+          if (count($player_quests) > 0) {
+            foreach ($player_quests as $quest) {
+              $query = 'SELECT qid,uid,quest_name,timestamp FROM quests WHERE qid=:qid AND status > 0';
+              $sth = $dbh -> prepare($query);
+              $sth -> execute(array(':qid' => $quest['qid']));
+              $questsArr[$index] = $sth -> fetch();
+              $index++;
+            }
           }
         }
         $json_array = generateQuestListings($questsArr, $json_array, 'playerQuests');
-
         // Get all remaining  non-player, non-GM quests.
         $query = 'SELECT qid FROM quest_members WHERE qid NOT IN (' . $gm_quests .') AND cid NOT IN (' . $player_chars . ')';
         $sth = $dbh -> prepare($query);
