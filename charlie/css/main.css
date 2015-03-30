@@ -124,9 +124,9 @@ footer {
 }
 
 .randomPostTitle {
-  font-size: 16px;
+  font-size: 24px;
   font-weight: bold;
-  text-shadow: #000 9px 6px 12px;
+  text-shadow: #000 3px 3px 3px;
   color: #B4B4B4;
 }
 
