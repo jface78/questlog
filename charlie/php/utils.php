@@ -96,6 +96,7 @@ function checkIfUserExists($name) {
     $query = 'SELECT count(uid) FROM users WHERE login_name=:name';
     $sth = $dbh -> prepare($query);
     $sth -> execute(array(':name' => $name));
+    $dbh = null;
     if ($sth -> fetch()[0] > 0) {
       return true;
     } else {

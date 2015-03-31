@@ -28,7 +28,31 @@ class QuestlogAPI extends API {
   }
   
   protected function createUser($args) {
-    
+    if ($this->method == 'POST') {
+      $pos = array_search('NAME', $args) + 1;
+      $name = $args[$pos];
+      $pos = array_search('PASS', $args) + 1;
+      $pass = $args[$pos];
+      $pos = array_search('EMAIL', $args) + 1;
+      $email = $args[$pos];
+      
+      try {
+        $json_array = [];
+        $json_array['users'] = [];
+        $dbh = new PDO('mysql:host=' .DB_HOST . ';dbname=' . DB_DATABASE, DB_USER, DB_PASS);
+        $dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $query = 'INSERT INTO users OUTPUT INSERTED.uid (login_name,login_hash,email)VALUES(:login,:pass,:email)';
+        $sth = $dbh -> prepare($query);
+        $sth -> execute(array(':login' => $name, ':pass' => $pass, ':email' => $email));
+        $json_array['users'][0]['userID'] = $sth -> fetch()[0];
+        $json_array['users'][0]['userName'] = $name;
+        print_r($json_array);
+        $dbh = null;
+        return $json_array;
+      } catch(PDOException $error) {
+        return 'database_error';
+      }
+    }
   }
   protected function login($args) {
     try {
