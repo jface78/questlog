@@ -26,7 +26,10 @@ class QuestlogAPI extends API {
       return false;
     }
   }
+  
+  protected function createUser($args) {
     
+  }
   protected function login($args) {
     try {
       $dbh = new PDO('mysql:host=' .DB_HOST . ';dbname=' . DB_DATABASE, DB_USER, DB_PASS);

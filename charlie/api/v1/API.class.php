@@ -75,7 +75,7 @@ abstract class API {
 
     public function processAPI() {
       // Check that the session is active.
-      if ($this -> endpoint != 'login' && $this -> endpoint != 'session' && !checkSession()) {
+      if ($this -> endpoint != 'login' && $this -> endpoint != 'createUser' && $this -> endpoint != 'session' && !checkSession()) {
         return $this->_response("Not logged in.", 401);
       }
       switch($this ->endpoint) {
@@ -89,6 +89,29 @@ abstract class API {
             $json_array['user_details']['ip'] = $_SESSION['ip'];
             $json_array['user_details']['date'] = $_SESSION['date'];
             return json_encode($json_array);
+          }
+          break;
+        case 'createUser':
+        //createUser/name/USER_NAME/pass/USER_PASS/email/EMAIL
+          if (empty($this->args)) {
+            return $this->_response("Invalid parameter(s)", 400);
+          }
+          $this->args = array_map('strtoupper', $this->args);
+          if (in_array('EMAIL', $this->args)) {
+            $nextPos = array_search('EMAIL',$this->args)+1;
+            if (!filter_var($this->args[$nextPos], FILTER_VALIDATE_EMAIL)) {
+              return $this->_response("Invalid parameter(s)", 400);
+            }
+          } else {
+            return $this->_response("Invalid parameter(s)", 400);
+          }
+          if (in_array('NAME', $this->args)) {
+            $nextPos = array_search('NAME',$this->args)+1;
+            if (checkIfUserExists($this->args[$nextPos])) {
+              return $this->_response("Conflict", 409);
+            }
+          } else {
+            return $this->_response("Invalid parameter(s)", 400);
           }
           break;
         case 'login':
@@ -226,6 +249,7 @@ abstract class API {
             401 => 'Unauthorized',
             404 => 'Not Found',   
             405 => 'Method Not Allowed',
+            409 => 'Conflict',
             500 => 'Internal Server Error',
         ); 
         return ($status[$code])?$status[$code]:$status[500]; 

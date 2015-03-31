@@ -381,13 +381,12 @@ function generateRandomNPC(div) {
   $(div).attr('title', char.name + ' ' + char.title);
   $(div).closest('.ui-dialog').find('.ui-dialog-title').text(char.name + ' ' + char.title);
   $($(div).find('.chargenContent')[0]).html('');
-  var htmlString = ucwords(char.getNumerator(char.age)) + ' ' + char.age + ' ' + char.gender + ' ' + char.race + '. ' +
+  var htmlString = '<br /><b>' + char.name + ' ' + char.title + '</b><br /><br />' +
+                   ucwords(char.getNumerator(char.age)) + ' ' + char.age + ' ' + char.gender + ' ' + char.race + '. ' +
                    ucwords(char.getPronoun(char.gender)) + '\'s ' + char.getNumerator(char.job) + ' ' + char.job + ' of ' +
                    char.jobSkill + ' skill with ' + char.getNumerator(char.trait1) + ' ' + char.trait1 + ' and ' + 
                    char.trait2 + ' demeanor. ' + char.description;
-                   console.log(htmlString);
   $($(div).find('.chargenContent')[0]).html(htmlString);
-  console.log($(div).find('.chargenContent').length);
 }
 
 function renderRandomNPC() {
@@ -433,8 +432,8 @@ function renderRandomNPC() {
   $(document.body).append(div);
 
   var dialog = $(div).dialog({
-    height: 300,
-    width: 350,
+    height: 500,
+    width: 550,
     modal: false,
     buttons: {
       'regenerate': function() {
@@ -715,18 +714,6 @@ function generateWelcomeMessage(user) {
 }
 
 function ucwords(str) {
-  //  discuss at: http://phpjs.org/functions/ucwords/
-  // original by: Jonas Raoni Soares Silva (http://www.jsfromhell.com)
-  // improved by: Waldo Malqui Silva
-  // improved by: Robin
-  // improved by: Kevin van Zonneveld (http://kevin.vanzonneveld.net)
-  // bugfixed by: Onno Marsman
-  //    input by: James (http://www.james-bell.co.uk/)
-  //   example 1: ucwords('kevin van  zonneveld');
-  //   returns 1: 'Kevin Van  Zonneveld'
-  //   example 2: ucwords('HELLO WORLD');
-  //   returns 2: 'HELLO WORLD'
-
   return (str + '')
     .replace(/^([a-z\u00E0-\u00FC])|\s+([a-z\u00E0-\u00FC])/g, function($1) {
       return $1.toUpperCase();
@@ -748,6 +735,124 @@ function formatDate(dateStr) {
   } else {
     return 'at an unknown point in time'
   }
+}
+
+function signup(div, dialogObject) {
+  $(div).find('.signupAlert').css('opacity', 0);
+  var alerts = $(div).find('.signupAlert');
+  var inputs = $(div).find('input');
+  if (!$($(inputs)[0]).val().trim().length || !$($(inputs)[1]).val().trim().length ||
+      !$($(inputs)[2]).val().trim().length || !$($(inputs)[3]).val().trim().length) {
+    $(div).find('.signupAlert').css('opacity', 1);
+    $(div).find('.signupError').text('"It\'s so fine and yet so terrible to stand in front of a blank canvas." - Paul Cezanne');
+    return;
+  }
+  if ($($(inputs)[2]).val().trim() != $($(inputs)[3]).val().trim()) {
+    $($(alerts)[2]).css('opacity', 1);
+    $($(alerts)[3]).css('opacity', 1);
+    $(div).find('.signupError').text('"A gentleman would be ashamed should his deeds not match his words." - Confucious');
+    return;
+  }
+  $.ajax({
+    url: API_URL + 'createUser/name/' + $($(inputs)[1]).val().trim() + '/email/' + $($(inputs)[0]).val().trim() + '/pass/' + $($(inputs)[3]).val().trim(),
+    method: 'POST',
+    data: {apiKey: LOCAL_API_KEY},
+    dataType: 'json',
+      statusCode: {
+        409: function() {
+          $($(alerts)[1]).css('opacity', 1);
+          $(div).find('.signupError').text('"Taking something from one man and making it worse is plagiarism." - George A. Moore');
+        },
+        400: function() {
+          $($(alerts)[0]).css('opacity', 1);
+          $(div).find('.signupError').text('"The world just does not fit conveniently into the format of a 35mm camera." - W. Eugene Smith');
+        },
+        200: function() {
+          dialogObject.dialog('close');
+        }
+      }
+  });
+}
+
+function renderSignup() {
+  var popupContainer = document.createElement('div');
+  $(popupContainer).css('font-size', '10px');
+  $(popupContainer).attr('title', 'join');
+  var rowDiv = document.createElement('div');
+  $(rowDiv).addClass('alignCenter');
+  var span = document.createElement('span');
+  $(span).addClass('signupLabel');
+  $(span).html('email&nbsp;');
+  $(rowDiv).append(span);
+  var input = document.createElement('input');
+  $(input).attr('type', 'text');
+  $(rowDiv).append(input);
+  var sup = document.createElement('sup');
+  $(sup).addClass('signupAlert');
+  $(sup).text('*');
+  $(rowDiv).append(sup);
+  $(popupContainer).append(rowDiv);
+  var rowDiv = document.createElement('div');
+  $(rowDiv).addClass('alignCenter');
+  var span = document.createElement('span');
+  $(span).addClass('signupLabel');
+  $(span).html('desired login&nbsp;');
+  $(rowDiv).append(span);
+  var input = document.createElement('input');
+  $(input).attr('type', 'text');
+  $(rowDiv).append(input);
+  sup = document.createElement('sup');
+  $(sup).addClass('signupAlert');
+  $(sup).text('*');
+  $(rowDiv).append(sup);
+  $(popupContainer).append(rowDiv);
+  rowDiv = document.createElement('div');
+  $(rowDiv).addClass('alignCenter');
+  span = document.createElement('span');
+  $(span).addClass('signupLabel');
+  $(span).html('passwd&nbsp;');
+  $(rowDiv).append(span);
+  input = document.createElement('input');
+  $(input).attr('type', 'password');
+  $(rowDiv).append(input);
+  sup = document.createElement('sup');
+  $(sup).addClass('signupAlert');
+  $(sup).text('*');
+  $(rowDiv).append(sup);
+  $(popupContainer).append(rowDiv);
+  rowDiv = document.createElement('div');
+  $(rowDiv).addClass('alignCenter');
+  span = document.createElement('span');
+  $(span).addClass('signupLabel');
+  $(span).html('confirm&nbsp;');
+  $(rowDiv).append(span);
+  input = document.createElement('input');
+  $(input).attr('type', 'password');
+  $(rowDiv).append(input);
+  sup = document.createElement('sup');
+  $(sup).addClass('signupAlert');
+  $(sup).text('*');
+  $(rowDiv).append(sup);
+  $(popupContainer).append(rowDiv);
+  rowDiv = document.createElement('div');
+  $(rowDiv).addClass('signupError');
+  $(popupContainer).append(rowDiv);
+  $(document.body).append(popupContainer);
+  var dialog = $(popupContainer).dialog({
+    height: 225,
+    width: 350,
+    modal: true,
+    buttons: {
+      'join': function() {
+        signup(popupContainer, dialog);
+      },
+      'never mind': function() {
+        dialog.dialog('close');
+      }
+    },
+    close: function() {
+    }
+  });
 }
 
 function addLoginBox() {
@@ -787,6 +892,21 @@ function addLoginBox() {
   var button = document.createElement('button');
   $(button).text('submit');
   $(div).append(button);
+  $(div).append('<br />');
+  var a = document.createElement('a');
+  $(a).attr('href', '#');
+  $(a).click(function(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    renderSignup();
+  });
+  $(a).text('join');
+  $(a).css('margin-right', '5px');
+  $(div).append(a);
+  a = document.createElement('a');
+  $(a).attr('href', '#');
+  $(a).text('forgot?');
+  $(div).append(a);
   $(parent).append(div);
   $('#leftHeader').after(parent);
   $(button).click(handleLogin);
@@ -795,6 +915,7 @@ function addLoginBox() {
       handleLogin();
     }
   });
+  
 }
 
 function addGreetingBox(user, date, ip) {

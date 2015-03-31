@@ -179,21 +179,21 @@ this.makeCharacterVitals = function() {
       break;
     default:
       this.race = monsterRaces[getRandomInt(0, monsterRaces.length-1)];
-      this.name = monsterNames[getRandomInt(0,monsterNames.length-1)];
-      var syllables = getRandomInt(0, 4);
+      this.name = ucwords(monsterNames[getRandomInt(0,monsterNames.length-1)]);
+      var syllables = getRandomInt(0, 3);
       for (var i=0; i < syllables; i++) {
-        switch(getRandomInt(0,3)) {
+        switch(getRandomInt(0,2)) {
           case 0:
             this.name += ' ';
             break;
           case 1:
-            this.name += '~';
-            break;
-          case 2:
             this.name += "'";
             break;
+          case 2:
+            this.name += '-';
+            break;
         }
-        this.name += monsterNames[getRandomInt(0,monsterNames.length-1)];
+        this.name += ucwords(monsterNames[getRandomInt(0,monsterNames.length-1)]);
       }
       break;
   }

@@ -83,9 +83,26 @@ function checkSession() {
   }
 }
 
-function hashPasswd($username,$passwd) {
+function hashPasswd($username, $passwd) {
   $hash_1 = bin2hex( mhash(MHASH_RIPEMD160, $passwd . $username) );
   $hash_2 = bin2hex( mhash(MHASH_RIPEMD160, $passwd . $hash_1) );
   return($hash_2);
+}
+
+function checkIfUserExists($name) {
+  try {
+    $dbh = new PDO('mysql:host=' .DB_HOST . ';dbname=' . DB_DATABASE, DB_USER, DB_PASS);
+    $dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $query = 'SELECT count(uid) FROM users WHERE login_name=:name';
+    $sth = $dbh -> prepare($query);
+    $sth -> execute(array(':name' => $name));
+    if ($sth -> fetch()[0] > 0) {
+      return true;
+    } else {
+      return false;
+    }
+  } catch(PDOException $error) {
+    return 'database_error';
+  }
 }
 ?>

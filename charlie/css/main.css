@@ -25,6 +25,31 @@ hr {
   margin-bottom:10px;
 }
 
+a:link, a:active, a:visited {
+  color: #cccccc;
+  font-weight: bold;
+  font-size: 10px;
+  font-family: Verdana, sans-serif;
+  text-decoration: none;
+  letter-spacing: 0.1mm;
+  cursor:pointer;
+}
+a:hover {
+  color:#fff;
+}
+input {
+  BORDER-TOP: #848383 1px outset;
+  BORDER-LEFT: #848383 1px outset;
+  BORDER-BOTTOM: #848383 1px inset;
+  BORDER-RIGHT: #848383 1px inset;
+  BACKGROUND-COLOR: #000000;
+  color: #ffffff;
+  font-weight: bold;
+  font-size: 10px;
+  font-family: Verdana,sans-serif;
+  text-decoration: none;
+  letter-spacing: 0.1mm;
+}
 button {
   border-width: 1px;
   border-style: outset inset inset outset;
@@ -77,13 +102,31 @@ footer {
 }
 .loginBox input, .loginBox button {
   width: 150px;
-  border-color:#fff;
   border-radius:0px;
 }
  .loginBox button {
    width:154px;
  }
-
+.signupLabel {
+  display:inline-block;
+  width:80px;
+  text-align:right;
+}
+.signupError {
+  font-style:italic;
+  text-align:center;
+  font-weight:bold;
+  margin-top:5px;
+  line-height:13px;
+}
+.signupAlert {
+  display: inline-block;
+  width: 10px;
+  text-align: center;
+  font-weight: bold;
+  color:red;
+  opacity:0;
+}
 .field {
   border-width: 1px;
   border-style: outset inset inset outset;
