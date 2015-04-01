@@ -47,16 +47,19 @@ abstract class API {
         $this->method = $_SERVER['REQUEST_METHOD'];
         if ($this->method == 'POST' && array_key_exists('HTTP_X_HTTP_METHOD', $_SERVER)) {
             if ($_SERVER['HTTP_X_HTTP_METHOD'] == 'DELETE') {
-                $this->method = 'DELETE';
+              $this->method = 'DELETE';
             } else if ($_SERVER['HTTP_X_HTTP_METHOD'] == 'PUT') {
-                $this->method = 'PUT';
+              $this->method = 'PUT';
             } else {
-                throw new Exception("Unexpected Header");
+              throw new Exception("Unexpected Header");
             }
         }
 
         switch($this->method) {
           case 'DELETE':
+            $this->request = $this->_cleanInputs($_POST);
+            $this->file = file_get_contents("php://input");
+            break;
           case 'POST':
               $this->request = $this->_cleanInputs($_POST);
               break;
@@ -86,32 +89,10 @@ abstract class API {
             $json_array = [];
             $json_array['user_details'] = [];
             $json_array['user_details']['name'] = $_SESSION['login'];
+            $json_array['user_details']['id'] = $_SESSION['uid'];
             $json_array['user_details']['ip'] = $_SESSION['ip'];
             $json_array['user_details']['date'] = $_SESSION['date'];
             return json_encode($json_array);
-          }
-          break;
-        case 'createUser':
-        //createUser/name/USER_NAME/pass/USER_PASS/email/EMAIL
-          if (empty($this->args)) {
-            return $this->_response("Invalid parameter(s)", 400);
-          }
-          $this->args = array_map('strtoupper', $this->args);
-          if (in_array('EMAIL', $this->args)) {
-            $nextPos = array_search('EMAIL',$this->args)+1;
-            if (!filter_var($this->args[$nextPos], FILTER_VALIDATE_EMAIL)) {
-              return $this->_response("Invalid parameter(s)", 400);
-            }
-          } else {
-            return $this->_response("Invalid parameter(s)", 400);
-          }
-          if (in_array('NAME', $this->args)) {
-            $nextPos = array_search('NAME',$this->args)+1;
-            if (checkIfUserExists($this->args[$nextPos])) {
-              return $this->_response("Conflict", 409);
-            }
-          } else {
-            return $this->_response("Invalid parameter(s)", 400);
           }
           break;
         case 'login':
@@ -123,24 +104,6 @@ abstract class API {
           $this->args = array_map('strtoupper', $this->args);
           if (empty($this->args[0]) || !is_numeric($this->args[0])) {
             return $this->_response("Invalid parameter(s)", 400);
-          }
-          if (in_array('LIMIT',$this->args)) {
-            $nextPos = array_search('LIMIT',$this->args)+1;
-            if (count($this->args) >= $nextPos+1 && !is_numeric($this->args[$nextPos])) {
-              return $this->_response("Invalid parameter(s)", 400);
-            }
-          }
-          if (in_array('ORDER', $this->args)) {
-            $nextPos = array_search('ORDER', $this->args) + 1;
-            if (count($this->args) >= $nextPos+1 && strtoupper($this->args[$nextPos]) != 'ASC' && strtoupper($this->args[$nextPos]) != 'DESC') {
-              return $this->_response("Invalid parameter(s)", 400);
-            }
-          }
-          if (in_array('PAGE', $this->args)) {
-            $nextPos = array_search('PAGE', $this->args) + 1;
-            if (count($this->args) >= $nextPos+1 && !is_numeric($this->args[$nextPos])) {
-              return $this->_response("Invalid parameter(s)", 400);
-            }
           }
           break;
         case 'users':
@@ -155,71 +118,99 @@ abstract class API {
           }
           break;
         case 'posts':
+          $this->args = array_map('strtoupper', $this->args);
           if (isset($this->args) && is_array($this->args) && count($this->args) >= 1) {
-            if (!in_array('qid',$this->args) && !in_array('pid',$this->args) && !in_array('cid',$this->args) && !in_array('uid',$this->args)) {
-              return $this->_response("Invalid parameter(s)", 400);
-            }
-            if (in_array('qid',$this->args) && in_array('pid',$this->args)) {
-              return $this->_response("Invalid parameter(s)", 400);
-            }
-            if (in_array('pid',$this->args) && (in_array('cid',$this->args) || in_array('uid',$this->args))) {
-              return $this->_response("Invalid parameter(s)", 400);
-            }
-            if (in_array('cid',$this->args) && in_array('uid',$this->args)) {
-              return $this->_response("Invalid parameter(s)", 400);
-            }
-            
-            if (in_array('qid',$this->args)) {
-              $nextPos = array_search('qid',$this->args)+1;
-              if (count($this->args) >= $nextPos+1 && !is_numeric($this->args[$nextPos])) {
+            if ($this->method == 'GET') {
+              if (!in_array('QID',$this->args) && !in_array('PID',$this->args) && !in_array('CID',$this->args) && !in_array('UID',$this->args)) {
                 return $this->_response("Invalid parameter(s)", 400);
               }
-            }
-            if (in_array('pid',$this->args)) {
-              $nextPos = array_search('pid',$this->args)+1;
-              if (count($this->args) >= $nextPos+1 && !is_numeric($this->args[$nextPos])) {
+              if (in_array('QID',$this->args) && in_array('PID',$this->args)) {
                 return $this->_response("Invalid parameter(s)", 400);
               }
-            }
-            if (in_array('cid',$this->args)) {
-              $nextPos = array_search('cid',$this->args)+1;
-              if (count($this->args) >= $nextPos+1 && !is_numeric($this->args[$nextPos])) {
+              if (in_array('PID',$this->args) && (in_array('CID',$this->args) || in_array('UID',$this->args))) {
                 return $this->_response("Invalid parameter(s)", 400);
               }
-            }
-            if (in_array('uid',$this->args)) {
-              $nextPos = array_search('uid',$this->args)+1;
-              if (count($this->args) >= $nextPos+1 && !is_numeric($this->args[$nextPos])) {
+              if (in_array('CID',$this->args) && in_array('UID',$this->args)) {
                 return $this->_response("Invalid parameter(s)", 400);
               }
-            }
-            if (in_array('limit',$this->args)) {
-              $nextPos = array_search('limit',$this->args)+1;
-              if (count($this->args) >= $nextPos+1 && !is_numeric($this->args[$nextPos])) {
+              if (in_array('LIMIT',$this->args)) {
+                $nextPos = array_search('LIMIT',$this->args)+1;
+                if (count($this->args) >= $nextPos+1 && !is_numeric($this->args[$nextPos])) {
+                  return $this->_response("Invalid parameter(s)", 400);
+                }
+              }
+              if (in_array('ORDER', $this->args)) {
+                $nextPos = array_search('ORDER', $this->args) + 1;
+                if (count($this->args) >= $nextPos+1 && $this->args[$nextPos] != 'ASC' && $this->args[$nextPos] != 'DESC') {
+                  echo 'this';
+                  return $this->_response("Invalid parameter(s)", 400);
+                }
+              }
+              if (in_array('PAGE', $this->args)) {
+                $nextPos = array_search('PAGE', $this->args) + 1;
+                if (count($this->args) >= $nextPos+1 && !is_numeric($this->args[$nextPos])) {
+                  return $this->_response("Invalid parameter(s)", 400);
+                }
+              }
+              if (in_array('QID',$this->args)) {
+                $nextPos = array_search('QID',$this->args)+1;
+                if (count($this->args) >= $nextPos+1 && !is_numeric($this->args[$nextPos])) {
+                  return $this->_response("Invalid parameter(s)", 400);
+                }
+              }
+              if (in_array('PID',$this->args)) {
+                $nextPos = array_search('PID',$this->args)+1;
+                if (count($this->args) >= $nextPos+1 && !is_numeric($this->args[$nextPos])) {
+                  return $this->_response("Invalid parameter(s)", 400);
+                }
+              }
+              if (in_array('CID',$this->args)) {
+                $nextPos = array_search('CID',$this->args)+1;
+                if (count($this->args) >= $nextPos+1 && !is_numeric($this->args[$nextPos])) {
+                  return $this->_response("Invalid parameter(s)", 400);
+                }
+              }
+              if (in_array('UID',$this->args)) {
+                $nextPos = array_search('UID',$this->args)+1;
+                if (count($this->args) >= $nextPos+1 && !is_numeric($this->args[$nextPos])) {
+                  return $this->_response("Invalid parameter(s)", 400);
+                }
+              }
+            } else if ($this->method == 'POST') {
+              if (!in_array('QID', $this->args) || !in_array('BODY', $this->args) || !in_array('CID', $this->args)) {
                 return $this->_response("Invalid parameter(s)", 400);
               }
-            }
-            if (in_array('asc',$this->args)) {
-              $this->args[array_search('asc',$this->args)] = 'ASC';
-            }
-            if (in_array('desc',$this->args)) {
-              $this->args[array_search('desc',$this->args)] = 'DESC';
-            }
-            if (in_array('ASC', $this->args) && in_array('DESC',$this->args)) {
-              return $this->_response("Invalid parameter(s)", 400);
+              $nextPos = array_search('QID',$this->args)+1;
+              if (!is_numeric($this->args[$nextPos])) {
+                return $this->_response("Invalid parameter(s)", 400);
+              }
+              $nextPos = array_search('CID',$this->args)+1;
+              if (!is_numeric($this->args[$nextPos])) {
+                return $this->_response("Invalid parameter(s)", 400);
+              }
+            } else if ($this->method == 'DELETE') {
+              if (!in_array('PID',$this->args)) {
+                return $this->_response("Invalid parameter(s)", 400);
+              }
+              $nextPos = array_search('PID',$this->args)+1;
+              if (!is_numeric($this->args[$nextPos])) {
+                return $this->_response("Invalid parameter(s)", 400);
+              }
             }
           } else {
             return $this->_response("Invalid parameter(s)", 400);
           }
           break;
+          
       }
       if ((int)method_exists($this, $this->endpoint) > 0) {
-        if ($this->_response($this->{$this->endpoint}($this->args)) == '"null_results"') {
+        $response = $this->{$this->endpoint}($this->args);
+        if ($response == '"null_results"') {
           return $this->_response("No results.", 404);
-       } else  if ($this->_response($this->{$this->endpoint}($this->args)) == '"database_error"') {
+        } else  if ($response == '"database_error"') {
           return $this->_response("Database error.", 500);
-       } else {
-          return $this->_response($this->{$this->endpoint}($this->args));
+        } else {
+          return $this->_response($response);
         }
       }
       return $this->_response("No Endpoint: $this->endpoint", 404);

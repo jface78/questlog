@@ -89,21 +89,4 @@ function hashPasswd($username, $passwd) {
   return($hash_2);
 }
 
-function checkIfUserExists($name) {
-  try {
-    $dbh = new PDO('mysql:host=' .DB_HOST . ';dbname=' . DB_DATABASE, DB_USER, DB_PASS);
-    $dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    $query = 'SELECT count(uid) FROM users WHERE login_name=:name';
-    $sth = $dbh -> prepare($query);
-    $sth -> execute(array(':name' => $name));
-    $dbh = null;
-    if ($sth -> fetch()[0] > 0) {
-      return true;
-    } else {
-      return false;
-    }
-  } catch(PDOException $error) {
-    return 'database_error';
-  }
-}
 ?>

@@ -5,18 +5,13 @@ var EVENT_LOADED = 'loaded';
 var LOCAL_API_KEY = 1;
 var isLoggedIn = false;
 
-var currentQuestID;
-var currentQuestPage = 1;
-var currentQuestLimiter = 50;
-var currentQuestSort = 'DESC';
-var currentQuestPageTotal = 1;
+var currentQuestData;
+var userID;
+var userName;
+
 
 function resetQuestVars() {
-  currentQuestID = null;
-  currentQuestPage = 1;
-  currentQuestLimiter = 50;
-  currentQuestSort = 'DESC';
-  currentQuestPageTotal = 1;
+  currentQuestData = null;
 }
 
 function handleLogout() {
@@ -45,6 +40,8 @@ function handleLogin() {
       statusCode: {
         200: function(response) {
           if (!isLoggedIn) {
+            userID = response.user_details.id;
+            userName = response.user_details.name;
             isLoggedIn = true;
             $('#mainContent').fadeOut('normal', function() {
               addGreetingBox(response.user_details.name, response.user_details.date, response.user_details.ip);
@@ -85,6 +82,26 @@ function handleLogin() {
 function renderNewPostWindow() {
   var popupContainer = document.createElement('div');
   $(popupContainer).attr('title', 'new post');
+  var div = document.createElement('div');
+  $(div).text('posting as ');
+  var select = document.createElement('select');
+  $(select).addClass('posterSelect');
+  if (userID == currentQuestData.gmID) {
+    var option = document.createElement('option');
+    $(option).val('0');
+    $(option).text(currentQuestData.gmName + ' - GM');
+    $(select).append(option);
+  }
+  for (var i=0; i < currentQuestData.players.length; i++) {
+    if (currentQuestData.players[i].userID == userID) {
+      var option = document.createElement('option');
+      $(option).val(currentQuestData.players[i].characterID);
+      $(option).text(currentQuestData.players[i].name);
+      $(select).append(option);
+    }
+  }
+  $(div).append(select);
+  $(popupContainer).append(div);
   var textArea = document.createElement('textarea');
   $(textArea).addClass('postTextArea');
   $(popupContainer).append(textArea);
@@ -95,10 +112,11 @@ function renderNewPostWindow() {
     modal: false,
     buttons: {
       'Post': function() {
-        newPost();
+        newPost($(select).val(), $(textArea).val());
+        dialog.dialog('close');
       },
       Cancel: function() {
-        dialog.dialog( "close" );
+        dialog.dialog('close');
       }
     },
     close: function() {
@@ -157,7 +175,18 @@ function renderDeletePostWindow(button) {
   });
 }
 
-function newPost() {
+function newPost(characterID, postText) {
+  $.ajax({
+    url: API_URL + 'POSTS/QID/' + currentQuestData.questID + '/CID/' + characterID + '/BODY/' + postText,
+    method: 'POST',
+    data: {apiKey: LOCAL_API_KEY},
+    dataType: 'json',
+    statusCode: {
+      200: function() {
+        getPostsByPage();
+      }
+    }
+  });
 }
 
 function editPost() {
@@ -166,18 +195,22 @@ function editPost() {
 
 function deletePost(postID) {
   $.ajax({
-    url: SERVICE_URL + 'managePosts.php?postID=' + postID,
+    url: API_URL + 'POSTS/PID/' + postID,
     method: 'DELETE',
-    success: function(data) {
-      $('#post_' + postID).remove();
-      $('.postBody').each(function(index, item) {
-        $(item).removeClass('even odd');
-        if (index % 2 == 0) {
-          $(item).addClass('even');
-        } else {
-          $(item).addClass('odd');
-        }
-      });
+    data: {apiKey: LOCAL_API_KEY},
+    dataType: 'json',
+    statusCode: {
+      200: function() {
+        $('#post_' + postID).remove();
+        $('.postBody').each(function(index, item) {
+          $(item).removeClass('even odd');
+          if (index % 2 == 0) {
+            $(item).addClass('even');
+          } else {
+            $(item).addClass('odd');
+          }
+        });
+      }
     }
   });
 }
@@ -192,25 +225,25 @@ function convertHTMLToBB(text) {
 
 function addPagination() {
   $('.questNavigation').empty();
-  var buttonStartIndex = currentQuestPage - 2;
-  if (buttonStartIndex >= currentQuestPageTotal) {
-    buttonStartIndex = currentQuestPage - 4;
+  var buttonStartIndex = currentQuestData.page - 2;
+  if (buttonStartIndex >= currentQuestData.pageCount) {
+    buttonStartIndex = currentQuestData.page - 4;
   }
   if (buttonStartIndex < 1) {
     buttonStartIndex = 1;
   }
-  if (currentQuestPageTotal - buttonStartIndex < 4 && currentQuestPageTotal - 4 > 1) {
-    buttonStartIndex = currentQuestPageTotal - 4;
+  if (currentQuestData.pageCount - buttonStartIndex < 4 && currentQuestData.pageCount - 4 > 1) {
+    buttonStartIndex = currentQuestData.pageCount - 4;
   }
   function addClickEvent(btn) {
     $(btn).click(function(event) {
       var page;
       if ($(btn).text() == '<<') {
-        currentQuestPage = 1;
+        currentQuestData.page = 1;
       } else if ($(btn).text() == '>>') {
-        currentQuestPage  = currentQuestPageTotal;
+        currentQuestData.page  = currentQuestData.pageCount;
       } else {
-        currentQuestPage  = parseInt($(btn).text());
+        currentQuestData.page  = parseInt($(btn).text());
       }
       getPostsByPage();
     });
@@ -218,18 +251,18 @@ function addPagination() {
   var btn = document.createElement('button');
   $(btn).addClass('questNavButton');
   $(btn).text('<<');
-  if (currentQuestPage > 1) {
+  if (currentQuestData.page > 1) {
     addClickEvent(btn);
   } else {
     $(btn).prop('disabled', true);
     $(btn).addClass('disabled');
   }
   $('.questNavigation').append(btn);
-  for (var i=buttonStartIndex; i < buttonStartIndex+5 && i<currentQuestPageTotal+1; i++) {
+  for (var i=buttonStartIndex; i < buttonStartIndex+5 && i<currentQuestData.pageCount+1; i++) {
     btn = document.createElement('button');
     $(btn).addClass('questNavButton');
     $(btn).text(i);
-    if (i==currentQuestPage) {
+    if (i==currentQuestData.page) {
       $(btn).prop('disabled', true);
       $(btn).css('text-decoration', 'underline');
       $(btn).addClass('disabled');
@@ -240,7 +273,7 @@ function addPagination() {
   var btn = document.createElement('button');
   $(btn).addClass('questNavButton');
   $(btn).text('>>');
-  if (currentQuestPage < currentQuestPageTotal) {
+  if (currentQuestData.page < currentQuestData.pageCount) {
     addClickEvent(btn);
   } else {
     $(btn).prop('disabled', true);
@@ -252,15 +285,21 @@ function addPagination() {
 function getPostsByPage() {
   $('#questContent').fadeOut('fast', function() {
     $('#questContent').empty();
-    var service = API_URL + 'quest/' + currentQuestID;
-    if (currentQuestLimiter) {
-      service += '/limit/' + currentQuestLimiter;
+    var service = API_URL + 'posts/QID/' + currentQuestData.questID;
+    if (currentQuestData.limit) {
+      service += '/limit/' + currentQuestData.limit;
+    } else {
+      service += '/limit/50';
     }
-    if (currentQuestPage) {
-      service += '/page/' + currentQuestPage;
+    if (currentQuestData.page) {
+      service += '/page/' + currentQuestData.page;
+    } else {
+      service += '/page/1';
     }
-    if (currentQuestSort) {
-      service += '/order/' + currentQuestSort;
+    if (currentQuestData.sort) {
+      service += '/order/' + currentQuestData.sort;
+    } else {
+      service += '/order/DESC';
     }
     $.ajax({
       url: service,
@@ -275,7 +314,7 @@ function getPostsByPage() {
             var header = document.createElement('header');
             var span = document.createElement('span');
             $(span).addClass('floatLeft');
-            $(span).text('#' + response.posts[i].id);
+            $(span).text('#' + response.posts[i].postID);
             $(span).append('&nbsp;&nbsp;');
             $(span).append('Posted&nbsp;');
             var date = formatDate(parseInt(response.posts[i].timestamp));
@@ -305,7 +344,7 @@ function getPostsByPage() {
             $(img).attr('title', 'delete post');
             $(img).addClass('pointer deletePostBtn');
             $(img).attr('src', 'img/icon.delete_dark.gif');
-            $(img).attr('data-post-id', response.posts[i].id);
+            $(img).attr('data-post-id', response.posts[i].postID);
             $(img).click(function(event) {
               event.preventDefault();
               event.stopPropagation();
@@ -326,11 +365,10 @@ function getPostsByPage() {
             $(div).append(section);
             $('#questContent').append(div);
           }
-          currentQuestID = parseInt(response.questID);
-          currentQuestPage = parseInt(response.currentPage);
-          currentQuestLimiter = parseInt(response.delimiter);
-          currentQuestPageTotal = parseInt(response.pageCount);
-          currentQuestSort = response.order;
+          currentQuestData.page = parseInt(response.currentPage);
+          currentQuestData.limit = parseInt(response.delimiter);
+          currentQuestData.pageCount = parseInt(response.pageCount);
+          currentQuestData.sort = response.order;
           addPagination();
           $('#questContent').fadeIn('fast');
         }
@@ -340,34 +378,40 @@ function getPostsByPage() {
 }
 
 function loadQuest(questID) {
-  currentQuestID = parseInt(questID);
   $.ajax({
     url: TEMPLATE_URL + 'quest.html',
     success: function(template) {
       $('#questlogLeft').html(template);
-      var buttons = $('.questMenu');
-      $(buttons[0]).click(function() {
-        $('#mainContent').fadeOut('normal', function() {
-          resetQuestVars();
-          loadQuestListings();
-        });
-      });
-      $(buttons[2]).click(function() {
-        if (currentQuestSort == 'ASC') {
-          currentQuestSort = 'DESC';
-        } else {
-          currentQuestSort = 'ASC';
+      $.ajax({
+        url: API_URL + 'quest/' + questID,
+        data: {apiKey: LOCAL_API_KEY},
+        success: function(data) {
+          currentQuestData = data;
+          var buttons = $('.questMenu');
+          $(buttons[0]).click(function() {
+            $('#mainContent').fadeOut('normal', function() {
+              resetQuestVars();
+              loadQuestListings();
+            });
+          });
+          $(buttons[2]).click(function() {
+            if (currentQuestData.sort == 'ASC') {
+              currentQuestData.sort = 'DESC';
+            } else {
+              currentQuestData.sort = 'ASC';
+            }
+            getPostsByPage();
+          });
+          $(buttons[3]).click(function() {
+            getPostsByPage(); 
+          });
+          $(buttons[4]).click(function() {
+            renderNewPostWindow();
+          });
+          getPostsByPage();
+          $('#questlogLeft').fadeIn('fast');
         }
-        getPostsByPage(); 
       });
-      $(buttons[3]).click(function() {
-        getPostsByPage(); 
-      });
-      $(buttons[4]).click(function() {
-        renderNewPostWindow();
-      });
-      getPostsByPage(); 
-      $('#questlogLeft').fadeIn('fast');
     }
   });
 }
@@ -1013,6 +1057,8 @@ $(document).ready(function() {
         $('#mainContent').fadeIn();
       },
       200: function(response) {
+        userID = response.user_details.id;
+        userName = response.user_details.name;
         isLoggedIn = true;
         $('#mainContent').fadeOut('normal', function() {
           addGreetingBox(response.user_details.name, response.user_details.date, response.user_details.ip);

@@ -8,7 +8,6 @@ class QuestlogAPI extends API {
 
   public function __construct($request, $origin) {
     parent::__construct($request);
-
     if (!array_key_exists('apiKey', $this->request)) {
       throw new Exception('No API Key provided');
     } else if (!$this -> verifyKey($this->request['apiKey'], $origin)) {
@@ -26,34 +25,7 @@ class QuestlogAPI extends API {
       return false;
     }
   }
-  
-  protected function createUser($args) {
-    if ($this->method == 'POST') {
-      $pos = array_search('NAME', $args) + 1;
-      $name = $args[$pos];
-      $pos = array_search('PASS', $args) + 1;
-      $pass = $args[$pos];
-      $pos = array_search('EMAIL', $args) + 1;
-      $email = $args[$pos];
-      
-      try {
-        $json_array = [];
-        $json_array['users'] = [];
-        $dbh = new PDO('mysql:host=' .DB_HOST . ';dbname=' . DB_DATABASE, DB_USER, DB_PASS);
-        $dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $query = 'INSERT INTO users OUTPUT INSERTED.uid (login_name,login_hash,email)VALUES(:login,:pass,:email)';
-        $sth = $dbh -> prepare($query);
-        $sth -> execute(array(':login' => $name, ':pass' => $pass, ':email' => $email));
-        $json_array['users'][0]['userID'] = $sth -> fetch()[0];
-        $json_array['users'][0]['userName'] = $name;
-        print_r($json_array);
-        $dbh = null;
-        return $json_array;
-      } catch(PDOException $error) {
-        return 'database_error';
-      }
-    }
-  }
+
   protected function login($args) {
     try {
       $dbh = new PDO('mysql:host=' .DB_HOST . ';dbname=' . DB_DATABASE, DB_USER, DB_PASS);
@@ -93,6 +65,7 @@ class QuestlogAPI extends API {
         $json_array = [];
         $json_array['user_details'] = [];
         $json_array['user_details']['name'] = $row['login_name'];
+        $json_array['user_details']['id'] = $row['uid'];
         $json_array['user_details']['ip'] = $login_data['ip'];
         $json_array['user_details']['date'] = $login_data['date'];
         return $json_array;
@@ -180,26 +153,10 @@ class QuestlogAPI extends API {
 
   protected function quest($args) {
     if ($this->method == 'GET') {
-      $postOrder = 'DESC';
-      $limit = null;
-      $page = 1;
-      if (in_array('ORDER', $args)) {
-        $pos = array_search('ORDER', $args) + 1;
-        $postOrder = strtoupper($args[$pos]);
-      }
-      if (in_array('LIMIT', $args)) {
-        $pos = array_search('LIMIT', $args) + 1;
-        $limit = $args[$pos];
-      }
-      if (in_array('PAGE', $args)) {
-        $pos = array_search('PAGE', $args) + 1;
-        $page = $args[$pos];
-      }
-
       try {
         $dbh = new PDO('mysql:host=' .DB_HOST . ';dbname=' . DB_DATABASE, DB_USER, DB_PASS);
         $json_array = [];
-        $query = 'SELECT qid,quest_name FROM quests WHERE qid = :questID AND status > 0';
+        $query = 'SELECT qid,uid,quest_name FROM quests WHERE qid = :questID AND status > 0';
         $sth = $dbh -> prepare($query);
         $sth -> execute(array(':questID' => $args[0]));
         $row = $sth -> fetch();
@@ -210,59 +167,27 @@ class QuestlogAPI extends API {
         }
         $json_array['title'] = $row['quest_name'];
         $json_array['questID'] = $row['qid'];
-        $json_array['currentPage'] = $page;
-        $json_array['order'] = $postOrder;
+        $json_array['gmID'] = $row['uid'];
+        
+        $query = 'SELECT login_name FROM users WHERE uid = :gmID';
+        $sth = $dbh -> prepare($query);
+        $sth -> execute(array(':gmID' => $row['uid']));
+        $json_array['gmName'] = $sth -> fetch()[0];
 
-        if (is_null($limit)) {
-          $json_array['pageCount'] = 1;
-          $json_array['delimiter'] = 0;
-          $startingIndex = 0;
-        } else {
-          $query = 'SELECT COUNT(pid) FROM posts WHERE qid=:questID';
-          $sth = $dbh -> prepare($query);
-          $sth -> execute(array(':questID' => $args[0]));
-          $total = $sth -> fetch();
-          $json_array['pageCount'] = ceil($total['COUNT(pid)']/$limit);
-          $json_array['delimiter'] = $limit;
-          if ($postOrder == 'DESC') {
-            $startingIndex = $limit * ($page-1);
-          } else {
-            $startingIndex = ($limit * $page) - $limit;
-          }
-        }
-        $query = 'SELECT pid,uid,cid,timestamp,post_text FROM posts WHERE qid=:questID ORDER BY timestamp ' . $postOrder;
-        if (!is_null($limit)) {
-          $query .= ' LIMIT ' . $limit . ' OFFSET ' . $startingIndex;
-        }
+        $query = 'SELECT cid FROM quest_members WHERE qid=:questID';
         $sth = $dbh -> prepare($query);
         $sth -> execute(array(':questID' => $args[0]));
         $results = $sth -> fetchAll();
-        $index = 0;
+        $index=0;
         foreach($results as $row) {
-          $json_array['posts'][$index] = array();
-          $json_array['posts'][$index]['id'] = $row['pid'];
-          $json_array['posts'][$index]['timestamp'] = strtotime($row['timestamp']);
-          $json_array['posts'][$index]['text'] = $row['post_text'];
-          $json_array['posts'][$index]['uid'] = $row['uid'];
-          $json_array['posts'][$index]['cid'] = $row['cid'];
-          if ($row['cid'] == '0') {
-            $json_array['posts'][$index]['cid'] = 'GM';
-            $query = 'SELECT login_name FROM users WHERE uid = :userID';
-            $sth = $dbh -> prepare($query);
-            $sth -> execute(array(':userID' => $row['uid']));
-            $user = $sth -> fetch();
-            $json_array['posts'][$index]['postedBy'] = $user['login_name'];
-          } else {
-            $query = 'SELECT char_name FROM characters WHERE cid = :characterID';
-            $sth = $dbh -> prepare($query);
-            $sth -> execute(array(':characterID' => $row['cid']));
-            $character = $sth -> fetch();
-            $json_array['posts'][$index]['postedBy'] = $character['char_name'];
-          }
+          $json_array['players'][$index]['characterID'] = $row['cid'];
+          $query = 'SELECT char_name,uid FROM characters WHERE cid=:charID';
+          $sth = $dbh -> prepare($query);
+          $sth -> execute(array(':charID' => $row['cid']));
+          $character = $sth->fetchAll();
+          $json_array['players'][$index]['userID'] = $character[0]['uid'];
+          $json_array['players'][$index]['name'] = $character[0]['char_name'];
           $index++;
-          if ($index == count($results)) {
-            
-          }
         }
         $dbh = null;
         return $json_array;
@@ -354,26 +279,38 @@ class QuestlogAPI extends API {
 
   protected function posts($args) {
     if ($this -> method == 'GET') {
-      if (!in_array('ASC', $args) && !in_array('DESC', $args)) {
-        $postOrder = 'DESC';
-      } else if (in_array('ASC', $args)) {
-        $postOrder = 'ASC';
-      } else {
-        $postOrder = 'DESC';
+      $postOrder = 'DESC';
+      $limit = null;
+      $page = 1;
+      if (in_array('ORDER', $args)) {
+        $pos = array_search('ORDER', $args) + 1;
+        $postOrder = strtoupper($args[$pos]);
+      }
+      if (in_array('LIMIT', $args)) {
+        $pos = array_search('LIMIT', $args) + 1;
+        $limit = $args[$pos];
+      }
+      if (in_array('PAGE', $args)) {
+        $pos = array_search('PAGE', $args) + 1;
+        $page = $args[$pos];
       }
       try {
-        $dbh = new PDO('mysql:host=' .DB_HOST . ';dbname=' . DB_DATABASE, DB_USER, DB_PASS);
+        
+        $json_array = [];
+        $json_array['currentPage'] = $page;
+        $json_array['order'] = $postOrder;
+        $json_array['delimiter'] = 0;
 
-        if (in_array('pid',$args)) {
+        $dbh = new PDO('mysql:host=' .DB_HOST . ';dbname=' . DB_DATABASE, DB_USER, DB_PASS);
+        if (in_array('PID', $args)) {
           $query = 'SELECT uid,cid,qid,pid,post_text,post_date,timestamp FROM posts WHERE pid = :postID';
           $sth = $dbh -> prepare($query);
-          $pos = array_search('pid',$args)+1;
+          $pos = array_search('PID',$args)+1;
           $sth -> execute(array(':postID' => $args[$pos]));
           $results = $sth -> fetchAll();
           if(!count($results)) {
             return 'null_results';
           }
-
           // get this post's quest info.
           $query = 'SELECT quest_name FROM quests WHERE qid = :questID AND status > 0';
           $sth = $dbh -> prepare($query);
@@ -405,35 +342,65 @@ class QuestlogAPI extends API {
           } else {
             $results[0]['edited'] = 'never';
           }
-        } else if (in_array('uid',$args) || in_array('cid',$args) || in_array('qid', $args)) {
-          if (in_array('uid', $args)) {
-            $pos = array_search('uid', $args) + 1;
+          $query = 'SELECT pid FROM posts WHERE qid=:questID ORDER BY timestamp DESC LIMIT 1';
+          $sth = $dbh -> prepare($query);
+          $sth -> execute(array(':questID' => $results[0]['qid']));
+          $lastPost = $sth -> fetch()[0];
+          if ($results[0]['uid'] == $_SESSION['uid'] && $lastPost == $results[0]['pid']) {
+            $results[0]['editable'] = 'true';
+          } else {
+            $results[0]['editable'] = 'false';
+          }
+        } else if (in_array('UID',$args) || in_array('CID',$args) || in_array('QID', $args)) {
+          if (in_array('UID', $args)) {
+            $pos = array_search('UID', $args) + 1;
             $whereString = 'WHERE uid = :userID';
             $paramsArray = array(':userID' => $args[$pos]);
-            if (in_array('qid',$args)) {
-              $pos = array_search('qid', $args)+1;
+            if (in_array('QID',$args)) {
+              $pos = array_search('QID', $args)+1;
               $whereString .= ' AND qid = :questID';
               $paramsArray[':questID'] = $args[$pos];
             }
-          } else if (in_array('cid', $args)) {
-            $pos = array_search('cid', $args) + 1;
+          } else if (in_array('CID', $args)) {
+            $pos = array_search('CID', $args) + 1;
             $whereString = 'WHERE cid = :characterID';
             $paramsArray = array(':characterID' => $args[$pos]);
-            if (in_array('qid', $args)) {
-              $pos = array_search('qid', $args) + 1;
+            if (in_array('QID', $args)) {
+              $pos = array_search('QID', $args) + 1;
               $whereString .= ' AND qid = :questID';
               $paramsArray[':questID'] = $args[$pos];
             }
-          } else if (in_array('qid', $args)) {
-            $pos = array_search('qid', $args)+1;
+          } else if (in_array('QID', $args)) {
+            $pos = array_search('QID', $args)+1;
             $whereString = 'WHERE qid = :questID';
             $paramsArray = array(':questID' => $args[$pos]);
           }
           $query = 'SELECT uid,cid,qid,pid,post_text,post_date,timestamp FROM posts ' . $whereString . ' ORDER BY timestamp ' . $postOrder;
-          if (in_array('limit',$args)) {
-            $pos = array_search('limit', $args)+1;
-            $query .= ' LIMIT ' . $args[$pos];
+          if (in_array('QID', $args)) {
+            $pos = array_search('QID', $args)+1;
+            $qid = $args[$pos];
+            if (is_null($limit)) {
+              $startingIndex = 0;
+            } else {
+              $count = 'SELECT COUNT(pid) FROM posts WHERE qid=:questID';
+              $sth = $dbh -> prepare($count);
+              $sth -> execute(array(':questID' => $qid));
+              $total = $sth -> fetch();
+              $json_array['pageCount'] = ceil($total['COUNT(pid)']/$limit);
+              $json_array['delimiter'] = $limit;
+              if ($postOrder == 'DESC') {
+                $startingIndex = $limit * ($page-1);
+              } else {
+                $startingIndex = ($limit * $page) - $limit;
+              }
+              $query .= ' LIMIT ' . $limit . ' OFFSET ' . $startingIndex;
+            }
+          } else {
+            if (!is_null($limit)) {
+              $query .= ' LIMIT ' . $limit;
+            }
           }
+
           $sth = $dbh -> prepare($query);
           $sth -> execute($paramsArray);
           $results = $sth -> fetchAll();
@@ -448,7 +415,15 @@ class QuestlogAPI extends API {
             $sth -> execute(array(':questID' => $row['qid']));
             $quest = $sth -> fetch();
             $results[$index]['quest_name'] = $quest['quest_name'];
-
+            
+            $query = 'SELECT pid FROM posts WHERE qid=:questID ORDER BY timestamp DESC LIMIT 1';
+            $sth = $dbh -> prepare($query);
+            $sth -> execute(array(':questID' => $row['qid']));
+            if ($sth->fetch()[0] == $row['pid'] && $row['uid'] == $_SESSION['uid']) {
+              $results[$index]['editable'] = 'true';
+            } else {
+              $results[$index]['editable'] = 'false';
+            }
             // get this post's user info.
             $query = 'SELECT login_name FROM users WHERE uid = :userID';
             $sth = $dbh -> prepare($query);
@@ -477,7 +452,6 @@ class QuestlogAPI extends API {
           }
         }
         $index = 0;
-        $json_array = [];
         $json_array['posts'] = [];
         foreach ($results as $row) {
           $json_array['posts'][$index] = [];
@@ -490,6 +464,7 @@ class QuestlogAPI extends API {
           $json_array['posts'][$index]['character'] = $row['char_name'];
           $json_array['posts'][$index]['date'] = $row['post_date'];
           $json_array['posts'][$index]['edited'] = $row['edited'];
+          $json_array['posts'][$index]['editable'] = $row['editable'];
           $json_array['posts'][$index]['text'] = $row['post_text'];
           $index++;
         }
@@ -499,7 +474,41 @@ class QuestlogAPI extends API {
         return 'database_error';
       }
     } else if ($this->method == 'POST') {
+      $pos = array_search('QID',$args)+1;
+      $qid = $args[$pos];
+      $pos = array_search('BODY',$args)+1;
+      $body = $args[$pos];
+      $pos = array_search('CID',$args)+1;
+      $cid = $args[$pos];
+      $json_array = [];
+      $json_array['posts'] = [];
       
+      // ADD PERMISSIONS CHECKING LATER
+      
+      try {
+        $dbh = new PDO('mysql:host=' . DB_HOST . ';dbname=' . DB_DATABASE, DB_USER, DB_PASS);
+        $query = 'INSERT INTO posts (qid,uid,cid,post_text,post_date,post_ip) VALUES(:qid,:uid,:cid,:text,now(),:ip)';
+        $sth = $dbh -> prepare($query);
+        $sth -> execute(array(':qid' => $qid, ':uid' => $_SESSION['uid'], ':cid' => $cid, ':text' => $body, ':ip' => $_SERVER['REMOTE_ADDR']));
+        $json_array['posts'][0]['postID'] = $dbh->lastInsertId();
+        $dbh = null;
+        return $json_array;
+      } catch(PDOException $error) {
+        return 'database_error';
+      }
+    } else if ($this->method == 'DELETE') {
+      $pos = array_search('QID',$args)+1;
+      $pid = $args[$pos];
+      try {
+        $dbh = new PDO('mysql:host=' . DB_HOST . ';dbname=' . DB_DATABASE, DB_USER, DB_PASS);
+        $query = 'DELETE FROM posts WHERE pid=:pid';
+        $sth = $dbh -> prepare($query);
+        $sth -> execute(array(':pid' => $pid));
+        $dbh = null;
+        return 'deleted';
+      } catch(PDOException $error) {
+        return 'database_error';
+      }
     }
   }
 }
