@@ -1,11 +1,11 @@
 <?php
-include '../../../../questlog_credentials.php';
+include '../../../questlog_credentials.php';
 include '../utils.php';
 
 try {
   $json_array = [];
   $dbh = new PDO('mysql:host=' .DB_HOST . ';dbname=' . DB_DATABASE, DB_USER, DB_PASS);
-  $query = 'SELECT qid,uid,quest_name FROM quests WHERE status > 0';
+  $query = 'SELECT qid,uid,quest_name FROM quests WHERE quest_status < 4';
   $sth = $dbh -> prepare($query);
   $sth -> execute();
   $quests = $sth -> fetchAll();

@@ -1,7 +1,7 @@
 <?php
 session_start();
 require_once 'API.class.php';
-include('../../../../questlog_credentials.php');
+include('../../../questlog_credentials.php');
 include '../../php/utils.php';
 
 class QuestlogAPI extends API {
@@ -85,7 +85,7 @@ class QuestlogAPI extends API {
       try {
         $dbh = new PDO('mysql:host=' .DB_HOST . ';dbname=' . DB_DATABASE, DB_USER, DB_PASS);
         // Get the user's GM quest.
-        $query = 'SELECT qid,uid,quest_name,timestamp FROM quests WHERE uid=:uid AND status > 0';
+        $query = 'SELECT qid,uid,quest_name,timestamp FROM quests WHERE uid=:uid AND quest_status < 4';
         $sth = $dbh -> prepare($query);
         $sth -> execute(array(':uid' => $_SESSION['uid']));
         $questsArr = $sth -> fetchAll();
@@ -113,7 +113,7 @@ class QuestlogAPI extends API {
           $player_quests = $sth -> fetchAll();
           if (count($player_quests) > 0) {
             foreach ($player_quests as $quest) {
-              $query = 'SELECT qid,uid,quest_name,timestamp FROM quests WHERE qid=:qid AND status > 0';
+              $query = 'SELECT qid,uid,quest_name,timestamp FROM quests WHERE qid=:qid AND quest_status < 4';
               $sth = $dbh -> prepare($query);
               $sth -> execute(array(':qid' => $quest['qid']));
               $questsArr[$index] = $sth -> fetch();
@@ -130,7 +130,7 @@ class QuestlogAPI extends API {
         $questsArr = [];
         $index = 0;
         foreach ($non_quests as $quest) {
-          $query = 'SELECT qid,uid,quest_name,timestamp FROM quests WHERE qid=:qid AND status > 0';
+          $query = 'SELECT qid,uid,quest_name,timestamp FROM quests WHERE qid=:qid AND quest_status < 4';
           $sth = $dbh -> prepare($query);
           $sth -> execute(array(':qid' => $quest['qid']));
           $results = $sth -> fetch(PDO::FETCH_ASSOC);
@@ -156,7 +156,7 @@ class QuestlogAPI extends API {
       try {
         $dbh = new PDO('mysql:host=' .DB_HOST . ';dbname=' . DB_DATABASE, DB_USER, DB_PASS);
         $json_array = [];
-        $query = 'SELECT qid,uid,quest_name FROM quests WHERE qid = :questID AND status > 0';
+        $query = 'SELECT qid,uid,quest_name FROM quests WHERE qid = :questID AND quest_status < 4';
         $sth = $dbh -> prepare($query);
         $sth -> execute(array(':questID' => $args[0]));
         $row = $sth -> fetch();
@@ -211,7 +211,7 @@ class QuestlogAPI extends API {
       try {
         $dbh = new PDO('mysql:host=' .DB_HOST . ';dbname=' . DB_DATABASE, DB_USER, DB_PASS);
         if (isset($questID)) {
-          $query = 'SELECT uid FROM quests WHERE qid= :questID AND status > 0';
+          $query = 'SELECT uid FROM quests WHERE qid= :questID AND quest_status < 4';
           $sth = $dbh -> prepare($query);
           $sth -> execute(array(':questID' => $questID));
           $users = $sth -> fetchAll();
@@ -312,7 +312,7 @@ class QuestlogAPI extends API {
             return 'null_results';
           }
           // get this post's quest info.
-          $query = 'SELECT quest_name FROM quests WHERE qid = :questID AND status > 0';
+          $query = 'SELECT quest_name FROM quests WHERE qid = :questID AND quest_status < 4';
           $sth = $dbh -> prepare($query);
           $sth -> execute(array(':questID' => $results[0]['qid']));
           $quest = $sth -> fetch();
@@ -410,7 +410,7 @@ class QuestlogAPI extends API {
           $index = 0;
           foreach ($results as $row) {
             // get this post's quest info.
-            $query = 'SELECT quest_name FROM quests WHERE qid = :questID AND status > 0';
+            $query = 'SELECT quest_name FROM quests WHERE qid = :questID AND quest_status < 4';
             $sth = $dbh -> prepare($query);
             $sth -> execute(array(':questID' => $row['qid']));
             $quest = $sth -> fetch();

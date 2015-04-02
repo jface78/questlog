@@ -531,7 +531,7 @@ function renderRandomNPC() {
   $(select).append(option);
   $(controls).append(select);
   $(select).change(function() {
-    console.log($(this).val());
+    //console.log($(this).val());
   });
   $(div).html(controls);
   var contentDiv = document.createElement('div');
@@ -1080,7 +1080,6 @@ function fetchRandomPost() {
       subdiv = document.createElement('div');
       $(subdiv).addClass('postHeader');
       var date = new Date(parseInt(data.date)*1000);
-      console.log(date.toDateString());
       if (date.getFullYear() < 2015) {
         var now = new Date();
         if (date.getMonth() > now.getMonth() || (date.getMonth() == now.getMonth() && date.getDate() > now.getDate())) {
@@ -1089,7 +1088,6 @@ function fetchRandomPost() {
           date.setFullYear(2015);
         }
       }
-      console.log(date.toDateString());
       var header = '&nbsp;' + data.post_id + '&nbsp;&nbsp;Posted on ' + date.toDateString() + ' at ' +
                             date.toLocaleTimeString() + ' by <a class="characterNameLink">' + data.poster_name + '</a>';
       $(subdiv).append(header);
@@ -1106,6 +1104,7 @@ function fetchRandomPost() {
 }
 
 $(document).ready(function() {
+  console.log('Questlog BETA');
   $('#mainContent').hide();
   $('footer').text('Copyright ' + new Date().getFullYear() + ' QuestLog.org');
   var hour = new Date().getHours();
