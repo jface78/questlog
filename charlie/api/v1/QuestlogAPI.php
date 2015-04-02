@@ -53,14 +53,14 @@ class QuestlogAPI extends API {
         $sth -> execute(array(':uid' => $row['uid']));
         $login_data = $sth -> fetch();
         if (!$login_data) {
-          $login_data['ip'] = $_SERVER['REMOTE_HOST'];
+          $login_data['ip'] = $_SERVER['REMOTE_ADDR'];
           $login_data['date'] = time();
         }
         $_SESSION["ip"] = $login_data['ip'];
         $_SESSION["date"] = $login_data['date'];
-        $query = "INSERT INTO user_logins (date, ip) VALUES (now(),:ip)";
+        $query = "INSERT INTO user_logins (uid,date, ip) VALUES (:uid,now(),:ip)";
         $sth = $dbh->prepare($query);
-        $sth->execute(array(':ip' => $_SERVER['REMOTE_ADDR']));
+        $sth->execute(array(':uid' => $row['uid'],':ip' => $login_data['ip']));
         $dbh = null;
         $json_array = [];
         $json_array['user_details'] = [];
@@ -480,19 +480,20 @@ class QuestlogAPI extends API {
       $body = $args[$pos];
       $pos = array_search('CID',$args)+1;
       $cid = $args[$pos];
-      $json_array = [];
-      $json_array['posts'] = [];
       
       // ADD PERMISSIONS CHECKING LATER
-      
+
       try {
         $dbh = new PDO('mysql:host=' . DB_HOST . ';dbname=' . DB_DATABASE, DB_USER, DB_PASS);
         $query = 'INSERT INTO posts (qid,uid,cid,post_text,post_date,post_ip) VALUES(:qid,:uid,:cid,:text,now(),:ip)';
         $sth = $dbh -> prepare($query);
         $sth -> execute(array(':qid' => $qid, ':uid' => $_SESSION['uid'], ':cid' => $cid, ':text' => $body, ':ip' => $_SERVER['REMOTE_ADDR']));
-        $json_array['posts'][0]['postID'] = $dbh->lastInsertId();
+        $newID = $dbh->lastInsertId();
+        $this->method = 'GET';
+        $args[0] = 'PID';
+        $args[1] = $newID;
         $dbh = null;
-        return $json_array;
+        return $this -> posts($args);
       } catch(PDOException $error) {
         return 'database_error';
       }

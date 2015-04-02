@@ -182,8 +182,10 @@ function newPost(characterID, postText) {
     data: {apiKey: LOCAL_API_KEY},
     dataType: 'json',
     statusCode: {
-      200: function() {
+      200: function(response) {
         getPostsByPage();
+        //renderPostBubble(response.posts[0], 0, true);
+        //resetPostsView();
       }
     }
   });
@@ -200,6 +202,7 @@ function deletePost(postID) {
     dataType: 'json',
     statusCode: {
       200: function() {
+        /*
         $('#post_' + postID).remove();
         $('.postBody').each(function(index, item) {
           $(item).removeClass('even odd');
@@ -208,7 +211,8 @@ function deletePost(postID) {
           } else {
             $(item).addClass('odd');
           }
-        });
+        });*/
+        getPostsByPage();
       }
     }
   });
@@ -237,7 +241,12 @@ function addPagination() {
   function addClickEvent(btn) {
     $(btn).click(function(event) {
       var page;
-      if ($(btn).text() == '<<') {
+      if ($(btn).text() == '<') {
+        currentQuestData.page--;
+      } else if ($(btn).text() == '>') {
+        currentQuestData.page++;
+      }
+      else if ($(btn).text() == '<<') {
         currentQuestData.page = 1;
       } else if ($(btn).text() == '>>') {
         currentQuestData.page  = currentQuestData.pageCount;
@@ -257,6 +266,16 @@ function addPagination() {
     $(btn).addClass('disabled');
   }
   $('.questNavigation').append(btn);
+  btn = document.createElement('button');
+  $(btn).addClass('questNavButton');
+  $(btn).text('<');
+  if (currentQuestData.page > 1) {
+    addClickEvent(btn);
+  } else {
+    $(btn).prop('disabled', true);
+    $(btn).addClass('disabled');
+  }
+  $('.questNavigation').append(btn);
   for (var i=buttonStartIndex; i < buttonStartIndex+5 && i<currentQuestData.pageCount+1; i++) {
     btn = document.createElement('button');
     $(btn).addClass('questNavButton');
@@ -269,7 +288,17 @@ function addPagination() {
     addClickEvent(btn);
     $('.questNavigation').append(btn);
   }
-  var btn = document.createElement('button');
+  btn = document.createElement('button');
+  $(btn).addClass('questNavButton');
+  $(btn).text('>');
+  if (currentQuestData.page < currentQuestData.pageCount) {
+    addClickEvent(btn);
+  } else {
+    $(btn).prop('disabled', true);
+    $(btn).addClass('disabled');
+  }
+  $('.questNavigation').append(btn);
+  btn = document.createElement('button');
   $(btn).addClass('questNavButton');
   $(btn).text('>>');
   if (currentQuestData.page < currentQuestData.pageCount) {
@@ -279,6 +308,84 @@ function addPagination() {
     $(btn).addClass('disabled');
   }
   $('.questNavigation').append(btn);
+}
+
+function renderPostBubble(postObject, index, prepend) {
+  var div = document.createElement('div');
+  $(div).attr('id', 'post_' + postObject.postID);
+  var header = document.createElement('header');
+  var span = document.createElement('span');
+  $(span).addClass('floatLeft');
+  $(span).text('#' + postObject.postID);
+  $(span).append('&nbsp;&nbsp;');
+  $(span).append('Posted&nbsp;');
+  var date = formatDate(parseInt(postObject.date));
+  $(span).append(date + '&nbsp;by&nbsp;');
+  var a = document.createElement('a');
+  $(a).addClass('characterNameLink');
+  $(a).text(postObject.character);
+	if (postObject.characterID == 'GM') {
+		$(a).append(' - GM');
+	}
+  $(span).append(a);
+  $(header).append(span);
+  if (postObject.editable == 'true') {
+    span = document.createElement('span');
+    $(span).addClass('floatRight');
+    var img = document.createElement('img');
+    $(img).addClass('pointer editPostBtn');
+    $(img).attr('alt', 'edit post');
+    $(img).attr('title', 'edit post');
+    $(img).attr('src', 'img/icon.edit_dark.gif');
+    $(img).attr('data-post-id', postObject.id);
+    $(img).click(function(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      renderEditWindow(this);
+    });
+    $(span).append(img);
+    $(span).append('&nbsp;');
+    img = document.createElement('img');
+    $(img).attr('alt', 'delete post');
+    $(img).attr('title', 'delete post');
+    $(img).addClass('pointer deletePostBtn');
+    $(img).attr('src', 'img/icon.delete_dark.gif');
+    $(img).attr('data-post-id', postObject.postID);
+    $(img).click(function(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      renderDeletePostWindow(this);
+    });
+    $(span).append(img);
+    $(header).append(span);
+  }
+  $(header).addClass('postHeader');
+  $(div).append(header);
+  var section = document.createElement('section');
+  $(section).addClass('postBody');
+  if (index % 2 == 0) {
+    $(section).addClass('even');
+  } else {
+    $(section).addClass('odd');
+  }
+  $(section).html(postObject.text);
+  $(div).append(section);
+  if (prepend) {
+    $('#questContent').prepend(div);
+  } else {
+    $('#questContent').append(div);
+  }
+}
+
+function resetPostsView() {
+  $('.postBody').removeClass('even odd');
+  $('.postBody').each(function(index, item) {
+    if (index % 2 == 0) {
+      $(item).addClass('even');
+    } else {
+      $(item).addClass('odd');
+    }
+  });
 }
 
 function getPostsByPage() {
@@ -308,64 +415,7 @@ function getPostsByPage() {
       statusCode: {
         200: function(response) {
           for (var i=0; i < response.posts.length; i++) {
-            var div = document.createElement('div');
-            $(div).attr('id', 'post_' + response.posts[i].postID);
-            var header = document.createElement('header');
-            var span = document.createElement('span');
-            $(span).addClass('floatLeft');
-            $(span).text('#' + response.posts[i].postID);
-            $(span).append('&nbsp;&nbsp;');
-            $(span).append('Posted&nbsp;');
-            var date = formatDate(parseInt(response.posts[i].date));
-            $(span).append(date + '&nbsp;by&nbsp;');
-            var a = document.createElement('a');
-            $(a).addClass('characterNameLink');
-            $(a).text(response.posts[i].character);
-	    if (response.posts[i].characterID == 'GM') {
-		$(a).append(' - GM');
-	    }
-            $(span).append(a);
-            $(header).append(span);
-            span = document.createElement('span');
-            $(span).addClass('floatRight');
-            var img = document.createElement('img');
-            $(img).addClass('pointer editPostBtn');
-            $(img).attr('alt', 'edit post');
-            $(img).attr('title', 'edit post');
-            $(img).attr('src', 'img/icon.edit_dark.gif');
-            $(img).attr('data-post-id', response.posts[i].id);
-            $(img).click(function(event) {
-              event.preventDefault();
-              event.stopPropagation();
-              renderEditWindow(this);
-            });
-            $(span).append(img);
-            $(span).append('&nbsp;');
-            img = document.createElement('img');
-            $(img).attr('alt', 'delete post');
-            $(img).attr('title', 'delete post');
-            $(img).addClass('pointer deletePostBtn');
-            $(img).attr('src', 'img/icon.delete_dark.gif');
-            $(img).attr('data-post-id', response.posts[i].postID);
-            $(img).click(function(event) {
-              event.preventDefault();
-              event.stopPropagation();
-              renderDeletePostWindow(this);
-            });
-            $(span).append(img);
-            $(header).append(span);
-            $(header).addClass('postHeader');
-            $(div).append(header);
-            var section = document.createElement('section');
-            $(section).addClass('postBody');
-            if (i % 2 == 0) {
-              $(section).addClass('even');
-            } else {
-              $(section).addClass('odd');
-            }
-            $(section).html(response.posts[i].text);
-            $(div).append(section);
-            $('#questContent').append(div);
+            renderPostBubble(response.posts[i], i);
           }
           currentQuestData.page = parseInt(response.currentPage);
           currentQuestData.limit = parseInt(response.delimiter);
@@ -407,9 +457,22 @@ function loadQuest(questID) {
           $(buttons[3]).click(function() {
             getPostsByPage(); 
           });
-          $(buttons[4]).click(function() {
-            renderNewPostWindow();
-          });
+          var isQuestMember = false;
+          for (var i=0; i < currentQuestData.players.length; i++) {
+            if (userID == parseInt(currentQuestData.players[i].userID)) {
+              isQuestMember = true;
+            }
+          }
+          if (!isQuestMember && parseInt(currentQuestData.gmID) == userID) {
+            isQuestMember = true;
+          }
+          if (isQuestMember) {
+            $(buttons[4]).click(function() {
+              renderNewPostWindow();
+            });
+          } else {
+            $(buttons[4]).remove();
+          }
           getPostsByPage();
           $('#questlogLeft').fadeIn('fast');
         }
@@ -800,9 +863,9 @@ function signup(div, dialogObject) {
     return;
   }
   $.ajax({
-    url: API_URL + 'createUser/name/' + $($(inputs)[1]).val().trim() + '/email/' + $($(inputs)[0]).val().trim() + '/pass/' + $($(inputs)[3]).val().trim(),
+    url: SERVICE_URL + 'manageAccounts.php?request=createAccount',
     method: 'POST',
-    data: {apiKey: LOCAL_API_KEY},
+    data: {user: $($(inputs)[1]).val().trim(), email: $($(inputs)[0]).val().trim(), pass: $($(inputs)[3]).val().trim()},
     dataType: 'json',
       statusCode: {
         409: function() {
@@ -813,7 +876,10 @@ function signup(div, dialogObject) {
           $($(alerts)[0]).css('opacity', 1);
           $(div).find('.signupError').text('"The world just does not fit conveniently into the format of a 35mm camera." - W. Eugene Smith');
         },
-        200: function() {
+        200: function(response) {
+          $('#user').val(response.users[0].userName);
+          $('#passwd').val(response.users[0].password);
+          handleLogin();
           dialogObject.dialog('close');
         }
       }
