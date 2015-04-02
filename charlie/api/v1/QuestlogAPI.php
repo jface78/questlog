@@ -505,7 +505,7 @@ class QuestlogAPI extends API {
         $sth = $dbh -> prepare($query);
         $sth -> execute(array(':pid' => $pid));
         $dbh = null;
-        return 'deleted';
+        return 'success';
       } catch(PDOException $error) {
         return 'database_error';
       }

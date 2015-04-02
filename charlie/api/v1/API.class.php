@@ -57,8 +57,7 @@ abstract class API {
 
         switch($this->method) {
           case 'DELETE':
-            $this->request = $this->_cleanInputs($_POST);
-            $this->file = file_get_contents("php://input");
+            $this->request = $this->_cleanInputs($_GET);
             break;
           case 'POST':
               $this->request = $this->_cleanInputs($_POST);
@@ -205,9 +204,9 @@ abstract class API {
       }
       if ((int)method_exists($this, $this->endpoint) > 0) {
         $response = $this->{$this->endpoint}($this->args);
-        if ($response == '"null_results"') {
+        if ($response == 'null_results') {
           return $this->_response("No results.", 404);
-        } else  if ($response == '"database_error"') {
+        } else  if ($response == 'database_error') {
           return $this->_response("Database error.", 500);
         } else {
           return $this->_response($response);
@@ -217,12 +216,13 @@ abstract class API {
     }
 
     private function _response($data, $status = 200) {
-        header("HTTP/1.1 " . $status . " " . $this->_requestStatus($status));
-        return json_encode($data);
+      header("HTTP/1.1 " . $status . " " . $this->_requestStatus($status));
+      return json_encode($data);
     }
 
     private function _cleanInputs($data) {
         $clean_input = Array();
+        // hack for jquery not passing DELETE params.
         if (is_array($data)) {
             foreach ($data as $k => $v) {
                 $clean_input[$k] = $this->_cleanInputs($v);

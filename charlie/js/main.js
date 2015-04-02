@@ -195,9 +195,8 @@ function editPost() {
 
 function deletePost(postID) {
   $.ajax({
-    url: API_URL + 'POSTS/PID/' + postID,
+    url: API_URL + 'POSTS/PID/' + postID + '?apiKey=' + LOCAL_API_KEY,
     method: 'DELETE',
-    data: {apiKey: LOCAL_API_KEY},
     dataType: 'json',
     statusCode: {
       200: function() {
@@ -310,18 +309,21 @@ function getPostsByPage() {
         200: function(response) {
           for (var i=0; i < response.posts.length; i++) {
             var div = document.createElement('div');
-            $(div).attr('id', 'post_' + response.posts[i].id);
+            $(div).attr('id', 'post_' + response.posts[i].postID);
             var header = document.createElement('header');
             var span = document.createElement('span');
             $(span).addClass('floatLeft');
             $(span).text('#' + response.posts[i].postID);
             $(span).append('&nbsp;&nbsp;');
             $(span).append('Posted&nbsp;');
-            var date = formatDate(parseInt(response.posts[i].timestamp));
+            var date = formatDate(parseInt(response.posts[i].date));
             $(span).append(date + '&nbsp;by&nbsp;');
             var a = document.createElement('a');
             $(a).addClass('characterNameLink');
-            $(a).text(response.posts[i].postedBy);
+            $(a).text(response.posts[i].character);
+	    if (response.posts[i].characterID == 'GM') {
+		$(a).append(' - GM');
+	    }
             $(span).append(a);
             $(header).append(span);
             span = document.createElement('span');
