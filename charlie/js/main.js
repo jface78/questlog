@@ -112,8 +112,7 @@ function renderNewPostWindow() {
     modal: false,
     buttons: {
       'Post': function() {
-        newPost($(select).val(), $(textArea).val());
-        dialog.dialog('close');
+        newPost($(select).val(), $(textArea).val().replace('\n', '<br>'), dialog);
       },
       Cancel: function() {
         dialog.dialog('close');
@@ -157,7 +156,8 @@ function renderEditWindow(button) {
   $(textArea).addClass('postTextArea');
   var text = $(button).parent().parent().parent().find('.postBody').html();
   text = convertHTMLToBB(text);
-  text = $('<div>').html(text).text();
+  text = santizeTextForTextarea(text);
+  //text = $('<div>').html(text).text();
   $(textArea).val(text);
   $(popupContainer).append(textArea);
   $(document.body).append(popupContainer);
@@ -167,7 +167,7 @@ function renderEditWindow(button) {
     modal: false,
     buttons: {
       'Edit': function() {
-        editPost($(button).data('post-id'), $(button).data('character-id'), $(textArea).val());
+        editPost($(button).data('post-id'), $(button).data('character-id'), $(textArea).val(), dialog);
       },
       Cancel: function() {
         dialog.dialog( "close" );
@@ -201,7 +201,16 @@ function renderDeletePostWindow(button) {
   });
 }
 
-function newPost(characterID, postText) {
+function sanitizeTextForDB(text) {
+  return text.replace(/(?:\r\n|\r|\n)/g, '<br>')
+}
+
+function santizeTextForTextarea(text) {
+  return text.replace(/<br\s*[\/]?>/gi, '\n');
+}
+
+function newPost(characterID, postText, dialog) {
+  postText = sanitizeTextForDB(postText);
   $.ajax({
     url: API_URL + 'POSTS/QID/' + currentQuestData.questID + '/CID/' + characterID + '/BODY/' + postText,
     method: 'POST',
@@ -209,25 +218,25 @@ function newPost(characterID, postText) {
     dataType: 'json',
     statusCode: {
       200: function(response) {
+        dialog.dialog('close');
         getPostsByPage();
-        //renderPostBubble(response.posts[0], 0, true);
-        //resetPostsView();
       }
     }
   });
 }
 
-function editPost(postID, characterID, postText) {
+function editPost(postID, characterID, postText, dialog) {
+  dbText = sanitizeTextForDB(postText);
   $.ajax({
-    url: API_URL + 'POSTS/PID/' + postID + '/CID/' + characterID + '/BODY/' + postText + '?apiKey=' + LOCAL_API_KEY,
+    url: API_URL + 'POSTS/PID/' + postID + '/CID/' + characterID + '/BODY/' + dbText + '?apiKey=' + LOCAL_API_KEY,
     method: 'PUT',
     dataType: 'json',
     statusCode: {
       200: function(response) {
-        var date = new Date(response.editedDate);
-        //console.log(date.toDateString());
-        $('#post_' + postID).find('.floatLeft').text('Edited on ' + date.toDateString() + ' at ' + date.toLocaleTimeString());
-        //
+        dialog.dialog('close');
+        var parent = $('#post_' + postID).find('.floatLeft');
+        $('#post_' + postID).find('.postBody').html(postText);
+        addEditedHover(parent, formatDate(new Date(response.editedDate).getTime()/1000));
       }
     }
   });
@@ -348,6 +357,30 @@ function addPagination() {
   $('.questNavigation').append(btn);
 }
 
+function addEditedHover(parent, text) {
+  var hoverSpan = document.createElement('span');
+  $(hoverSpan).text('*');
+  $(hoverSpan).addClass('editedAsterisk');
+  $(parent).find('.editedAsterisk').remove();
+  var remainder = $(parent).html().split('Posted')[1];
+  $(parent).text('Posted');
+  $(parent).append(hoverSpan);
+  $(parent).append(remainder);
+  $(hoverSpan).qtip({
+    content: {
+      text: 'Edited ' + text
+    },
+    position: {
+      my: 'bottom left',
+      at: 'top right',
+      target: $(hoverSpan)
+    },
+    style: {
+      classes: 'qtip-dark qtip-shadow qtip-rounded'
+    }
+  });
+}
+
 function renderPostBubble(postObject, index, prepend) {
   var div = document.createElement('div');
   $(div).attr('id', 'post_' + postObject.postID);
@@ -356,29 +389,11 @@ function renderPostBubble(postObject, index, prepend) {
   $(span).addClass('floatLeft');
   $(span).text('#' + postObject.postID);
   $(span).append('&nbsp;&nbsp;');
+  $(span).append('Posted');
   if (postObject.edited != 'never') {
-    var hoverSpan = document.createElement('span');
-    $(hoverSpan).text('*');
-    $(hoverSpan).addClass('editedAsterisk');
-    $(span).append('Posted');
-    $(span).append(hoverSpan);
-    $(span).append('&nbsp;');
-    $(hoverSpan).qtip({
-      content: {
-        text: 'Edited ' + formatDate(parseInt(postObject.edited))
-      },
-      position: {
-        my: 'bottom left',
-        at: 'top right',
-        target: $(hoverSpan)
-      },
-      style: {
-        classes: 'qtip-dark qtip-shadow qtip-rounded'
-      }
-    });
-  } else {
-    $(span).append('Posted&nbsp;');
+    addEditedHover(span, formatDate(parseInt(postObject.edited)));
   }
+  $(span).append('&nbsp;');
   var date = formatDate(parseInt(postObject.date));
   $(span).append(date + '&nbsp;by&nbsp;');
   var a = document.createElement('a');
@@ -935,7 +950,6 @@ function leadWithZero(numberString) {
 }
 
 function formatDate(dateStr) {
-  console.log('date: ' + dateStr);
   if (dateStr) {
     var date = new Date(parseInt(dateStr)*1000);
     return 'on ' + date.toDateString() + ' at ' + date.toLocaleTimeString();

@@ -523,7 +523,7 @@ class QuestlogAPI extends API {
 
       try {
         $dbh = new PDO('mysql:host=' . DB_HOST . ';dbname=' . DB_DATABASE, DB_USER, DB_PASS);
-        $query = 'UPDATE posts SET post_text=:text,cid=:cid WHERE pid=:pid';
+        $query = 'UPDATE posts SET post_text=:text,cid=:cid,timestamp=now() WHERE pid=:pid';
         $sth = $dbh -> prepare($query);
         $sth -> execute(array(':text' => $body, ':cid' => $cid, ':pid' => $pid));
         $query = 'SELECT timestamp FROM posts WHERE pid=:pid';
