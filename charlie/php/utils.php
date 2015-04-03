@@ -48,7 +48,7 @@ function generateQuestListings($results, $json_array, $type) {
         $sth = $dbh -> prepare($query);
         $sth -> execute(array(':qid' => $row['qid']));
         $lastPostDate = $sth -> fetch();
-        $json_array['quests'][$type][$index]['lastPostDate'] = time($lastPostDate['timestamp']);
+        $json_array['quests'][$type][$index]['lastPostDate'] = strtotime($lastPostDate['timestamp']);
         if ($cid['cid'] == 0) {
           $query = 'SELECT login_name FROM users WHERE uid=:uid';
           $sth = $dbh -> prepare($query);
@@ -72,6 +72,7 @@ function generateQuestListings($results, $json_array, $type) {
     exit();
   }
 }
+
 
 function checkSession() {
   if ((isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > SESSION_TIMEOUT)) || !isset($_SESSION['last_activity'])) {

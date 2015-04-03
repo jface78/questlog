@@ -48,7 +48,7 @@ class QuestlogAPI extends API {
         $_SESSION['group'] = $row['group_name'];
         $_SESSION['last_activity'] = time();
 
-        $query = 'SELECT ip, date FROM user_logins WHERE uid=:uid ORDER BY date DESC LIMIT 1';
+        $query = 'SELECT ip, date FROM user_logins WHERE uid=:uid ORDER BY id DESC LIMIT 1';
         $sth = $dbh -> prepare($query);
         $sth -> execute(array(':uid' => $row['uid']));
         $login_data = $sth -> fetch();
@@ -58,9 +58,9 @@ class QuestlogAPI extends API {
         }
         $_SESSION["ip"] = $login_data['ip'];
         $_SESSION["date"] = $login_data['date'];
-        $query = "INSERT INTO user_logins (uid,date, ip) VALUES (:uid,now(),:ip)";
+        $query = "INSERT INTO user_logins (uid, date, ip) VALUES (:uid, :time, :ip)";
         $sth = $dbh->prepare($query);
-        $sth->execute(array(':uid' => $row['uid'],':ip' => $login_data['ip']));
+        $sth->execute(array(':uid' => $row['uid'],':time' => time(), ':ip' => $login_data['ip']));
         $dbh = null;
         $json_array = [];
         $json_array['user_details'] = [];
@@ -443,7 +443,7 @@ class QuestlogAPI extends API {
               $results[$index]['char_name'] = $character['char_name'];
             }
             $results[$index]['post_date'] = strtotime($row['post_date']);
-            if (strtotime($row['post_date']) != strtotime($row['post_date'])) {
+            if (strtotime($row['post_date']) != strtotime($row['timestamp'])) {
               $results[$index]['edited'] = strtotime($row['timestamp']);
             } else {
               $results[$index]['edited'] = 'never';
@@ -493,7 +493,8 @@ class QuestlogAPI extends API {
         $args[0] = 'PID';
         $args[1] = $newID;
         $dbh = null;
-        return $this -> posts($args);
+        return 'success';
+        //return $this -> posts($args);
       } catch(PDOException $error) {
         return 'database_error';
       }
@@ -507,6 +508,31 @@ class QuestlogAPI extends API {
         $sth -> execute(array(':pid' => $pid));
         $dbh = null;
         return 'success';
+      } catch(PDOException $error) {
+        return 'database_error';
+      }
+    } else if ($this -> method == 'PUT') {
+      $pos = array_search('PID',$args)+1;
+      $pid = $args[$pos];
+      $pos = array_search('BODY',$args)+1;
+      $body = $args[$pos];
+      $pos = array_search('CID',$args)+1;
+      $cid = $args[$pos];
+      
+      // ADD PERMISSIONS CHECKING LATER
+
+      try {
+        $dbh = new PDO('mysql:host=' . DB_HOST . ';dbname=' . DB_DATABASE, DB_USER, DB_PASS);
+        $query = 'UPDATE posts SET post_text=:text,cid=:cid WHERE pid=:pid';
+        $sth = $dbh -> prepare($query);
+        $sth -> execute(array(':text' => $body, ':cid' => $cid, ':pid' => $pid));
+        $query = 'SELECT timestamp FROM posts WHERE pid=:pid';
+        $sth = $dbh -> prepare($query);
+        $sth -> execute(array(':pid' => $pid));
+        $dbh = null;
+        $json_array = [];
+        $json_array['editedDate'] = $sth -> fetch()[0];
+        return $json_array;
       } catch(PDOException $error) {
         return 'database_error';
       }

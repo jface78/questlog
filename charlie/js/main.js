@@ -107,8 +107,8 @@ function renderNewPostWindow() {
   $(popupContainer).append(textArea);
   $(document.body).append(popupContainer);
   var dialog = $(popupContainer).dialog({
-    height: 300,
-    width: 350,
+    height: 400,
+    width: 450,
     modal: false,
     buttons: {
       'Post': function() {
@@ -126,7 +126,33 @@ function renderNewPostWindow() {
 
 function renderEditWindow(button) {
   var popupContainer = document.createElement('div');
-  $(popupContainer).attr('title', 'edit post #' + $(button).data('postId'));
+  $(popupContainer).attr('title', 'edit post #' + $(button).data('post-id'));
+  var div = document.createElement('div');
+  $(div).text('posting as ');
+  var select = document.createElement('select');
+  $(select).addClass('posterSelect');
+  if (userID == currentQuestData.gmID) {
+    var option = document.createElement('option');
+    $(option).val('0');
+    $(option).text(currentQuestData.gmName + ' - GM');
+    if ($(button).data('character-id') == 'GM') {
+        $(option).prop('selected', true);
+      }
+    $(select).append(option);
+  }
+  for (var i=0; i < currentQuestData.players.length; i++) {
+    if (currentQuestData.players[i].userID == userID) {
+      var option = document.createElement('option');
+      $(option).val(currentQuestData.players[i].characterID);
+      $(option).text(currentQuestData.players[i].name);
+      if ($(button).data('character-id') == currentQuestData.players[i].characterID) {
+        $(option).prop('selected', true);
+      }
+      $(select).append(option);
+    }
+  }
+  $(div).append(select);
+  $(popupContainer).append(div);
   var textArea = document.createElement('textarea');
   $(textArea).addClass('postTextArea');
   var text = $(button).parent().parent().parent().find('.postBody').html();
@@ -136,12 +162,12 @@ function renderEditWindow(button) {
   $(popupContainer).append(textArea);
   $(document.body).append(popupContainer);
   var dialog = $(popupContainer).dialog({
-    height: 300,
-    width: 350,
+    height: 400,
+    width: 450,
     modal: false,
     buttons: {
       'Edit': function() {
-        editPost($(button).data('postId'));
+        editPost($(button).data('post-id'), $(button).data('character-id'), $(textArea).val());
       },
       Cancel: function() {
         dialog.dialog( "close" );
@@ -191,8 +217,20 @@ function newPost(characterID, postText) {
   });
 }
 
-function editPost() {
-
+function editPost(postID, characterID, postText) {
+  $.ajax({
+    url: API_URL + 'POSTS/PID/' + postID + '/CID/' + characterID + '/BODY/' + postText + '?apiKey=' + LOCAL_API_KEY,
+    method: 'PUT',
+    dataType: 'json',
+    statusCode: {
+      200: function(response) {
+        var date = new Date(response.editedDate);
+        //console.log(date.toDateString());
+        $('#post_' + postID).find('.floatLeft').text('Edited on ' + date.toDateString() + ' at ' + date.toLocaleTimeString());
+        //
+      }
+    }
+  });
 }
 
 function deletePost(postID) {
@@ -318,7 +356,29 @@ function renderPostBubble(postObject, index, prepend) {
   $(span).addClass('floatLeft');
   $(span).text('#' + postObject.postID);
   $(span).append('&nbsp;&nbsp;');
-  $(span).append('Posted&nbsp;');
+  if (postObject.edited != 'never') {
+    var hoverSpan = document.createElement('span');
+    $(hoverSpan).text('*');
+    $(hoverSpan).addClass('editedAsterisk');
+    $(span).append('Posted');
+    $(span).append(hoverSpan);
+    $(span).append('&nbsp;');
+    $(hoverSpan).qtip({
+      content: {
+        text: 'Edited ' + formatDate(parseInt(postObject.edited))
+      },
+      position: {
+        my: 'bottom left',
+        at: 'top right',
+        target: $(hoverSpan)
+      },
+      style: {
+        classes: 'qtip-dark qtip-shadow qtip-rounded'
+      }
+    });
+  } else {
+    $(span).append('Posted&nbsp;');
+  }
   var date = formatDate(parseInt(postObject.date));
   $(span).append(date + '&nbsp;by&nbsp;');
   var a = document.createElement('a');
@@ -337,7 +397,8 @@ function renderPostBubble(postObject, index, prepend) {
     $(img).attr('alt', 'edit post');
     $(img).attr('title', 'edit post');
     $(img).attr('src', 'img/icon.edit_dark.gif');
-    $(img).attr('data-post-id', postObject.id);
+    $(img).attr('data-post-id', postObject.postID);
+    $(img).attr('data-character-id', postObject.characterID);
     $(img).click(function(event) {
       event.preventDefault();
       event.stopPropagation();
@@ -554,9 +615,16 @@ function renderRandomNPC() {
     },
     close: function() {
     }
+  });   
+}
+
+function assignMenuButtonActions() {
+  $('#logoutBtn').click(function(event) {
+    handleLogout();
   });
-  
-    
+  $('#generateNPCBtn').click(function(event) {
+    renderRandomNPC();
+  });
 }
 
 function loadQuestListings() {
@@ -571,183 +639,212 @@ function loadQuestListings() {
         dataType: 'json',
         statusCode: {
           200: function(response) {
-            $('#logoutBtn').click(function(event) {
-              handleLogout();
-            });
-            $('#generateNPCBtn').click(function(event) {
-              renderRandomNPC();
-            });
-            for (var i=0; i < response.quests.gmQuests.length; i++) {
-              var tr = document.createElement('tr');
-              var td = document.createElement('td');
-              $(td).text(response.quests.gmQuests[i].title);
-              $(td).addClass('log-left');
-              $(td).attr('data-quest-id', response.quests.gmQuests[i].questID);
-              $(td).click(function() {
-                var id = $(this).data('questId');
-                $('#questlogLeft').fadeOut('fast', function() {
-                  loadQuest(id);
+            if (response.quests.gmQuests.length) {
+              for (var i=0; i < response.quests.gmQuests.length; i++) {
+                var tr = document.createElement('tr');
+                var td = document.createElement('td');
+                $(td).text(response.quests.gmQuests[i].title);
+                $(td).addClass('log-left');
+                $(td).attr('data-quest-id', response.quests.gmQuests[i].questID);
+                $(td).click(function() {
+                  var id = $(this).data('questId');
+                  $('#questlogLeft').fadeOut('fast', function() {
+                    loadQuest(id);
+                  });
                 });
-              });
-              $(tr).append(td);
-              td = document.createElement('td');
-              $(td).addClass('log-cell');
-              $(td).text(response.quests.gmQuests[i].count);
-              $(tr).append(td);
-              td = document.createElement('td');
-              $(td).addClass('log-cell');
-              $(td).text(response.quests.gmQuests[i].lastPostBy);
-              $(tr).append(td);
-              td = document.createElement('td');
-              $(td).addClass('log-cell');
-              $(td).text(new Date(parseInt(response.quests.gmQuests[i].lastPostDate)*1000).toDateString());
-              $(tr).append(td);
-              td = document.createElement('td');
-              $(td).addClass('log-cell');
-              var btn = document.createElement('button');
-              $(btn).addClass('smallButton');
-              $(btn).css('margin-right', '5px');
-              $(btn).text('edit');
-              $(td).append(btn);
-              btn = document.createElement('button');
-              $(btn).addClass('smallButton');
-              $(btn).text('delete');
-              $(td).append(btn);
-              $(tr).append(td);
-               td = document.createElement('td');
-              $(td).text(response.quests.gmQuests[i].sortable);
-              $(tr).append(td);
-              $('#gmQuests tbody').append(tr);
-            }
-            $('#gmQuests').DataTable({
-              'paging':false,
-              'searching':false,
-              'autoWidth':false,
-              'language': {
-                'search': 'Search GM Quests: ',
-                'info': ''
-              },
-              'columnDefs': [
-                {'class': 'alignCenter', 'targets':[4]},
-                { 'width': '25%', 'targets': 0 },
-                { 'width': '150px', 'targets': 4},
-                { 'visible': false, 'targets':[5]},
-                { "iDataSort": 5, "targets": [ 0 ] }
-              ],
-              "order": [[ 0, "asc" ]],
-              'initComplete':function() {
-                $('#gmQuests_filter').css('text-align', 'right');
-                $('#gmQuests_filter input').addClass('field');
+                $(tr).append(td);
+                td = document.createElement('td');
+                $(td).addClass('log-cell');
+                $(td).text(response.quests.gmQuests[i].count);
+                $(tr).append(td);
+                td = document.createElement('td');
+                $(td).addClass('log-cell');
+                $(td).text(response.quests.gmQuests[i].lastPostBy);
+                $(tr).append(td);
+                td = document.createElement('td');
+                $(td).addClass('log-cell');
+                var postDate = new Date(parseInt(response.quests.gmQuests[i].lastPostDate)*1000);
+                $(td).text(postDate.toDateString() + ' at ' + postDate.toLocaleTimeString());
+                $(tr).append(td);
+                td = document.createElement('td');
+                $(td).addClass('log-cell');
+                var btn = document.createElement('button');
+                $(btn).addClass('smallButton');
+                $(btn).css('margin-right', '5px');
+                $(btn).text('edit');
+                $(td).append(btn);
+                btn = document.createElement('button');
+                $(btn).addClass('smallButton');
+                $(btn).text('delete');
+                $(td).append(btn);
+                $(tr).append(td);
+                td = document.createElement('td');
+                $(td).text(response.quests.gmQuests[i].sortable);
+                $(tr).append(td);
+                td = document.createElement('td');
+                $(td).text(parseInt(response.quests.gmQuests[i].lastPostDate));
+                $(tr).append(td);
+                $('#gmQuests tbody').append(tr);
               }
-            });
+              $('#gmQuests').DataTable({
+                'paging':false,
+                'searching':false,
+                'autoWidth':false,
+                'language': {
+                  'search': 'Search GM Quests: ',
+                  'info': ''
+                },
+                'columnDefs': [
+                  {'class': 'alignCenter', 'targets':[4]},
+                  { 'width': '25%', 'targets': 0 },
+                  { 'width': '150px', 'targets': 4},
+                  { 'visible': false, 'targets':[5,6]},
+                  { "iDataSort": 5, "targets": [ 0 ],
+                    "iDataSort": 6, "targets": [3]
+                  }
+                ],
+                "order": [[ 6, "desc" ]],
+                'initComplete':function() {
+                  $('#gmQuests_filter').css('text-align', 'right');
+                  $('#gmQuests_filter input').addClass('field');
+                }
+              });
+            } else {
+              var span = document.createElement('span');
+              $(span).text('You have no active GM quests.');
+              $('#gmQuests').replaceWith(span);
+            }
 
-            for (var i=0; i < response.quests.playerQuests.length; i++) {
-              var tr = document.createElement('tr');
-              var td = document.createElement('td');
-              $(td).text(response.quests.playerQuests[i].title);
-              $(td).addClass('log-left');
-              $(td).attr('data-quest-id', response.quests.playerQuests[i].questID);
-              $(td).click(function() {
-                var id = $(this).data('questId');
-                $('#questlogLeft').fadeOut('fast', function() {
-                  loadQuest(id);
+            if (response.quests.playerQuests.length) {
+              for (var i=0; i < response.quests.playerQuests.length; i++) {
+                var tr = document.createElement('tr');
+                var td = document.createElement('td');
+                $(td).text(response.quests.playerQuests[i].title);
+                $(td).addClass('log-left');
+                $(td).attr('data-quest-id', response.quests.playerQuests[i].questID);
+                $(td).click(function() {
+                  var id = $(this).data('questId');
+                  $('#questlogLeft').fadeOut('fast', function() {
+                    loadQuest(id);
+                  });
                 });
-              });
-              $(tr).append(td);
-              td = document.createElement('td');
-              $(td).addClass('log-cell');
-              $(td).text(response.quests.playerQuests[i].count);
-              $(tr).append(td);
-              td = document.createElement('td');
-              $(td).addClass('log-cell');
-              $(td).text(response.quests.playerQuests[i].gm);
-              $(tr).append(td);
-              td = document.createElement('td');
-              $(td).addClass('log-cell');
-              $(td).text(response.quests.playerQuests[i].lastPostBy);
-              $(tr).append(td);
-              td = document.createElement('td');
-              $(td).addClass('log-cell');
-              $(td).text(new Date(parseInt(response.quests.playerQuests[i].lastPostDate)*1000).toDateString());
-              $(tr).append(td);
-               td = document.createElement('td');
-              $(td).text(response.quests.playerQuests[i].sortable);
-              $(tr).append(td);
-              $('#playerQuests tbody').append(tr);
-            }
-            $('#playerQuests').DataTable({
-              'paging':false,
-              'searching':false,
-              'autoWidth':false,
-              'language': {
-                'search': 'Search Player Quests: ',
-                'info': ''
-              },
-              'columnDefs': [
-                { 'width': '25%', 'targets': 0 },
-                { 'visible': false, 'targets':[5]},
-                { "iDataSort": 5, "targets": [ 0 ] }
-              ],
-              "order": [[ 0, "asc" ]],
-              'initComplete':function() {
-                $('#playerQuests_filter').css('text-align', 'right');
-                $('#playerQuests_filter input').addClass('field');
+                $(tr).append(td);
+                td = document.createElement('td');
+                $(td).addClass('log-cell');
+                $(td).text(response.quests.playerQuests[i].count);
+                $(tr).append(td);
+                td = document.createElement('td');
+                $(td).addClass('log-cell');
+                $(td).text(response.quests.playerQuests[i].gm);
+                $(tr).append(td);
+                td = document.createElement('td');
+                $(td).addClass('log-cell');
+                $(td).text(response.quests.playerQuests[i].lastPostBy);
+                $(tr).append(td);
+                td = document.createElement('td');
+                $(td).addClass('log-cell');
+                var postDate = new Date(parseInt(response.quests.playerQuests[i].lastPostDate)*1000);
+                $(td).text(postDate.toDateString() + ' at ' + postDate.toLocaleTimeString());
+                $(tr).append(td);
+                td = document.createElement('td');
+                $(td).text(response.quests.playerQuests[i].sortable);
+                $(tr).append(td);
+                td = document.createElement('td');
+                $(td).text(parseInt(response.quests.playerQuests[i].lastPostDate));
+                $(tr).append(td);
+                $('#playerQuests tbody').append(tr);
               }
-            });
+              $('#playerQuests').DataTable({
+                'paging':false,
+                'searching':false,
+                'autoWidth':false,
+                'language': {
+                  'search': 'Search Player Quests: ',
+                  'info': ''
+                },
+                'columnDefs': [
+                  { 'width': '25%', 'targets': 0 },
+                  { 'visible': false, 'targets':[5,6]},
+                  { "iDataSort": 5, "targets": [0],
+                    "iDataSort": 6, "targets": [4]
+                  }
+                ],
+                "order": [[ 6, "desc" ]],
+                'initComplete':function() {
+                  $('#playerQuests_filter').css('text-align', 'right');
+                  $('#playerQuests_filter input').addClass('field');
+                }
+              });
+            } else {
+              var span = document.createElement('span');
+              $(span).text('You have no active player quests.');
+              $('#playerQuests').replaceWith(span);
+            }
 
-            for (var i=0; i < response.quests.otherQuests.length; i++) {
-              var tr = document.createElement('tr');
-              var td = document.createElement('td');
-              $(td).text(response.quests.otherQuests[i].title);
-              $(td).addClass('log-left');
-              $(td).attr('data-quest-id', response.quests.otherQuests[i].questID);
-              $(td).click(function() {
-                var id = $(this).data('questId');
-                $('#questlogLeft').fadeOut('fast', function() {
-                  loadQuest(id);
+            if (response.quests.otherQuests.length) {
+              for (var i=0; i < response.quests.otherQuests.length; i++) {
+                var tr = document.createElement('tr');
+                var td = document.createElement('td');
+                $(td).text(response.quests.otherQuests[i].title);
+                $(td).addClass('log-left');
+                $(td).attr('data-quest-id', response.quests.otherQuests[i].questID);
+                $(td).click(function() {
+                  var id = $(this).data('questId');
+                  $('#questlogLeft').fadeOut('fast', function() {
+                    loadQuest(id);
+                  });
                 });
-              });
-              $(tr).append(td);
-              td = document.createElement('td');
-              $(td).addClass('log-cell');
-              $(td).text(response.quests.otherQuests[i].count);
-              $(tr).append(td);
-              td = document.createElement('td');
-              $(td).addClass('log-cell');
-              $(td).text(response.quests.otherQuests[i].gm);
-              $(tr).append(td);
-              td = document.createElement('td');
-              $(td).addClass('log-cell');
-              $(td).text(response.quests.otherQuests[i].lastPostBy);
-              $(tr).append(td);
-              td = document.createElement('td');
-              $(td).addClass('log-cell');
-              $(td).text(new Date(parseInt(response.quests.otherQuests[i].lastPostDate)*1000).toDateString());
-              $(tr).append(td);
-              td = document.createElement('td');
-              $(td).text(response.quests.otherQuests[i].sortable);
-              $(tr).append(td);
-              $('#otherQuests tbody').append(tr);
-            }
-            $('#otherQuests').DataTable({
-              'paging':false,
-              'searching':false,
-              'autoWidth':false,
-              'language': {
-                'search': 'Search Other Quests: ',
-                'info': ''
-              },
-              'columnDefs': [
-                { 'width': '25%', 'targets': 0 },
-                { 'visible': false, 'targets':[5]},
-                { "iDataSort": 5, "targets": [ 0 ] }
-              ],
-              "order": [[ 0, "asc" ]],
-              'initComplete':function() {
-                $('#otherQuests_filter').css('text-align', 'right');
-                $('#otherQuests_filter input').addClass('field');
+                $(tr).append(td);
+                td = document.createElement('td');
+                $(td).addClass('log-cell');
+                $(td).text(response.quests.otherQuests[i].count);
+                $(tr).append(td);
+                td = document.createElement('td');
+                $(td).addClass('log-cell');
+                $(td).text(response.quests.otherQuests[i].gm);
+                $(tr).append(td);
+                td = document.createElement('td');
+                $(td).addClass('log-cell');
+                $(td).text(response.quests.otherQuests[i].lastPostBy);
+                $(tr).append(td);
+                td = document.createElement('td');
+                $(td).addClass('log-cell');
+                var postDate = new Date(parseInt(response.quests.otherQuests[i].lastPostDate)*1000);
+                $(td).text(postDate.toDateString() + ' at ' + postDate.toLocaleTimeString());
+                $(tr).append(td);
+                td = document.createElement('td');
+                $(td).text(response.quests.otherQuests[i].sortable);
+                $(tr).append(td);
+                td = document.createElement('td');
+                $(td).text(parseInt(response.quests.otherQuests[i].lastPostDate));
+                $(tr).append(td);
+                $('#otherQuests tbody').append(tr);
               }
-            });
+              $('#otherQuests').DataTable({
+                'paging':false,
+                'searching':false,
+                'autoWidth':false,
+                'language': {
+                  'search': 'Search Other Quests: ',
+                  'info': ''
+                },
+                'columnDefs': [
+                  { 'width': '25%', 'targets': 0 },
+                  { 'visible': false, 'targets':[5,6]},
+                  { "iDataSort": 5, "targets": [ 0 ],
+                    "iDataSort": 6, "targets": [ 4 ]}
+                ],
+                "order": [[ 6, "desc" ]],
+                'initComplete':function() {
+                  $('#otherQuests_filter').css('text-align', 'right');
+                  $('#otherQuests_filter input').addClass('field');
+                }
+              });
+            } else {
+              var span = document.createElement('span');
+              $(span).text('There are no active other quests.');
+              $('#otherQuests').replaceWith(span);
+            }
             $('#mainContent').fadeIn();
           }
         }
@@ -838,6 +935,7 @@ function leadWithZero(numberString) {
 }
 
 function formatDate(dateStr) {
+  console.log('date: ' + dateStr);
   if (dateStr) {
     var date = new Date(parseInt(dateStr)*1000);
     return 'on ' + date.toDateString() + ' at ' + date.toLocaleTimeString();
@@ -1054,6 +1152,7 @@ function generateMenu() {
     success: function(template) {
       $(div).html(template);
       $('#mainContent').append(div);
+      assignMenuButtonActions();
     }
   });
 }
@@ -1105,6 +1204,22 @@ function fetchRandomPost() {
 
 $(document).ready(function() {
   console.log('Questlog BETA');
+  // Fallback in case jquery-ui cdn is inaccessible.
+  if (!$.ui) {
+    head = document.getElementsByTagName('head');
+    script = document.createElement('script');
+    script.type = 'text/javascript';
+    script.src = 'js/plugins/jquery-ui.min.js';
+    head[0].appendChild(script);
+  }
+  // Fallback in case datatables cdn inaccessible.
+  if (!jQuery.fn.dataTable) {
+    head = document.getElementsByTagName('head');
+    script = document.createElement('script');
+    script.type = 'text/javascript';
+    script.src = 'js/plugins/jquery.dataTables.min.js';
+    head[0].appendChild(script);
+  }
   $('#mainContent').hide();
   $('footer').text('Copyright ' + new Date().getFullYear() + ' QuestLog.org');
   var hour = new Date().getHours();

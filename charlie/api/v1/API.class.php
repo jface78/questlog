@@ -205,7 +205,10 @@ abstract class API {
       }
       if ((int)method_exists($this, $this->endpoint) > 0) {
         $response = $this->{$this->endpoint}($this->args);
-        if ($response == 'null_results') {
+        if ($response == 'success') {
+          return $this->_response('Operation Successful');
+        }
+        else if ($response == 'null_results') {
           return $this->_response("No results.", 404);
         } else  if ($response == 'database_error') {
           return $this->_response("Database error.", 500);
