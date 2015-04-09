@@ -83,6 +83,7 @@ function renderNewPostWindow() {
   var popupContainer = document.createElement('div');
   $(popupContainer).attr('title', 'new post');
   var div = document.createElement('div');
+  $(div).css('height', '22px');
   $(div).text('posting as ');
   var select = document.createElement('select');
   $(select).addClass('posterSelect');

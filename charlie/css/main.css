@@ -37,6 +37,17 @@ a:link, a:active, a:visited {
 a:hover {
   color:#fff;
 }
+
+select {
+  background-color: #545454;
+  color: white;
+  border: 1px solid #000;
+  font-size: 10px !important;
+  padding: 2px;
+  border-radius: 3px;
+  letter-spacing: 1px;
+}
+
 input {
   BORDER-TOP: #848383 1px outset;
   BORDER-LEFT: #848383 1px outset;
@@ -64,6 +75,14 @@ button {
 button:hover {
   color:#FFF;
 }
+
+input:focus,
+select:focus,
+textarea:focus,
+button:focus {
+    outline: none;
+}
+
 .smallButton {
   padding-top:1px;
   padding-bottom:1px;
