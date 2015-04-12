@@ -5,7 +5,7 @@ include '../utils.php';
 try {
   $json_array = [];
   $dbh = new PDO('mysql:host=' .DB_HOST . ';dbname=' . DB_DATABASE, DB_USER, DB_PASS);
-  $query = 'SELECT qid,uid,quest_name FROM quests WHERE quest_status < 4';
+  $query = 'SELECT qid,uid,quest_name FROM quests WHERE quest_status < 4 AND qid != 4';
   $sth = $dbh -> prepare($query);
   $sth -> execute();
   $quests = $sth -> fetchAll();
@@ -37,11 +37,13 @@ try {
     $sth -> execute(array(':cid' => $json_array['character_id']));
     $json_array['poster_name'] = $sth -> fetch()[0];
   }
+  $dbh = null;
   header("Content-Type: application/json");
+  http_response_code(200);
   echo json_encode($json_array);
   $dbh = null;
 } catch(PDOException $error) {
-  header('HTTP/1.1 500 Internal Server Error');
+  http_response_code(500);
   echo $error;
 }
 ?>

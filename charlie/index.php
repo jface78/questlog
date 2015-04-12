@@ -22,18 +22,17 @@
     <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.2/themes/vader/jquery-ui.css" />
   </head>
   <body>
-    <header class="floatLeft" id="leftHeader">
-      <img src="img/title.05.gif" alt="QuestLog" id="titleImg"><br />
-      <div id="warningMessage">This is QuestLog. RPGs and collaborative storytelling.<br>
-      <span style="color:#fff;font-size:14px;">Current Status: <b>CLOSED BETA</b></span>
-      </div>
-    </header>
-    <hr class="clear"></hr>
-    <section id="mainContent">
-
-    </section>
-    <hr></hr>
-    
+    <div class="wrapper">
+      <header class="floatLeft" id="leftHeader">
+        <img src="img/title.05.gif" alt="QuestLog" id="titleImg"><br />
+        <div id="warningMessage">This is QuestLog. RPGs and collaborative storytelling.<br>
+        <span style="color:#fff;font-size:14px;">Current Status: <b>CLOSED BETA</b></span>
+      </header>
+      <hr class="clear"></hr>
+      <div id="mainContent"></div>
+      <hr></hr>
+      <div class="push"></div>
+    </div>
   <footer></footer>
   </body>
 </html>

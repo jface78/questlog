@@ -106,7 +106,6 @@ function renderNewPostWindow() {
   var textArea = document.createElement('textarea');
   $(textArea).addClass('postTextArea');
   $(popupContainer).append(textArea);
-  $(document.body).append(popupContainer);
   var dialog = $(popupContainer).dialog({
     height: 400,
     width: 450,
@@ -161,7 +160,6 @@ function renderEditWindow(button) {
   //text = $('<div>').html(text).text();
   $(textArea).val(text);
   $(popupContainer).append(textArea);
-  $(document.body).append(popupContainer);
   var dialog = $(popupContainer).dialog({
     height: 400,
     width: 450,
@@ -183,7 +181,6 @@ function renderDeletePostWindow(button) {
   var popupContainer = document.createElement('div');
   $(popupContainer).attr('title', 'Sure about that?');
   $(popupContainer).append('Delete post #' + $(button).data('postId') + '? ' + generateNPCName() + ' hasn\'t read it yet.');
-  $(document.body).append(popupContainer);
   var dialog = $(popupContainer).dialog({
     height: 200,
     width: 350,
@@ -615,7 +612,6 @@ function renderRandomNPC() {
   $(contentDiv).addClass('chargenContent');
   $(div).append(contentDiv);
   generateRandomNPC(div);
-  $(document.body).append(div);
 
   var dialog = $(div).dialog({
     height: 500,
@@ -959,8 +955,45 @@ function formatDate(dateStr) {
   }
 }
 
+function recoverPassword(div, dialogObject) {
+  $(div).find('.signupError').text('');
+  if (!$($(div).find('input')[0]).val().trim().length) {
+    $(div).find('.signupError').text('"It\'s so fine and yet so terrible to stand in front of a blank canvas." - Paul Cezanne');
+    return;
+  }
+  else {
+    $.ajax({
+    url: SERVICE_URL + 'manageAccounts.php',
+    method: 'PUT',
+    data: {email: $($(div).find('input')[0]).val().trim()},
+    dataType: 'json',
+      statusCode: {
+        400: function() {
+          $(div).find('.signupError').text('"The world just does not fit conveniently into the format of a 35mm camera." - W. Eugene Smith');
+        },
+        200: function() {
+          dialobObject.dialog('close');
+          var newDiv = document.createElement('div');
+          $(newDiv).html('Instructions to reset your password have been sent to the provided email address.<br /><b>They will expire in one hour.</b>');
+          var dialog = $(newDiv).dialog({
+            height: 250,
+            width: 300,
+            modal: true,
+            buttons: {
+              'K': function() {
+                dialog.dialog('close');
+              }
+            }
+          });
+        }
+      }
+    });
+  }
+}
+
 function signup(div, dialogObject) {
   $(div).find('.signupAlert').css('opacity', 0);
+  $(div).find('.signupError').text('');
   var alerts = $(div).find('.signupAlert');
   var inputs = $(div).find('input');
   if (!$($(inputs)[0]).val().trim().length || !$($(inputs)[1]).val().trim().length ||
@@ -976,7 +1009,7 @@ function signup(div, dialogObject) {
     return;
   }
   $.ajax({
-    url: SERVICE_URL + 'manageAccounts.php?request=createAccount',
+    url: SERVICE_URL + 'manageAccounts.php',
     method: 'POST',
     data: {user: $($(inputs)[1]).val().trim(), email: $($(inputs)[0]).val().trim(), pass: $($(inputs)[3]).val().trim()},
     dataType: 'json',
@@ -990,10 +1023,12 @@ function signup(div, dialogObject) {
           $(div).find('.signupError').text('"The world just does not fit conveniently into the format of a 35mm camera." - W. Eugene Smith');
         },
         200: function(response) {
-          $('#user').val(response.users[0].userName);
-          $('#passwd').val(response.users[0].password);
-          handleLogin();
+          userID = response.users[0].userID;
+          $('#user').val($($(inputs)[1]).val().trim());
+          $('#passwd').val($($(inputs)[3]).val().trim());
+          console.log('pass? '  + $($(inputs)[3]).val().trim());
           dialogObject.dialog('close');
+          handleLogin();
         }
       }
   });
@@ -1062,14 +1097,47 @@ function renderSignup() {
   rowDiv = document.createElement('div');
   $(rowDiv).addClass('signupError');
   $(popupContainer).append(rowDiv);
-  $(document.body).append(popupContainer);
   var dialog = $(popupContainer).dialog({
-    height: 225,
-    width: 350,
+    height: 250,
+    width: 400,
     modal: true,
     buttons: {
       'join': function() {
         signup(popupContainer, dialog);
+      },
+      'never mind': function() {
+        dialog.dialog('close');
+      }
+    },
+    close: function() {
+    }
+  });
+}
+
+function renderForgotPassword() {
+  var popupContainer = document.createElement('div');
+  $(popupContainer).css('font-size', '10px');
+  $(popupContainer).attr('title', 'recover');
+  var rowDiv = document.createElement('div');
+  $(rowDiv).addClass('alignCenter');
+  var span = document.createElement('span');
+  $(span).addClass('signupLabel');
+  $(span).html('email&nbsp;');
+  $(rowDiv).append(span);
+  var input = document.createElement('input');
+  $(input).attr('type', 'text');
+  $(rowDiv).append(input);
+  $(popupContainer).append(rowDiv);
+  rowDiv = document.createElement('div');
+  $(rowDiv).addClass('signupError');
+  $(popupContainer).append(rowDiv);
+  var dialog = $(popupContainer).dialog({
+    height: 250,
+    width: 400,
+    modal: true,
+    buttons: {
+      'reset password': function() {
+        recoverPassword(popupContainer, dialog);
       },
       'never mind': function() {
         dialog.dialog('close');
@@ -1130,6 +1198,11 @@ function addLoginBox() {
   $(div).append(a);
   a = document.createElement('a');
   $(a).attr('href', '#');
+  $(a).click(function(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    renderForgotPassword();
+  });
   $(a).text('forgot?');
   $(div).append(a);
   $(parent).append(div);
