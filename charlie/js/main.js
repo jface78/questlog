@@ -955,7 +955,7 @@ function formatDate(dateStr) {
   }
 }
 
-function recoverPassword(div, dialogObject) {
+function resetPassword(div, dialogObject) {
   $(div).find('.signupError').text('');
   if (!$($(div).find('input')[0]).val().trim().length) {
     $(div).find('.signupError').text('<span style="font-style:normal;">Enter your email address, dummy.</span>');
@@ -964,7 +964,7 @@ function recoverPassword(div, dialogObject) {
   else {
     $.ajax({
     url: SERVICE_URL + 'manageAccounts.php?request=password',
-    method: 'PUT',
+    method: 'POST',
     data: {email: $($(div).find('input')[0]).val().trim()},
     dataType: 'json',
       statusCode: {
@@ -1140,7 +1140,7 @@ function renderForgotPassword() {
     modal: true,
     buttons: {
       'reset password': function() {
-        recoverPassword(popupContainer, dialog);
+        resetPassword(popupContainer, dialog);
       },
       'never mind': function() {
         dialog.dialog('close');

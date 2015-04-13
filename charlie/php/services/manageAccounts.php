@@ -50,41 +50,99 @@ switch($_GET['request']) {
     }
     break;
   case 'password':
-    parse_str(file_get_contents("php://input"), $post_vars);
-    $email = $post_vars['email'];
-    if (empty($email) ||!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-      http_response_code(400);
-      exit();
-    }
-    try {
-      $dbh = new PDO('mysql:host=' .DB_HOST . ';dbname=' . DB_DATABASE, DB_USER, DB_PASS);
-      $dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    switch($_SERVER['REQUEST_METHOD']) {
+      case 'POST':
+        $email = $_POST['email'];
+        if (empty($email) ||!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+          http_response_code(400);
+          exit();
+        }
+        try {
+          $dbh = new PDO('mysql:host=' .DB_HOST . ';dbname=' . DB_DATABASE, DB_USER, DB_PASS);
+          $dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-      $query = 'SELECT uid FROM user_profiles WHERE user_email=:email';
-      $sth = $dbh -> prepare($query);
-      $sth -> execute(array(':email' => $email));
-      $uid = $sth -> fetch()[0];
-      $hash = md5(time());
-      if (count($uid) <= 0) {
-        $dbh = null;
-        http_response_code(404);
-        exit();
-      }
-      $query = 'INSERT INTO password_recovery(uid, reset_hash) VALUES (:uid, :hash)';
-      $sth = $dbh -> prepare($query);
-      $sth -> execute(array(':uid' => $uid, ':hash' => $hash));
-      $dbh = null;
-      $message = 'Hello,' . "\n\n" . 'Questlog received a request to reset your password. You may do so at the following link:' . "\n\n";
-      $message .= 'http://www.questlog.org/new/resetPass.php?hash=' . $hash . "\n\n";
-      $message .= 'You have one hour to comply.' . "\n\n";
-      $message .= 'Regards,' . "\n" . 'Questlog.org';
-      $headers = 'From: no-reply@questlog.org' . "\r\n" .
-          'Reply-To: no-reply@questlog.org' . "\r\n" .
-          'X-Mailer: PHP/' . phpversion();
-      mail($email, 'questlog password recovery', $message, $headers);
+          $query = 'SELECT uid FROM user_profiles WHERE user_email=:email';
+          $sth = $dbh -> prepare($query);
+          $sth -> execute(array(':email' => $email));
+          $uid = $sth -> fetch()[0];
+          $hash = md5(time());
+          if (count($uid) <= 0) {
+            $dbh = null;
+            http_response_code(404);
+            exit();
+          }
+          $query = 'INSERT INTO password_recovery(uid, reset_hash) VALUES (:uid, :hash)';
+          $sth = $dbh -> prepare($query);
+          $sth -> execute(array(':uid' => $uid, ':hash' => $hash));
+          $dbh = null;
+          $message = 'Hello,' . "\n\n" . 'Questlog received a request to reset your password. You may do so at the following link:' . "\n\n";
+          $message .= 'https://www.questlog.org/new/resetPass.php?hash=' . $hash . "\n\n";
+          $message .= 'You have one hour to comply.' . "\n\n";
+          $message .= 'Regards,' . "\n" . 'Questlog.org';
+          $headers = 'From: no-reply@questlog.org' . "\r\n" .
+              'Reply-To: no-reply@questlog.org' . "\r\n" .
+              'X-Mailer: PHP/' . phpversion();
+          mail($email, 'questlog password recovery', $message, $headers);
       
-    } catch(PDOException $error) {
-      http_response_code(500);
+        } catch(PDOException $error) {
+          http_response_code(500);
+        }
+        break;
+      case 'PUT':
+        parse_str(file_get_contents("php://input"), $post_vars);
+        $hash = $post_vars['hash'];
+        $pass = $post_vars['pass'];
+        if (empty($hash) || empty($pass)) {
+          http_response_code(400);
+          exit();
+        }
+        try {
+          $dbh = new PDO('mysql:host=' .DB_HOST . ';dbname=' . DB_DATABASE, DB_USER, DB_PASS);
+          $dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+          $query = 'SELECT rid, ABS(UNIX_TIMESTAMP(now()) - UNIX_TIMESTAMP(timestamp)) as seconds FROM password_recovery';
+          $sth = $dbh -> prepare($query);
+          $sth -> execute();
+          $results = $sth -> fetchAll();
+          $ridsString = '';
+          foreach($results as $time) {
+            if ($time['seconds']/60 >= 60) {
+              $ridsString .= 'rid=' . $time['rid'] . ' OR ';
+            }
+          }
+          $ridsString = rtrim($ridsString, " OR ");
+          if (strlen($ridsString)) {
+            $query = 'DELETE FROM password_recovery WHERE ' . $ridsString;
+            $sth = $dbh -> prepare($query);
+            $sth -> execute();
+          }
+          $query = 'SELECT rid,uid FROM password_recovery WHERE reset_hash=:hash';
+          $sth = $dbh -> prepare($query);
+          $sth -> execute(array(':hash' => $hash));
+          $results = $sth -> fetch();
+          echo 'rid: ' . $results['rid'];
+          echo 'uid: ' . $results['uid'];
+          if (count($results) == 0) {
+            http_response_code(410);
+            $dbh = null;
+            exit();
+          }
+          $query = 'DELETE FROM password_recovery WHERE rid=:rid';
+          $sth = $dbh -> prepare($query);
+          $sth -> execute(array(':rid' => $results['rid']));
+          $query = 'SELECT login_name FROM users WHERE uid=:uid';
+          $sth = $dbh -> prepare($query);
+          $sth -> execute(array(':uid' => $results['uid']));
+          $name = $sth -> fetch()[0];
+
+          $query = 'UPDATE users SET login_hash=:hash WHERE uid=:uid';
+          $sth = $dbh -> prepare($query);
+          $sth -> execute(array(':hash' => hashPasswd($name, $pass), ':uid' => $results['uid']));
+          $dbh = null;
+          http_response_code(200);
+        } catch(PDOException $error) {
+          http_response_code(500);
+        }
+        break;
     }
     break;
 }
