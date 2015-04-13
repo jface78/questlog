@@ -958,23 +958,26 @@ function formatDate(dateStr) {
 function recoverPassword(div, dialogObject) {
   $(div).find('.signupError').text('');
   if (!$($(div).find('input')[0]).val().trim().length) {
-    $(div).find('.signupError').text('"It\'s so fine and yet so terrible to stand in front of a blank canvas." - Paul Cezanne');
+    $(div).find('.signupError').text('<span style="font-style:normal;">Enter your email address, dummy.</span>');
     return;
   }
   else {
     $.ajax({
-    url: SERVICE_URL + 'manageAccounts.php',
+    url: SERVICE_URL + 'manageAccounts.php?request=password',
     method: 'PUT',
     data: {email: $($(div).find('input')[0]).val().trim()},
     dataType: 'json',
       statusCode: {
         400: function() {
-          $(div).find('.signupError').text('"The world just does not fit conveniently into the format of a 35mm camera." - W. Eugene Smith');
+          $(div).find('.signupError').text('<span style="font-style:normal;">Invalid email address.</span>');
+        },
+        404: function() {
+          $(div).find('.signupError').text('<span style="font-style:normal;">There is is no such account associated with this email address.</span>');
         },
         200: function() {
-          dialobObject.dialog('close');
+          dialogObject.dialog('close');
           var newDiv = document.createElement('div');
-          $(newDiv).html('Instructions to reset your password have been sent to the provided email address.<br /><b>They will expire in one hour.</b>');
+          $(newDiv).html('Instructions to reset your password have been sent to the provided email address.<br /><br /><b>This will expire in one hour.</b>');
           var dialog = $(newDiv).dialog({
             height: 250,
             width: 300,
@@ -1009,7 +1012,7 @@ function signup(div, dialogObject) {
     return;
   }
   $.ajax({
-    url: SERVICE_URL + 'manageAccounts.php',
+    url: SERVICE_URL + 'manageAccounts.php?request=account',
     method: 'POST',
     data: {user: $($(inputs)[1]).val().trim(), email: $($(inputs)[0]).val().trim(), pass: $($(inputs)[3]).val().trim()},
     dataType: 'json',
