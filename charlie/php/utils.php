@@ -90,5 +90,28 @@ function hashPasswd($username, $passwd) {
   return($hash_2);
 }
 
+function rollDice($number, $type) {
+  return rand(1,$type) * $number;
+}
+
+function convertRolls($text, $characterRolling) {
+  $pattern = '/(\|r|\|roll)\s(\w+)/i';
+  preg_match_all($pattern, $text, $matches);
+  $replacementArray = [];
+  foreach ($matches[2] as $match) {
+    $pos = strpos($match, 'd');
+    $amount = substr($match, 0, $pos);
+    $type = substr($match, $pos+1, strlen($match));
+    if ($amount == 1) {
+      $string = '<br /><b>*** ' . ucwords($characterRolling) . ' rolled one ' . $type . '-sided die: ';
+    } else {
+      $string = '<br /><b>*** ' . ucwords($characterRolling) . ' rolled ' . $amount . ' ' . $type . '-sided dice: ';
+    }
+    $string .= rollDice($amount, $type) . ' ***</b><br />';
+    $text = str_replace($match, $string, $text);
+  }
+  return $text;
+}
+
 
 ?>
