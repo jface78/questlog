@@ -5,6 +5,33 @@ function killSession() {
   session_unset();
 }
 
+function getPostersName($cid, $qid) {
+  try {
+    $dbh = new PDO('mysql:host=' . DB_HOST . ';dbname=' . DB_DATABASE, DB_USER, DB_PASS);
+    if ($cid != 0) {
+      $query = 'SELECT char_name FROM characters WHERE cid=:cid';
+      $sth = $dbh -> prepare($query);
+      $sth -> execute(array(':cid' => $cid));
+      $dbh = null;
+      return $sth -> fetch()[0];
+    } else {
+      $query = 'SELECT uid FROM quests WHERE qid=:qid';
+      $sth = $dbh -> prepare($query);
+      $sth -> execute(array(':qid' => $qid));
+      $uid = $sth -> fetch()[0];
+      $query = 'SELECT login_name FROM users WHERE uid=:uid';
+      $sth = $dbh -> prepare($query);
+      $sth -> execute(array(':uid' => $uid));
+      $dbh = null;
+      return $sth -> fetch()[0] . ' - GM';
+    }
+    
+  } catch(PDOException $error) {
+    http_response_code(500);
+    exit();
+  }
+}
+
 function getSortableTitle($title) {
   if (strpos(strtolower($title), 'an ') === 0) {
     return substr($title, 3, strlen($title)-1) . ', An';
@@ -97,18 +124,19 @@ function rollDice($number, $type) {
 function convertRolls($text, $characterRolling) {
   $pattern = '/(\|r|\|roll)\s(\w+)/i';
   preg_match_all($pattern, $text, $matches);
-  $replacementArray = [];
+  $index = 0;
   foreach ($matches[2] as $match) {
     $pos = strpos($match, 'd');
     $amount = substr($match, 0, $pos);
     $type = substr($match, $pos+1, strlen($match));
     if ($amount == 1) {
-      $string = '<br /><b>*** ' . ucwords($characterRolling) . ' rolled one ' . $type . '-sided die: ';
+      $string = '<br /><b>*** ' . $characterRolling . ' rolled one ' . $type . '-sided die: ';
     } else {
-      $string = '<br /><b>*** ' . ucwords($characterRolling) . ' rolled ' . $amount . ' ' . $type . '-sided dice: ';
+      $string = '<br /><b>*** ' . $characterRolling . ' rolled ' . $amount . ' ' . $type . '-sided dice: ';
     }
     $string .= rollDice($amount, $type) . ' ***</b><br />';
-    $text = str_replace($match, $string, $text);
+    $text = str_replace($matches[0][$index], $string, $text);
+    $index++;
   }
   return $text;
 }

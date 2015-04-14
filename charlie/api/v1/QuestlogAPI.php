@@ -485,11 +485,7 @@ class QuestlogAPI extends API {
 
       try {
         $dbh = new PDO('mysql:host=' . DB_HOST . ';dbname=' . DB_DATABASE, DB_USER, DB_PASS);
-        $query = 'SELECT char_name FROM characters WHERE cid=:cid';
-        $sth = $dbh -> prepare($query);
-        $sth -> execute(array(':cid' => $cid));
-        $body = convertRolls($body, $sth->fetch()[0]);
-        echo $body;exit();
+        $body = convertRolls($body, getPostersName($cid, $qid));
         $query = 'INSERT INTO posts (qid,uid,cid,post_text,post_date,post_ip) VALUES(:qid,:uid,:cid,:text,now(),:ip)';
         $sth = $dbh -> prepare($query);
         $sth -> execute(array(':qid' => $qid, ':uid' => $_SESSION['uid'], ':cid' => $cid, ':text' => $body, ':ip' => $_SERVER['REMOTE_ADDR']));
