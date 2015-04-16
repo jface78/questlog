@@ -38,6 +38,13 @@ switch($_GET['request']) {
           $json_array['users'][0] = [];
           $json_array['users'][0]['userID'] = $id;
           $dbh = null;
+          $message = 'Username: ' . $_POST['user'] . "\n";
+          $message .= 'Email: ' . $_POST['email'] . "\n\n";
+          $message .= 'Regards,' . "\n" . 'Questlog.org';
+          $headers = 'From: no-reply@questlog.org' . "\r\n" .
+              'Reply-To: no-reply@questlog.org' . "\r\n" .
+              'X-Mailer: PHP/' . phpversion();
+          mail($email, 'New account created at Questlog', $message, $headers);
           header("Content-Type: application/json");
           http_response_code(200);
           echo json_encode($json_array);

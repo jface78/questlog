@@ -635,6 +635,9 @@ function assignMenuButtonActions() {
   $('#logoutBtn').click(function(event) {
     handleLogout();
   });
+  $('#userProfileBtn').click(function(event) {
+    renderEditUser();
+  });
   $('#generateNPCBtn').click(function(event) {
     renderRandomNPC();
   });
@@ -1142,6 +1145,73 @@ function renderForgotPassword() {
     buttons: {
       'reset password': function() {
         resetPassword(popupContainer, dialog);
+      },
+      'never mind': function() {
+        dialog.dialog('close');
+      }
+    },
+    close: function() {
+    }
+  });
+}
+
+function updateUserDetails(dialogObject, email) {
+  console.log('email: ' + email);
+  $('.signupError').text('');
+  $.ajax({
+    url: API_URL + 'users/email/' + email + '?apiKey=' + LOCAL_API_KEY,
+    method: 'PUT',
+    dataType: 'json',
+    statusCode: {
+      200: function() {
+        $('.signupError').text('Your details have been updated.');
+      },
+      400: function() {
+        $('.signupError').text('Invalid email address.');
+      },
+      403: function() {
+        $('.signupError').text('You are not authorized to do this.');
+      }
+    }
+  });
+}
+
+
+function renderEditUser() {
+  var popupContainer = document.createElement('div');
+  $(popupContainer).css('font-size', '10px');
+  $(popupContainer).attr('title', 'Edit User');
+  var rowDiv = document.createElement('div');
+  var span = document.createElement('span');
+  $(span).addClass('signupLabel');
+  $(span).html('email&nbsp;');
+  $(rowDiv).append(span);
+  var emailInput = document.createElement('input');
+  $(emailInput).addClass('labeledInputText');
+  $(emailInput).attr('type', 'text');
+  $(rowDiv).append(emailInput);
+  $(popupContainer).append(rowDiv);
+  rowDiv = document.createElement('div');
+  span = document.createElement('span');
+  $(span).addClass('signupLabel');
+  $(span).html('post alert by email&nbsp;');
+  $(rowDiv).append(span);
+  var input = document.createElement('input');
+  $(input).css('margin', '0px');
+  $(input).attr('type', 'checkbox');
+  $(input).prop('disabled', true);
+  $(rowDiv).append(input);
+  $(popupContainer).append(rowDiv);
+  rowDiv = document.createElement('div');
+  $(rowDiv).addClass('signupError');
+  $(popupContainer).append(rowDiv);
+  var dialog = $(popupContainer).dialog({
+    height: 250,
+    width: 400,
+    modal: true,
+    buttons: {
+      'update': function() {
+        updateUserDetails(dialog, $(emailInput).val());
       },
       'never mind': function() {
         dialog.dialog('close');

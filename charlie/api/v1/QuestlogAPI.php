@@ -199,15 +199,13 @@ class QuestlogAPI extends API {
   protected function users($args) {
     if ($this->method == 'GET') {
       if (isset($args) && is_array($args) && count($args) > 0) {
-        if (isset($args) && $args[0] == 'uid') {
-          $userID = $args[1];
-        } else if ($args[0] == 'qid') {
-          $questID = $args[1];
-        } else if ($args[0] == 'cid') {
-          $charID = $args[1];
-        }
+        $nextPos = array_search('UID', $this->args)+1;
+        $userID = $args[$nextPos];
+        $nextPos = array_search('QID', $this->args)+1;
+        $questID = $args[$nextPos];
+        $nextPos = array_search('CID', $this->args)+1;
+        $charID = $args[$nextPos];
       }
-
       try {
         $dbh = new PDO('mysql:host=' .DB_HOST . ';dbname=' . DB_DATABASE, DB_USER, DB_PASS);
         if (isset($questID)) {
@@ -271,6 +269,19 @@ class QuestlogAPI extends API {
         }
         $dbh = null;
         return $json_array;
+      } catch(PDOException $error) {
+        return 'database_error';
+      }
+    } else if ($this -> method == 'PUT') {
+      $pos = array_search('EMAIL', $args)+1;
+      $email = $args[$pos];
+      try {
+        $dbh = new PDO('mysql:host=' .DB_HOST . ';dbname=' . DB_DATABASE, DB_USER, DB_PASS);
+        $query = 'UPDATE user_profiles SET user_email=:email, alert_email=:email WHERE uid=:uid';
+        $sth = $dbh -> prepare($query);
+        $sth -> execute(array(':email' => strtolower($email), ':uid' => $_SESSION['uid']));
+        $dbh = null;
+        return 'success';
       } catch(PDOException $error) {
         return 'database_error';
       }

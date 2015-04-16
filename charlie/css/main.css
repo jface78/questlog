@@ -65,7 +65,14 @@ input {
   font-family: Verdana,sans-serif;
   text-decoration: none;
   letter-spacing: 0.1mm;
+  vertical-align:middle;
 }
+
+.labeledInputText {
+  width:50%;
+  box-sizing:border-box;
+}
+
 button {
   border-width: 1px;
   border-style: outset inset inset outset;
@@ -138,7 +145,7 @@ footer {
  }
 .signupLabel {
   display:inline-block;
-  width:100px;
+  width:50%;
   text-align:right;
 }
 .signupError {

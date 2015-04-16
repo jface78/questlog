@@ -107,15 +107,40 @@ abstract class API {
           }
           break;
         case 'users':
-          if (isset($this->args) && is_array($this->args) && count($this->args) >= 1) {
-            if (count($this->args) && $this->args[0] == 'uid' && empty($this -> args[1]) || !is_numeric($this->args[1])) {
-              return $this->_response("Invalid parameter(s)", 400);
-            } else if (count($this->args) && $this->args[0] == 'qid' && empty($this -> args[1]) || !is_numeric($this->args[1])) {
-              return $this->_response("Invalid parameter(s)", 400);
-            } else if (count($this->args) && $this->args[0] == 'cid' && empty($this -> args[1]) || !is_numeric($this->args[1])) {
+          $this->args = array_map('strtoupper', $this->args);
+          if ($this->method == 'GET') {
+            if (isset($this->args) && is_array($this->args) && count($this->args) >= 1) {
+              if (in_array('UID',$this->args)) {
+                $nextPos = array_search('UID',$this->args)+1;
+                if (count($this->args) >= $nextPos+1 && !is_numeric($this->args[$nextPos])) {
+                  return $this->_response("Invalid parameter(s)", 400);
+                }
+              }
+              if (in_array('QID',$this->args)) {
+                $nextPos = array_search('QID',$this->args)+1;
+                if (count($this->args) >= $nextPos+1 && !is_numeric($this->args[$nextPos])) {
+                  return $this->_response("Invalid parameter(s)", 400);
+                }
+              }
+              if (in_array('CID',$this->args)) {
+                $nextPos = array_search('CID',$this->args)+1;
+                if (count($this->args) >= $nextPos+1 && !is_numeric($this->args[$nextPos])) {
+                  return $this->_response("Invalid parameter(s)", 400);
+                }
+              }
+            }
+          } else if ($this -> method == 'PUT') {
+            if (in_array('EMAIL',$this->args)) {
+              $nextPos = array_search('EMAIL',$this->args)+1;
+              if (count($this->args) >= $nextPos+1 && !filter_var($this->args[$nextPos], FILTER_VALIDATE_EMAIL)) {
+                return $this->_response("Invalid parameter(s)", 400);
+              }
+            }
+            // this will check to make sure at least one field is being updated, just email for now.
+            if (!in_array('EMAIL', $this->args)) {
               return $this->_response("Invalid parameter(s)", 400);
             }
-          }
+          } 
           break;
         case 'posts':
           $this->args = array_map('strtoupper', $this->args);
