@@ -15,6 +15,7 @@ switch($_GET['request']) {
           exit();
         }
         try {
+          //make this verified emails only
           $dbh = new PDO('mysql:host=' .DB_HOST . ';dbname=' . DB_DATABASE, DB_USER, DB_PASS);
           $dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
       
@@ -44,7 +45,7 @@ switch($_GET['request']) {
           $headers = 'From: no-reply@questlog.org' . "\r\n" .
               'Reply-To: no-reply@questlog.org' . "\r\n" .
               'X-Mailer: PHP/' . phpversion();
-          mail($email, 'New account created at Questlog', $message, $headers);
+          mail('jface@jonathanface.com', 'New account created at Questlog', $message, $headers);
           header("Content-Type: application/json");
           http_response_code(200);
           echo json_encode($json_array);

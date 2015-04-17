@@ -638,6 +638,9 @@ function assignMenuButtonActions() {
   $('#userProfileBtn').click(function(event) {
     renderEditUser();
   });
+  $('#newQuestBtn').click(function(event) {
+    renderNewQuest();
+  });
   $('#generateNPCBtn').click(function(event) {
     renderRandomNPC();
   });
@@ -1156,8 +1159,13 @@ function renderForgotPassword() {
 }
 
 function updateUserDetails(dialogObject, email) {
-  console.log('email: ' + email);
   $('.signupError').text('');
+  /*$.ajax({
+    url: API_URL + 'users/self/,
+    method: 'GET',
+    dataType: 'json',
+    data: {apiKey: LOCAL_API_KEY},
+    statusCode: {*/
   $.ajax({
     url: API_URL + 'users/email/' + email + '?apiKey=' + LOCAL_API_KEY,
     method: 'PUT',
@@ -1176,48 +1184,87 @@ function updateUserDetails(dialogObject, email) {
   });
 }
 
+function renderNewQuest() {
+  var popupContainer = document.createElement('div');
+  $(popupContainer).attr('title', 'New Quest');
+  $.ajax({
+    url: TEMPLATE_URL + 'newQuest.html',
+    success: function(template) {
+      $(popupContainer).append(template);
+      var dialog = $(popupContainer).dialog({
+        height: $(window).height() * 0.8,
+        width: '80%',
+        modal: true,
+        buttons: {
+          'create': function() {
+            updateUserDetails(dialog, $(emailInput).val());
+          },
+          'never mind': function() {
+            dialog.dialog('close');
+          }
+        },
+        close: function() {
+        }
+      });
+    }
+  });
+}
+
 
 function renderEditUser() {
-  var popupContainer = document.createElement('div');
-  $(popupContainer).css('font-size', '10px');
-  $(popupContainer).attr('title', 'Edit User');
-  var rowDiv = document.createElement('div');
-  var span = document.createElement('span');
-  $(span).addClass('signupLabel');
-  $(span).html('email&nbsp;');
-  $(rowDiv).append(span);
-  var emailInput = document.createElement('input');
-  $(emailInput).addClass('labeledInputText');
-  $(emailInput).attr('type', 'text');
-  $(rowDiv).append(emailInput);
-  $(popupContainer).append(rowDiv);
-  rowDiv = document.createElement('div');
-  span = document.createElement('span');
-  $(span).addClass('signupLabel');
-  $(span).html('post alert by email&nbsp;');
-  $(rowDiv).append(span);
-  var input = document.createElement('input');
-  $(input).css('margin', '0px');
-  $(input).attr('type', 'checkbox');
-  $(input).prop('disabled', true);
-  $(rowDiv).append(input);
-  $(popupContainer).append(rowDiv);
-  rowDiv = document.createElement('div');
-  $(rowDiv).addClass('signupError');
-  $(popupContainer).append(rowDiv);
-  var dialog = $(popupContainer).dialog({
-    height: 250,
-    width: 400,
-    modal: true,
-    buttons: {
-      'update': function() {
-        updateUserDetails(dialog, $(emailInput).val());
-      },
-      'never mind': function() {
-        dialog.dialog('close');
+  $.ajax({
+    url: API_URL + 'users/uid/' + userID,
+    method: 'GET',
+    dataType: 'json',
+    data: {apiKey: LOCAL_API_KEY},
+    statusCode: {
+      200: function(response) {
+        var popupContainer = document.createElement('div');
+        $(popupContainer).css('font-size', '10px');
+        $(popupContainer).attr('title', 'Edit User');
+        var rowDiv = document.createElement('div');
+        var span = document.createElement('span');
+        $(span).addClass('signupLabel');
+        $(span).html('email&nbsp;');
+        $(rowDiv).append(span);
+        var emailInput = document.createElement('input');
+        $(emailInput).addClass('labeledInputText');
+        $(emailInput).attr('type', 'text');
+        $(emailInput).val(response.users[0].email);
+        $(emailInput).focus(function() { $(this).select() });
+        $(emailInput).mouseup(function(e){e.preventDefault();});
+        $(rowDiv).append(emailInput);
+        $(popupContainer).append(rowDiv);
+        rowDiv = document.createElement('div');
+        span = document.createElement('span');
+        $(span).addClass('signupLabel');
+        $(span).html('post alert by email&nbsp;');
+        $(rowDiv).append(span);
+        var input = document.createElement('input');
+        $(input).css('margin', '0px');
+        $(input).attr('type', 'checkbox');
+        $(input).prop('disabled', true);
+        $(rowDiv).append(input);
+        $(popupContainer).append(rowDiv);
+        rowDiv = document.createElement('div');
+        $(rowDiv).addClass('signupError');
+        $(popupContainer).append(rowDiv);
+        var dialog = $(popupContainer).dialog({
+          height: 250,
+          width: 400,
+          modal: true,
+          buttons: {
+            'update': function() {
+              updateUserDetails(dialog, $(emailInput).val());
+            },
+            'never mind': function() {
+              dialog.dialog('close');
+            }
+          },
+          close: function() {
+          }
+        });
       }
-    },
-    close: function() {
     }
   });
 }

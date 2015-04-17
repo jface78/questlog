@@ -47,6 +47,7 @@ select {
   background-color: #545454;
   color: white;
   border: 1px solid #000;
+  outline:none;
   font-size: 10px !important;
   padding: 2px;
   border-radius: 3px;
@@ -66,6 +67,15 @@ input {
   text-decoration: none;
   letter-spacing: 0.1mm;
   vertical-align:middle;
+  letter-spacing: 0.1mm;
+}
+
+textarea {
+  resize:none;
+  background-color:#000;
+  color:#fff;
+  outline:none;
+  letter-spacing: 0.1mm;
 }
 
 .labeledInputText {
@@ -252,10 +262,6 @@ footer {
 .postTextArea {
   width:98%;
   height:90%;
-  resize:none;
-  background-color:#000;
-  color:#fff;
-  outline:none;
 }
 
 #mainContent {

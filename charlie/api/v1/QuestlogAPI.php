@@ -199,12 +199,18 @@ class QuestlogAPI extends API {
   protected function users($args) {
     if ($this->method == 'GET') {
       if (isset($args) && is_array($args) && count($args) > 0) {
-        $nextPos = array_search('UID', $this->args)+1;
-        $userID = $args[$nextPos];
-        $nextPos = array_search('QID', $this->args)+1;
-        $questID = $args[$nextPos];
-        $nextPos = array_search('CID', $this->args)+1;
-        $charID = $args[$nextPos];
+        if (in_array('UID', $args)) {
+          $nextPos = array_search('UID', $this->args)+1;
+          $userID = $args[$nextPos];
+        }
+        if (in_array('QID', $this->args)) {
+          $nextPos = array_search('QID', $this->args)+1;
+          $questID = $args[$nextPos];
+        }
+        if (in_array('CID', $this->args)) {
+          $nextPos = array_search('CID', $this->args)+1;
+          $charID = $args[$nextPos];
+        }
       }
       try {
         $dbh = new PDO('mysql:host=' .DB_HOST . ';dbname=' . DB_DATABASE, DB_USER, DB_PASS);
@@ -222,12 +228,20 @@ class QuestlogAPI extends API {
             $query = 'SELECT uid FROM characters WHERE cid= :characterID';
             $sth = $dbh -> prepare($query);
             $sth -> execute(array(':characterID' => $row['cid']));
-            array_push($users, $sth -> fetchAll()[0]);
+            array_push($users, $sth -> fetch(PDO::FETCH_ASSOC));
+            $index=0;
             foreach($users as $user) {
               $query = 'SELECT uid,login_name,user_status,timestamp FROM users WHERE uid=:userID';
               $sth = $dbh -> prepare($query);
               $sth -> execute(array(':userID' => $user['uid']));
-              array_push($results, $sth -> fetchAll()[0]);
+              array_push($results, $sth -> fetch(PDO::FETCH_ASSOC));
+              if ($user['uid'] == $_SESSION['uid']) {
+                $query = 'SELECT user_email FROM user_profiles WHERE uid=:uid';
+                $sth = $dbh -> prepare($query);
+                $sth -> execute(array(':uid' => $user['uid']));
+                $results[$index]['user_email'] = $sth -> fetch()[0];
+              }
+              $index++;
             }
           }
         } else if (isset($charID)) {
@@ -239,7 +253,13 @@ class QuestlogAPI extends API {
             $query = 'SELECT uid,login_name,user_status,timestamp FROM users WHERE uid=:userID';
             $sth = $dbh -> prepare($query);
             $sth -> execute(array(':userID' => $user['uid']));
-            $results = $sth -> fetchAll();
+            $results = $sth -> fetchAll(PDO::FETCH_ASSOC);
+            if ($user['uid'] == $_SESSION['uid']) {
+              $query = 'SELECT user_email FROM user_profiles WHERE uid=:uid';
+              $sth = $dbh -> prepare($query);
+              $sth -> execute(array(':uid' => $user['uid']));
+              $results[0]['user_email'] = $sth -> fetch()[0];
+            }
           }
         } else {
           $query = 'SELECT uid,login_name,user_status,timestamp FROM users';
@@ -252,6 +272,16 @@ class QuestlogAPI extends API {
             $sth -> execute();
           }
           $results = $sth -> fetchAll();
+          $index = 0;
+          foreach ($results as $row) {
+            if ($row['uid'] == $_SESSION['uid']) {
+              $query = 'SELECT user_email FROM user_profiles WHERE uid=:uid';
+              $sth = $dbh -> prepare($query);
+              $sth -> execute(array(':uid' => $row['uid']));
+              $results[$index]['user_email'] = $sth -> fetch()[0];
+              $index++;
+            }
+          }
         }
         if(!isset($results) || !count($results)) {
           $dbh = null;
@@ -265,6 +295,9 @@ class QuestlogAPI extends API {
           $json_array['users'][$index]['userName'] = $row['login_name'];
           $json_array['users'][$index]['status'] = $row['user_status'];
           $json_array['users'][$index]['created'] = strtotime($row['timestamp']);
+          if (array_key_exists('user_email', $row)) {
+            $json_array['users'][$index]['email'] = $row['user_email'];
+          }
           $index++;
         }
         $dbh = null;
