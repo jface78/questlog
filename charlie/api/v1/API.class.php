@@ -231,6 +231,17 @@ abstract class API {
             return $this->_response("Invalid parameter(s)", 400);
           }
           break;
+        case 'search':
+          $this->args = array_map('strtoupper', $this->args);
+          if (!in_array('PLAYERS',$this->args)) {
+            return $this->_response("Invalid parameter(s)", 400);
+          } else {
+            $nextPos = array_search('PLAYERS',$this->args)+1;
+            if (strlen($this->args[$nextPos]) < 2) {
+              return $this->_response("Invalid parameter(s)", 400);
+            }
+          }
+          break;
           
       }
       if ((int)method_exists($this, $this->endpoint) > 0) {

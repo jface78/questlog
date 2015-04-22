@@ -389,6 +389,13 @@ footer {
   cursor:pointer;
   color:#FFF;
 }
+
+.playerListItem {
+  margin-bottom:5px;
+  text-decoration:underline;
+  cursor:pointer;
+}
+
 .pointer{cursor:pointer;}
 .clear{clear:both;}
 .floatLeft{float:left;}

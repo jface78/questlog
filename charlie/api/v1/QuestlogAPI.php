@@ -320,6 +320,49 @@ class QuestlogAPI extends API {
       }
     }
   }
+  
+  protected function search($args) {
+    if (in_array('PLAYERS', $args)) {
+      $type = 'players';
+      $pos = array_search('PLAYERS', $args) + 1;
+      $key = $args[$pos];
+    }
+    try {
+      $dbh = new PDO('mysql:host=' .DB_HOST . ';dbname=' . DB_DATABASE, DB_USER, DB_PASS);
+      $query = 'SELECT char_name,cid,uid,created FROM characters WHERE char_name LIKE concat("%", :arg, "%")';
+      $sth = $dbh -> prepare($query);
+      $sth -> execute(array(':arg' => $key));
+      $results = $sth -> fetchAll();
+      $index = 0;
+      $json_array = [];
+      $json_array[$type] = [];
+      foreach($results as $row) {
+        $json_array[$type][$index]['userID'] = $row['uid'];
+        $json_array[$type][$index]['character'] = $row['char_name'];
+        $json_array[$type][$index]['characterID'] = $row['cid'];
+        $json_array[$type][$index]['created'] = strtotime($row['created']);
+        $query = 'SELECT login_name FROM users WHERE uid=:uid';
+        $sth = $dbh -> prepare($query);
+        $sth -> execute(array(':uid' => $row['uid']));
+        $json_array[$type][$index]['userName'] = $sth -> fetch()[0];
+        $index++;
+      }
+      $query = 'SELECT login_name,uid FROM users WHERE login_name LIKE concat("%", :arg, "%")';
+      $sth = $dbh -> prepare($query);
+      $sth -> execute(array(':arg' => $key));
+      $results = $sth -> fetchAll();
+      $index = 0;
+      foreach($results as $row) {
+        $json_array[$type][$index]['userID'] = $row['uid'];
+        $json_array[$type][$index]['userName'] = $row['login_name'];
+        $index++;
+      }
+      $dbh = null;
+      return $json_array;
+    } catch(PDOException $error) {
+      return 'database_error';
+    }
+  }
 
   protected function posts($args) {
     if ($this -> method == 'GET') {

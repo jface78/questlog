@@ -1185,12 +1185,68 @@ function updateUserDetails(dialogObject, email) {
 }
 
 function renderNewQuest() {
+  
+  function addClickEvent() {
+    
+  }
+  
   var popupContainer = document.createElement('div');
   $(popupContainer).attr('title', 'New Quest');
   $.ajax({
     url: TEMPLATE_URL + 'newQuest.html',
     success: function(template) {
       $(popupContainer).append(template);
+      $(popupContainer).find('#playerList').keyup(function(event) {
+        if ($(event.target).val().length >= 2) {
+          $.ajax({
+            url: API_URL + 'search/players/' + $(event.target).val().trim() + '?apiKey=1',
+            dataType: 'json',
+            success: function(data) {
+              var span = document.createElement('span');
+              for (var i=0; i < data.players.length; i++) {
+                var subDiv = document.createElement('div');
+                if (data.players[i].characterID) {
+                  $(subDiv).append(data.players[i].character);
+                  $(subDiv).append(' (' + data.players[i].userName + ')');
+                  $(subDiv).data('data-playerid', data.players[i].characterID);
+                } else {
+                  $(subDiv).append(data.players[i].userName + ' (GM)')
+                  $(subDiv).data('data-playerid', data.players[i].userID);
+                }
+                $(subDiv).addClass('playerListItem');
+                $(subDiv).click(function(e) {
+                  console.log('clicked ' + $(e.target).text());
+                  console.log($(popupContainer).find('#addedPlayers'));
+                  $(popupContainer).find('#addedPlayers').append($(e.target).text());
+                });
+                $(span).append(subDiv);
+              }
+              if (data.players.length) {
+                $(event.target).qtip({
+                  content: {
+                    text: span
+                  },
+                  position: {
+                    my: 'top left',
+                    at: 'bottom left'
+                  },
+                  style: {
+                    classes: 'qtip-dark qtip-shadow qtip-rounded'
+                  },
+                  hide: {
+                    fixed: true,
+                    delay: 500
+                  },
+                  show: {
+                    effect: false
+                  }
+                });
+                $(event.target).trigger('mouseenter');
+              }
+            }
+          });
+        }
+      });
       var dialog = $(popupContainer).dialog({
         height: $(window).height() * 0.8,
         width: '80%',
@@ -1204,6 +1260,9 @@ function renderNewQuest() {
           }
         },
         close: function() {
+        },
+        create: function() {
+          
         }
       });
     }
