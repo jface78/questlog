@@ -552,7 +552,7 @@ class QuestlogAPI extends API {
           $json_array['posts'][$index]['date'] = $row['post_date'];
           $json_array['posts'][$index]['edited'] = $row['edited'];
           $json_array['posts'][$index]['editable'] = $row['editable'];
-          $json_array['posts'][$index]['text'] = $row['post_text'];
+          $json_array['posts'][$index]['text'] = databaseToDisplayText($row['post_text'], $row['char_name']);
           $index++;
         }
         $dbh = null;
@@ -572,7 +572,7 @@ class QuestlogAPI extends API {
 
       try {
         $dbh = new PDO('mysql:host=' . DB_HOST . ';dbname=' . DB_DATABASE, DB_USER, DB_PASS);
-        $body = convertRolls($body, getPostersName($cid, $qid));
+        $body = sanitizeText($body);
         $query = 'INSERT INTO posts (qid,uid,cid,post_text,post_date,post_ip) VALUES(:qid,:uid,:cid,:text,now(),:ip)';
         $sth = $dbh -> prepare($query);
         $sth -> execute(array(':qid' => $qid, ':uid' => $_SESSION['uid'], ':cid' => $cid, ':text' => $body, ':ip' => $_SERVER['REMOTE_ADDR']));
@@ -611,6 +611,7 @@ class QuestlogAPI extends API {
 
       try {
         $dbh = new PDO('mysql:host=' . DB_HOST . ';dbname=' . DB_DATABASE, DB_USER, DB_PASS);
+        $body = sanitizeText($body);
         $query = 'UPDATE posts SET post_text=:text,cid=:cid,timestamp=now() WHERE pid=:pid';
         $sth = $dbh -> prepare($query);
         $sth -> execute(array(':text' => $body, ':cid' => $cid, ':pid' => $pid));

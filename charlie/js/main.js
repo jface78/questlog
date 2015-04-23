@@ -112,7 +112,7 @@ function renderNewPostWindow() {
     modal: false,
     buttons: {
       'Post': function() {
-        newPost($(select).val(), $(textArea).val().replace('\n', '<br>'), dialog);
+        newPost($(select).val(), $(textArea).val(), dialog);
       },
       Cancel: function() {
         dialog.dialog('close');
@@ -200,18 +200,19 @@ function renderDeletePostWindow(button) {
 }
 
 function sanitizeTextForDB(text) {
-  text.replace(/(?:\r\n|\r|\n)/g, '<br>')
-  return text.replace(/\//g, '|');
+  text = text.replace(new RegExp('(?:\r\n|\r|\n)','g'), '<br>');
+  return text.replace(new RegExp('\/', 'g'), '|');
 }
 
 function santizeTextForTextarea(text) {
+  text = text.replace(/\*\*\*(.)+rolled(.)+\*\*\*/i, '[DICE ROLL - DO NOT REMOVE]');
   return text.replace(/<br\s*[\/]?>/gi, '\n');
+  *** holodog rolled one 100-sided die: 69 ***
 }
 
 function newPost(characterID, postText, dialog) {
-  postText = sanitizeTextForDB(postText);
   $.ajax({
-    url: API_URL + 'POSTS/QID/' + currentQuestData.questID + '/CID/' + characterID + '/BODY/' + postText,
+    url: API_URL + 'POSTS/QID/' + currentQuestData.questID + '/CID/' + characterID + '/BODY/' + sanitizeTextForDB(postText),
     method: 'POST',
     data: {apiKey: LOCAL_API_KEY},
     dataType: 'json',
@@ -225,9 +226,8 @@ function newPost(characterID, postText, dialog) {
 }
 
 function editPost(postID, characterID, postText, dialog) {
-  dbText = sanitizeTextForDB(postText);
   $.ajax({
-    url: API_URL + 'POSTS/PID/' + postID + '/CID/' + characterID + '/BODY/' + dbText + '?apiKey=' + LOCAL_API_KEY,
+    url: API_URL + 'POSTS/PID/' + postID + '/CID/' + characterID + '/BODY/' + sanitizeTextForDB(postText) + '?apiKey=' + LOCAL_API_KEY,
     method: 'PUT',
     dataType: 'json',
     statusCode: {

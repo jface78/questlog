@@ -121,24 +121,81 @@ function rollDice($number, $type) {
   return rand(1,$type) * $number;
 }
 
-function convertRolls($text, $characterRolling) {
-  $pattern = '/(\|r|\|roll)\s(\w+)/i';
-  preg_match_all($pattern, $text, $matches);
-  $index = 0;
-  foreach ($matches[2] as $match) {
-    $pos = strpos($match, 'd');
-    $amount = substr($match, 0, $pos);
-    $type = substr($match, $pos+1, strlen($match));
-    if ($amount == 1) {
-      $string = '<br /><b>*** ' . $characterRolling . ' rolled one ' . $type . '-sided die: ';
-    } else {
-      $string = '<br /><b>*** ' . $characterRolling . ' rolled ' . $amount . ' ' . $type . '-sided dice: ';
+function databaseToDisplayText($text, $character) {
+  try {
+    $dbh = new PDO('mysql:host=' .DB_HOST . ';dbname=' . DB_DATABASE, DB_USER, DB_PASS);
+    $pattern = '/\[r\][0-9]+\[\/r\]/i';
+    preg_match_all($pattern, $text, $matches);
+    $index = 0;
+    foreach ($matches[0] as $match) {
+      $pos = strpos($match, '[r]');
+      $id = substr($match, $pos+3, strpos($match, '[/r]'));
+      $query = 'SELECT roll, type FROM rolls WHERE rid=:rid';
+      $sth = $dbh -> prepare($query);
+      $sth -> execute(array(':rid' => $id));
+      $results = $sth -> fetch();
+      $type = $results['type'];
+      $pos = strpos($type, 'd');
+      $amount = substr($results['type'], 0, $pos);
+      $type = substr($results['type'], $pos+1, strlen($results['type']));
+      if ($amount == 1) {
+        $string = '*** <b>' . $character . '</b> rolled <b>one ' . $type . '-sided die</b>: ';
+      } else {
+        $string = '<b>*** <b>' . $character . '</b> rolled <b>' . $amount . ' ' . $type . '-sided dice</b>: ';
+      }
+      $string .= $results['roll'] . ' ***';
+      $text = str_replace($matches[0][$index], $string, $text);
+      $index++;
     }
-    $string .= rollDice($amount, $type) . ' ***</b><br />';
-    $text = str_replace($matches[0][$index], $string, $text);
-    $index++;
+    $dbh = null;
+    return $text;
+  } catch (PDOException $error) {
+    http_response_code(500);
   }
-  return $text;
+}
+
+function sanitizeText($text) {
+  //$text = html_entity_decode($text);
+  $text = deathToCheaters($text);
+  return ircToDatabase($text);
+}
+
+function deathToCheaters($text) {
+  $pattern = '/\*\*\*(.)+rolled(.)+\*\*\*/i';
+  return preg_replace($pattern, '', $text);
+}
+
+function ircToDatabase($text) {
+  try {
+    $dbh = new PDO('mysql:host=' .DB_HOST . ';dbname=' . DB_DATABASE, DB_USER, DB_PASS);
+    $pattern = '/\|r(oll)?\s(\w+)/i';
+    preg_match_all($pattern, $text, $matches);
+    $index = 0;
+    $ids = [];
+    foreach ($matches[2] as $match) {
+      $pos = strpos($match, 'd');
+      $amount = substr($match, 0, $pos);
+      if (strlen($amount) == 0) {
+        $amount = 1;
+      }
+      $type = substr($match, $pos+1, strlen($match));
+      $results = rollDice($amount, $type);
+      $query = 'INSERT INTO rolls (roll, type) VALUES(:results, :type)';
+      $sth = $dbh -> prepare($query);
+      $type = $amount . 'd' . $type;
+      $sth -> execute(array(':results' => $results, ':type' => $type));
+      array_push($ids, '[r]' . $dbh -> lastInsertId() . '[/r]');
+      $text = str_replace($matches[0][$index], '', $text);
+      $index++;
+    }
+    foreach ($ids as $id) {
+      text .= $id;
+    }
+    $dbh = null;
+    return $text;
+  } catch(PDOException $error) {
+    http_response_code(500);
+  }
 }
 
 
