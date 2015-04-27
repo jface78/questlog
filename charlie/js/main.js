@@ -207,7 +207,7 @@ function sanitizeTextForDB(text) {
 function santizeTextForTextarea(text) {
   text = text.replace(/\*\*\*(.)+rolled(.)+\*\*\*/i, '[DICE ROLL - DO NOT REMOVE]');
   return text.replace(/<br\s*[\/]?>/gi, '\n');
-  *** holodog rolled one 100-sided die: 69 ***
+  //*** holodog rolled one 100-sided die: 69 ***
 }
 
 function newPost(characterID, postText, dialog) {
@@ -378,6 +378,10 @@ function addEditedHover(parent, text) {
       classes: 'qtip-dark qtip-shadow qtip-rounded'
     }
   });
+}
+
+function renderDiceRolls(text) {
+  
 }
 
 function renderPostBubble(postObject, index, prepend) {

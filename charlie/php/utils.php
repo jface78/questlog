@@ -121,29 +121,28 @@ function rollDice($number, $type) {
   return rand(1,$type) * $number;
 }
 
-function databaseToDisplayText($text, $character) {
+function databaseToDisplayText($text, $character, $pid) {
   try {
     $dbh = new PDO('mysql:host=' .DB_HOST . ';dbname=' . DB_DATABASE, DB_USER, DB_PASS);
-    $pattern = '/\[r\][0-9]+\[\/r\]/i';
+    $pattern = '/\[DICE_ROLL\]([0-9a-zA-Z]+)\[\/DICE_ROLL\]/i';
     preg_match_all($pattern, $text, $matches);
     $index = 0;
-    foreach ($matches[0] as $match) {
-      $pos = strpos($match, '[r]');
-      $id = substr($match, $pos+3, strpos($match, '[/r]'));
-      $query = 'SELECT roll, type FROM rolls WHERE rid=:rid';
+    //print_r($matches);
+    foreach ($matches[1] as $match) {
+      $query = 'SELECT roll, type FROM rolls WHERE rid=:pid AND location_hash=:hash';
       $sth = $dbh -> prepare($query);
-      $sth -> execute(array(':rid' => $id));
+      $sth -> execute(array(':pid' => $pid, ':hash'=>$match));
       $results = $sth -> fetch();
       $type = $results['type'];
       $pos = strpos($type, 'd');
       $amount = substr($results['type'], 0, $pos);
       $type = substr($results['type'], $pos+1, strlen($results['type']));
       if ($amount == 1) {
-        $string = '*** <b>' . $character . '</b> rolled <b>one ' . $type . '-sided die</b>: ';
+        $string = '<b>*** ' . $character . ' rolled one ' . $type . '-sided die: ';
       } else {
-        $string = '<b>*** <b>' . $character . '</b> rolled <b>' . $amount . ' ' . $type . '-sided dice</b>: ';
+        $string = '<b>*** ' . $character . ' rolled ' . $amount . ' ' . $type . '-sided dice: ';
       }
-      $string .= $results['roll'] . ' ***';
+      $string .= $results['roll'] . ' ***</b>';
       $text = str_replace($matches[0][$index], $string, $text);
       $index++;
     }
@@ -154,10 +153,10 @@ function databaseToDisplayText($text, $character) {
   }
 }
 
-function sanitizeText($text) {
+function sanitizeText($text, $pid) {
   //$text = html_entity_decode($text);
   $text = deathToCheaters($text);
-  return ircToDatabase($text);
+  return ircToDatabase($text, $pid);
 }
 
 function deathToCheaters($text) {
@@ -165,13 +164,12 @@ function deathToCheaters($text) {
   return preg_replace($pattern, '', $text);
 }
 
-function ircToDatabase($text) {
+function ircToDatabase($text, $pid) {
   try {
     $dbh = new PDO('mysql:host=' .DB_HOST . ';dbname=' . DB_DATABASE, DB_USER, DB_PASS);
     $pattern = '/\|r(oll)?\s(\w+)/i';
     preg_match_all($pattern, $text, $matches);
     $index = 0;
-    $ids = [];
     foreach ($matches[2] as $match) {
       $pos = strpos($match, 'd');
       $amount = substr($match, 0, $pos);
@@ -180,16 +178,14 @@ function ircToDatabase($text) {
       }
       $type = substr($match, $pos+1, strlen($match));
       $results = rollDice($amount, $type);
-      $query = 'INSERT INTO rolls (roll, type) VALUES(:results, :type)';
+      $position = hash('sha256', ($pid . time()) * rand(1,999));
+      $query = 'INSERT INTO rolls (rid, roll, type, location_hash) VALUES(:rid, :results, :type, :hash)';
       $sth = $dbh -> prepare($query);
       $type = $amount . 'd' . $type;
-      $sth -> execute(array(':results' => $results, ':type' => $type));
-      array_push($ids, '[r]' . $dbh -> lastInsertId() . '[/r]');
-      $text = str_replace($matches[0][$index], '', $text);
+      $sth -> execute(array(':results' => $results, ':type' => $type, ':rid' => $pid, ':hash' => $position));
+      $location = '[DICE_ROLL]' . $position . '[/DICE_ROLL]';
+      $text = str_replace($matches[0][$index], $location, $text);
       $index++;
-    }
-    foreach ($ids as $id) {
-      text .= $id;
     }
     $dbh = null;
     return $text;

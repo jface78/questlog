@@ -18,7 +18,7 @@ try {
   $sth -> execute(array(':qid' => $json_array['quest_id']));
   $json_array['total_posts'] = $sth -> fetch()[0];
   $json_array['post_number'] = rand(0, $json_array['total_posts']-1);
-  $query = 'SELECT pid,cid,post_text,timestamp FROM posts WHERE qid=:qid LIMIT 1 OFFSET ' . $json_array['post_number'];
+  $query = 'SELECT pid,cid,post_text,timestamp FROM posts WHERE qid=:qid AND post_text != "" LIMIT 1 OFFSET ' . $json_array['post_number'];
   $sth = $dbh -> prepare($query);
   $sth -> execute(array(':qid' => $json_array['quest_id']));
   $post = $sth -> fetch();
