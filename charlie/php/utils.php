@@ -5,6 +5,118 @@ function killSession() {
   session_unset();
 }
 
+function convert_number_to_words($number) {
+    
+    $hyphen      = '-';
+    $conjunction = ' and ';
+    $separator   = ', ';
+    $negative    = 'negative ';
+    $decimal     = ' point ';
+    $dictionary  = array(
+        0                   => 'zero',
+        1                   => 'one',
+        2                   => 'two',
+        3                   => 'three',
+        4                   => 'four',
+        5                   => 'five',
+        6                   => 'six',
+        7                   => 'seven',
+        8                   => 'eight',
+        9                   => 'nine',
+        10                  => 'ten',
+        11                  => 'eleven',
+        12                  => 'twelve',
+        13                  => 'thirteen',
+        14                  => 'fourteen',
+        15                  => 'fifteen',
+        16                  => 'sixteen',
+        17                  => 'seventeen',
+        18                  => 'eighteen',
+        19                  => 'nineteen',
+        20                  => 'twenty',
+        30                  => 'thirty',
+        40                  => 'fourty',
+        50                  => 'fifty',
+        60                  => 'sixty',
+        70                  => 'seventy',
+        80                  => 'eighty',
+        90                  => 'ninety',
+        100                 => 'hundred',
+        1000                => 'thousand',
+        1000000             => 'million',
+        1000000000          => 'billion',
+        1000000000000       => 'trillion',
+        1000000000000000    => 'quadrillion',
+        1000000000000000000 => 'quintillion'
+    );
+    
+    if (!is_numeric($number)) {
+        return false;
+    }
+    
+    if (($number >= 0 && (int) $number < 0) || (int) $number < 0 - PHP_INT_MAX) {
+        // overflow
+        trigger_error(
+            'convert_number_to_words only accepts numbers between -' . PHP_INT_MAX . ' and ' . PHP_INT_MAX,
+            E_USER_WARNING
+        );
+        return false;
+    }
+
+    if ($number < 0) {
+        return $negative . convert_number_to_words(abs($number));
+    }
+    
+    $string = $fraction = null;
+    
+    if (strpos($number, '.') !== false) {
+        list($number, $fraction) = explode('.', $number);
+    }
+    
+    switch (true) {
+        case $number < 21:
+            $string = $dictionary[$number];
+            break;
+        case $number < 100:
+            $tens   = ((int) ($number / 10)) * 10;
+            $units  = $number % 10;
+            $string = $dictionary[$tens];
+            if ($units) {
+                $string .= $hyphen . $dictionary[$units];
+            }
+            break;
+        case $number < 1000:
+            $hundreds  = $number / 100;
+            $remainder = $number % 100;
+            $string = $dictionary[$hundreds] . ' ' . $dictionary[100];
+            if ($remainder) {
+                $string .= $conjunction . convert_number_to_words($remainder);
+            }
+            break;
+        default:
+            $baseUnit = pow(1000, floor(log($number, 1000)));
+            $numBaseUnits = (int) ($number / $baseUnit);
+            $remainder = $number % $baseUnit;
+            $string = convert_number_to_words($numBaseUnits) . ' ' . $dictionary[$baseUnit];
+            if ($remainder) {
+                $string .= $remainder < 100 ? $conjunction : $separator;
+                $string .= convert_number_to_words($remainder);
+            }
+            break;
+    }
+    
+    if (null !== $fraction && is_numeric($fraction)) {
+        $string .= $decimal;
+        $words = array();
+        foreach (str_split((string) $fraction) as $number) {
+            $words[] = $dictionary[$number];
+        }
+        $string .= implode(' ', $words);
+    }
+    
+    return $string;
+}
+
 function getPostersName($cid, $qid) {
   try {
     $dbh = new PDO('mysql:host=' . DB_HOST . ';dbname=' . DB_DATABASE, DB_USER, DB_PASS);
@@ -23,7 +135,7 @@ function getPostersName($cid, $qid) {
       $sth = $dbh -> prepare($query);
       $sth -> execute(array(':uid' => $uid));
       $dbh = null;
-      return $sth -> fetch()[0] . ' - GM';
+      return $sth -> fetch()[0];
     }
     
   } catch(PDOException $error) {
@@ -138,11 +250,11 @@ function databaseToDisplayText($text, $character, $pid) {
       $amount = substr($results['type'], 0, $pos);
       $type = substr($results['type'], $pos+1, strlen($results['type']));
       if ($amount == 1) {
-        $string = '<b>*** ' . $character . ' rolled one ' . $type . '-sided die: ';
+        $string = '*** ' . $character . ' rolled one ' . $type . '-sided die: ';
       } else {
-        $string = '<b>*** ' . $character . ' rolled ' . $amount . ' ' . $type . '-sided dice: ';
+        $string = '*** ' . $character . ' rolled ' . convert_number_to_words($amount) . ' ' . $type . '-sided dice: ';
       }
-      $string .= $results['roll'] . ' ***</b>';
+      $string .= $results['roll'] . ' ***';
       $text = str_replace($matches[0][$index], $string, $text);
       $index++;
     }
@@ -153,15 +265,47 @@ function databaseToDisplayText($text, $character, $pid) {
   }
 }
 
-function sanitizeText($text, $pid) {
-  //$text = html_entity_decode($text);
+function sanitizeText($text, $pid, $cid, $qid) {
   $text = deathToCheaters($text);
+  
+  $pattern = '/\[DICE_ROLL\]([A-Za-z0-9]+)\[\|DICE_ROLL\]/i';
+  preg_match_all($pattern, $text, $matches);
+  $index = 0;
+  foreach ($matches[1] as $match) {
+    $location = '[DICE_ROLL]' . $match . '[/DICE_ROLL]';
+    $text = str_replace($matches[0][$index], $location, $text);
+    $index++;
+    
+  }
   return ircToDatabase($text, $pid);
 }
 
 function deathToCheaters($text) {
   $pattern = '/\*\*\*(.)+rolled(.)+\*\*\*/i';
   return preg_replace($pattern, '', $text);
+}
+function retrieveDiceRoll($hash, $character) {
+  try {
+    $dbh = new PDO('mysql:host=' .DB_HOST . ';dbname=' . DB_DATABASE, DB_USER, DB_PASS);
+    $query = 'SELECT roll, type FROM rolls WHERE location_hash=:hash';
+    $sth = $dbh -> prepare($query);
+    $sth -> execute(array(':hash' => $hash));
+    $results = $sth -> fetch();
+    $type = $results['type'];
+    $pos = strpos($type, 'd');
+    $amount = substr($results['type'], 0, $pos);
+    $type = substr($results['type'], $pos+1, strlen($results['type']));
+    if ($amount == 1) {
+      $string = '*** ' . $character . ' rolled one ' . $type . '-sided die: ';
+    } else {
+      $string = '*** ' . $character . ' rolled ' . convert_number_to_words($amount) . ' ' . $type . '-sided dice: ';
+    }
+    $string .= $results['roll'] . ' ***';
+    $dbh = null;
+    return $string;
+  } catch(PDOException $error) {
+    http_response_code(500);
+  }
 }
 
 function ircToDatabase($text, $pid) {

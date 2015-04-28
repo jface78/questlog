@@ -552,12 +552,13 @@ class QuestlogAPI extends API {
           $json_array['posts'][$index]['date'] = $row['post_date'];
           $json_array['posts'][$index]['edited'] = $row['edited'];
           $json_array['posts'][$index]['editable'] = $row['editable'];
-          $pattern = '/\[DICE_ROLL\]([0-9a-zA-Z]+)\[\/DICE_ROLL\]/i';
+          
+          $pattern = '#\[DICE_ROLL\]([0-9a-zA-Z]+)\[\/DICE_ROLL\]#i';
           preg_match_all($pattern, $row['post_text'], $matches);
           $json_array['posts'][$index]['rolls'] = [];
           $subIndex = 0;
           foreach ($matches[1] as $match) {
-            $json_array['posts'][$index]['rolls'][$subIndex] = stripslashes($matches[0][$subIndex]);
+            $json_array['posts'][$index]['rolls'][$subIndex] = $match;
             $subIndex++;
           }
           $json_array['posts'][$index]['text'] = databaseToDisplayText($row['post_text'], $row['char_name'], $row['pid']);
@@ -622,7 +623,11 @@ class QuestlogAPI extends API {
 
       try {
         $dbh = new PDO('mysql:host=' . DB_HOST . ';dbname=' . DB_DATABASE, DB_USER, DB_PASS);
-        $body = sanitizeText($body);
+        $query = 'SELECT qid FROM posts WHERE pid=:pid';
+        $sth = $dbh -> prepare($query);
+        $sth -> execute(array(':pid' => $pid));
+        $qid = $sth -> fetch()[0];
+        $body = sanitizeText($body, $pid, $cid, $qid);
         $query = 'UPDATE posts SET post_text=:text,cid=:cid,timestamp=now() WHERE pid=:pid';
         $sth = $dbh -> prepare($query);
         $sth -> execute(array(':text' => $body, ':cid' => $cid, ':pid' => $pid));

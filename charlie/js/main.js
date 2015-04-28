@@ -205,9 +205,14 @@ function sanitizeTextForDB(text) {
 }
 
 function santizeTextForTextarea(text) {
-  text = text.replace(/\*\*\*(.)+rolled(.)+\*\*\*/i, '[DICE ROLL - DO NOT REMOVE]');
+  var toHTML = $('<output>' + text + '</output>');
+  $(toHTML).find('.roll').each(function(index, item) {
+    console.log('ITEM: ' + item);
+    var id = $(item).attr('id');
+    $(item).replaceWith('[DICE_ROLL]' + id + '[/DICE_ROLL]');
+  });
+  text = $(toHTML).html();
   return text.replace(/<br\s*[\/]?>/gi, '\n');
-  //*** holodog rolled one 100-sided die: 69 ***
 }
 
 function newPost(characterID, postText, dialog) {
@@ -226,16 +231,15 @@ function newPost(characterID, postText, dialog) {
 }
 
 function editPost(postID, characterID, postText, dialog) {
+  postText = sanitizeTextForDB(postText);
   $.ajax({
-    url: API_URL + 'POSTS/PID/' + postID + '/CID/' + characterID + '/BODY/' + sanitizeTextForDB(postText) + '?apiKey=' + LOCAL_API_KEY,
+    url: API_URL + 'POSTS/PID/' + postID + '/CID/' + characterID + '/BODY/' + postText + '?apiKey=' + LOCAL_API_KEY,
     method: 'PUT',
     dataType: 'json',
     statusCode: {
       200: function(response) {
         dialog.dialog('close');
-        var parent = $('#post_' + postID).find('.floatLeft');
-        $('#post_' + postID).find('.postBody').html(postText);
-        addEditedHover(parent, formatDate(new Date(response.editedDate).getTime()/1000));
+        getPostsByPage();
       }
     }
   });
@@ -446,6 +450,13 @@ function renderPostBubble(postObject, index, prepend) {
     $(section).addClass('even');
   } else {
     $(section).addClass('odd');
+  }
+  var pattern = /(\*\*\*\s[a-zA-Z0-9]+\srolled\s[a-zA-Z0-9\s:\-]+\*\*\*)/ig;
+  var matches = postObject.text.match(new RegExp(pattern));
+  if (matches != null) {
+    for (var i=0; i < matches.length; i++) {
+      postObject.text = postObject.text.replace(matches[i], '<span class="roll" id="' + postObject.rolls[i] +'">' + matches[i] + '</span>');
+    }
   }
   $(section).html(postObject.text);
   $(div).append(section);

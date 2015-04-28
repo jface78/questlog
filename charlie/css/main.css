@@ -264,6 +264,10 @@ footer {
   height:90%;
 }
 
+.roll {
+  font-weight:bold;
+}
+
 #mainContent {
   width:100%;
   color:#fff;
