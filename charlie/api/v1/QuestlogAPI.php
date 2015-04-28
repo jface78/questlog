@@ -553,7 +553,7 @@ class QuestlogAPI extends API {
           $json_array['posts'][$index]['edited'] = $row['edited'];
           $json_array['posts'][$index]['editable'] = $row['editable'];
           
-          $pattern = '#\[DICE_ROLL\]([0-9a-zA-Z]+)\[\/DICE_ROLL\]#i';
+          $pattern = '#\[DICE_ROLL\]([0-9a-zA-Z]+)\[\|DICE_ROLL\]#i';
           preg_match_all($pattern, $row['post_text'], $matches);
           $json_array['posts'][$index]['rolls'] = [];
           $subIndex = 0;

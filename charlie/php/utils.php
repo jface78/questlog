@@ -236,7 +236,7 @@ function rollDice($number, $type) {
 function databaseToDisplayText($text, $character, $pid) {
   try {
     $dbh = new PDO('mysql:host=' .DB_HOST . ';dbname=' . DB_DATABASE, DB_USER, DB_PASS);
-    $pattern = '/\[DICE_ROLL\]([0-9a-zA-Z]+)\[\/DICE_ROLL\]/i';
+    $pattern = '/\[DICE_ROLL\]([0-9a-zA-Z]+)\[\|DICE_ROLL\]/i';
     preg_match_all($pattern, $text, $matches);
     $index = 0;
     //print_r($matches);
@@ -267,17 +267,28 @@ function databaseToDisplayText($text, $character, $pid) {
 
 function sanitizeText($text, $pid, $cid, $qid) {
   $text = deathToCheaters($text);
-  
-  $pattern = '/\[DICE_ROLL\]([A-Za-z0-9]+)\[\|DICE_ROLL\]/i';
-  preg_match_all($pattern, $text, $matches);
-  $index = 0;
-  foreach ($matches[1] as $match) {
-    $location = '[DICE_ROLL]' . $match . '[/DICE_ROLL]';
-    $text = str_replace($matches[0][$index], $location, $text);
-    $index++;
-    
+  $text = restoreMissingDiceRolls($text, $pid);
+  return ircToDatabase($text, $pid); 
+}
+
+function restoreMissingDiceRolls($text, $pid) {
+  try {
+    $dbh = new PDO('mysql:host=' .DB_HOST . ';dbname=' . DB_DATABASE, DB_USER, DB_PASS);
+    $query = 'SELECT location_hash FROM rolls WHERE rid=:pid';
+    $sth = $dbh -> prepare($query);
+    $sth -> execute(array(':pid' => $pid));
+    $results = $sth -> fetchAll();
+    foreach ($results as $hash) {
+      $pattern = '#\[DICE_ROLL\](' . $hash['location_hash'] . ')\[\|DICE_ROLL\]#i';
+      if (!preg_match_all($pattern, $text, $matches)) {
+        $text .= '<br>[DICE_ROLL]' . $hash['location_hash'] . '[|DICE_ROLL]';
+      }
+    }
+    $dbh = null;
+    return $text;
+  } catch(PDOException $error) {
+    http_response_code(500);
   }
-  return ircToDatabase($text, $pid);
 }
 
 function deathToCheaters($text) {
@@ -327,7 +338,7 @@ function ircToDatabase($text, $pid) {
       $sth = $dbh -> prepare($query);
       $type = $amount . 'd' . $type;
       $sth -> execute(array(':results' => $results, ':type' => $type, ':rid' => $pid, ':hash' => $position));
-      $location = '[DICE_ROLL]' . $position . '[/DICE_ROLL]';
+      $location = '[DICE_ROLL]' . $position . '[|DICE_ROLL]';
       $text = str_replace($matches[0][$index], $location, $text);
       $index++;
     }
