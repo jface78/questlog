@@ -1,0 +1,40 @@
+<div style="padding:10px;height:100%;min-width:600px;font-family:Verdana,sans-serif;">
+  <div style="width:100%;display:inline-block;">
+    <div class="nowrapping halfLeft">
+      <div class="questLabel">quest name&nbsp;</div>
+      <input type="text" id="questName" style="width:200px;height:16px;"><br />
+    </div>
+    <div class="nowrapping halfLeft">
+      <div class="questLabel">viewable&nbsp;</div>
+      <select id="privacy" style="width:200px;">
+        <option value="0">public</option>
+        <option value="1">participants</option>
+        <option value="2">only me</option>
+      </select>
+    </div>
+  </div>
+  <div style="width:100%;display:inline-block;">
+    <div class="nowrapping halfLeft">
+      <div class="questLabel">backstory&nbsp;</div>
+      <div style="overflow:hidden;min-width:200px;">
+        <textarea id="backstory" style="width:97%;height:300px;"></textarea>
+      </div>
+    </div>
+    <div class="nowrapping halfLeft">
+      <div class="questLabel">first post&nbsp;</div>
+      <div style="overflow:hidden;min-width:200px;">
+        <textarea id="firstPost" style="width:97%;height:300px;"></textarea>
+      </div>
+    </div>
+  </div>
+  <div style="width:100%;display:inline-block;">
+    <div class="nowrapping halfLeft">
+      <div class="questLabel">players&nbsp;</div>
+      <input type="text" id="playerList" style="width:200px;height:16px;">
+    </div>
+    <div class="halfLeft">
+      <span id="addedPlayers"></span>
+    </div>
+  </div>
+  <div id="newQuestError"></div>
+</div>

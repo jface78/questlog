@@ -1,0 +1,417 @@
+html, body {
+  height:100%;
+  margin:0;
+}
+
+html {
+  overflow-y:scroll;
+}
+
+body {
+  background-color:#36373B;
+  font-family:Verdana,sans-serif;
+  font-size:10px;
+  color:#999;
+  letter-spacing: 0.1mm;
+  line-height:20px;
+  box-sizing:border-box;
+  padding:10px;
+}
+
+hr {
+  border-width: 1px 0px 0px;
+  border-style: dashed none none;
+  border-color: #222;
+  height: 1px;
+  width: 100%;
+  text-align: left;
+  float:left;
+  margin-top:10px;
+  margin-bottom:10px;
+}
+
+a:link, a:active, a:visited {
+  color: #cccccc;
+  font-weight: bold;
+  font-size: 10px;
+  font-family: Verdana, sans-serif;
+  text-decoration: none;
+  letter-spacing: 0.1mm;
+  cursor:pointer;
+}
+a:hover {
+  color:#fff;
+}
+
+select {
+  background-color: #545454;
+  color: white;
+  border: 1px solid #000;
+  outline:none;
+  font-size: 10px !important;
+  padding: 2px;
+  border-radius: 3px;
+  letter-spacing: 0.1mm;
+}
+
+input {
+  BORDER-TOP: #848383 1px outset;
+  BORDER-LEFT: #848383 1px outset;
+  BORDER-BOTTOM: #848383 1px inset;
+  BORDER-RIGHT: #848383 1px inset;
+  BACKGROUND-COLOR: #000000;
+  color: #ffffff;
+  font-weight: bold;
+  font-size: 10px;
+  font-family: Verdana,sans-serif;
+  text-decoration: none;
+  letter-spacing: 0.1mm;
+  vertical-align:middle;
+  letter-spacing: 0.1mm;
+}
+
+textarea {
+  resize:none;
+  background-color:#000;
+  color:#fff;
+  outline:none;
+  letter-spacing: 0.1mm;
+}
+
+.labeledInputText {
+  width:50%;
+  box-sizing:border-box;
+}
+
+button {
+  border-width: 1px;
+  border-style: outset inset inset outset;
+  border: 1px solid #848383;
+  background-color: #3B3B3B;
+  font-size: 10px;
+  font-weight: bold;
+  color: #cccccc;
+  cursor:pointer;
+  border-radius:4px;
+}
+button:hover {
+  color:#FFF;
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+button:focus {
+    outline: none;
+}
+
+.smallButton {
+  padding-top:1px;
+  padding-bottom:1px;
+  font-weight:normal;
+}
+
+.wrapper {
+  min-height:100%;
+  margin: 0 auto -15px;
+}
+.push {
+  height:15px;
+}
+
+footer {
+  height:15px;
+  text-align:center;
+  width:100%;
+}
+
+#leftHeader {
+  width:75%;
+}
+
+.loginBox {
+  float:right;
+  width:25%;
+  color:#fff;
+  font-weight:bold;
+  text-align:right;
+}
+.greetingBox {
+  float:right;
+  color:#fff;
+  font-weight:normal;
+  text-align:right;
+  width:25%;
+  height:48px;
+  line-height:14px;
+  padding-top:10px;
+}
+.loginBox input, .loginBox button {
+  width: 150px;
+  border-radius:0px;
+}
+ .loginBox button {
+   width:154px;
+ }
+.signupLabel {
+  display:inline-block;
+  width:50%;
+  text-align:right;
+}
+.signupError {
+  font-style:italic;
+  text-align:center;
+  font-weight:bold;
+  margin-top:5px;
+  line-height:13px;
+}
+.signupAlert {
+  display: inline-block;
+  width: 10px;
+  text-align: center;
+  font-weight: bold;
+  color:red;
+  opacity:0;
+}
+.field {
+  border-width: 1px;
+  border-style: outset inset inset outset;
+  border-color: #848383;
+  background-color: #000;
+  color: #FFF;
+  font-size:10px;
+  letter-spacing: 0.1mm;
+}
+
+.postHeader {
+  box-sizing:border-box;
+  height:20px;
+  width:100%;
+  color:#1F1F1F;
+  line-height:20px;
+  vertical-align:middle;
+  background-image:url('../img/barbg_2.gif');
+  background-repeat: repeat-x;
+  border:1px solid #000;
+  border-bottom:none;
+}
+.postHeader .floatLeft {
+  margin-left:10px;
+}
+
+.postHeader .floatRight {
+  margin-right:10px;
+}
+
+.editedAsterisk {
+  cursor:pointer;
+  font-weight:bold;
+  font-size:12px;
+  position:relative;
+  top:2px;
+}
+
+.characterNameLink {
+  font-weight:bold;
+  cursor:pointer;
+}
+.characterNameLink:hover {
+  color:#FFD75D;
+}
+
+.randomPostTitle {
+  font-size: 24px;
+  font-weight: bold;
+  text-shadow: #000 3px 3px 3px;
+  color: #B4B4B4;
+}
+
+.randomPostContainer {
+  width:75%;
+  margin:0 auto;
+  margin-top:25px;
+  border-bottom-left-radius:20px;
+  border-bottom-right-radius:20px;
+  overflow:hidden;
+  border-bottom:1px solid #000;
+}
+
+#questContent {
+  margin-top:5px;
+  min-height:600px;
+}
+
+.postBody {
+  width:100%;
+  color:#000;
+  line-height:20px;
+  border:1px solid #000;
+  word-wrap:break-word;
+  border-bottom:none;
+  padding:20px;
+  box-sizing:border-box;
+}
+
+.postBody .odd {
+  background-color:#656566;
+}
+.postBody .even {
+  background-color:#514C4C;
+}
+
+.postTextArea {
+  width:98%;
+  height:90%;
+}
+
+.roll {
+  font-weight:bold;
+}
+.diceResults {
+  font-size:12px;
+}
+
+#mainContent {
+  width:100%;
+  color:#fff;
+  min-height:100%;
+  height:100%;
+  display:inline-block;
+}
+
+#questlogLeft {
+  min-width:500px;
+  width:75%;
+  float:left;
+}
+#questlogRight {
+  width:25%;
+  float:right;
+  text-align:right;
+  padding-top:22px;
+}
+
+#questlogRight span {
+  color:#ccc;
+  cursor:pointer;
+  font-weight:bold;
+  letter-spacing: 0.1mm;
+}
+#questlogRight span:hover {
+  color:#fff;
+}
+#quest {
+  position:relative;
+  min-height:600px;
+}
+.questNavigation {
+  position:absolute;
+  right:-5px;
+  text-align:center;
+  vertical-align:middle;
+}
+.questNavButton {
+  color:#cccccc;
+  background-color:#656566;;
+  border:1px solid #939393;
+  font-size:12px;
+  width:40px;
+  height:18px;
+  border-radius:5px;
+  margin-left:5px;
+  margin-right:5px;
+}
+.questNavButton.disabled {
+  cursor:default;
+  opacity:0.5;
+}
+.questNavButton:hover {
+  color:#fff;
+  background-color:#535456;
+}
+#questListings table {
+  width:100%;
+  border-spacing:0;
+}
+#questListings th {
+  color:#ccc;
+  text-align:left;
+  cursor:pointer;
+  border-bottom: 1px solid #000;
+  font-weight:normal;
+  white-space:nowrap;
+}
+#questListings th:hover {
+  color:#fff;
+}
+#questListings td {
+  padding:2px;
+  color:#000;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.logTable {
+  color: #000;
+  font-weight: normal;
+  font-size: 10px;
+  font-family: verdana,sans-serif;
+  text-decoration: none;
+  letter-spacing: 0.1mm;
+}
+.log-left {
+  border-bottom: 1px solid #000;
+  border-right: 1px solid #000;
+  border-left: 1px solid #000;
+}
+.log-left:hover {
+  color:#fff !important;
+  cursor:pointer;
+}
+.log-cell {
+  border-bottom: 1px solid #000;
+  border-right: 1px solid #000;
+}
+.log-right {
+    
+}
+
+.even {
+  background-color:#535456;
+}
+.odd {
+  background-color:#656566;
+}
+
+.questMenu {
+  color:#cccccc;
+  font-weight:bold;
+  vertical-align:middle;
+  display:inline-block;
+  height:18px;
+  line-height:18px;
+}
+.questMenu:hover {
+  cursor:pointer;
+  color:#FFF;
+}
+
+.playerListItem {
+  margin-bottom:5px;
+  text-decoration:underline;
+  cursor:pointer;
+}
+
+
+.pointer{cursor:pointer;}
+.clear{clear:both;}
+.floatLeft{float:left;}
+.floatRight{float:right;}
+.alignCenter{text-align:center;}
+.nowrapping{white-space:nowrap;}
+
+.ui-dialog {
+  font-family:Verdana, sans-serif;
+  letter-spacing:0.1mm;
+}
