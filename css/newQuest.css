@@ -1,0 +1,36 @@
+#addedPlayers {
+  vertical-align:middle;
+  display:inline-block;
+  overflow-x:hidden;
+  overflow-y:auto;
+  margin-left:5px;
+}
+.addedPlayerBubble {
+  background-color:#545454;
+  color:#fff;
+  border-radius:5px;
+  padding:3px;
+  vertical-align:middle;
+  margin-right:5px;
+  margin-bottom:5px;
+  float:left;
+  font-size:10px;
+}
+.halfLeft {
+  width:50%;
+  float:left;
+}
+.questLabel {
+  display:inline-block;
+  float:left;
+  min-width:100px;
+  text-align:right;
+}
+#newQuestError {
+  width:100%;
+  display:inline-block;
+  text-align:center;
+  color:#FFF;
+  font-size:14px;
+  font-weight:bold;
+}
