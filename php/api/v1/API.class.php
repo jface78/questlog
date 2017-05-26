@@ -78,11 +78,14 @@ abstract class API {
 
   public function processAPI() {
     // Check that the session is active.
-    if ($this -> endpoint != 'login' && $this -> endpoint != 'session') {
+    if ($this -> endpoint != 'login' && $this -> endpoint != 'session' && !checkSession()) {
       return $this->_response("Not logged in.", 401);
     }
     switch($this ->endpoint) {
       case 'session':
+        if (!checkSession()) {
+          return $this->_response("Not logged in.", 401);
+        }
         break;
       case 'login':
         if (empty($this->request['name']) || empty($this->request['pass'])) {

@@ -61,7 +61,7 @@ input {
   padding-left:4px;
 }
 
-input[type="submit"] {
+input[type="submit"], button {
   border-width: 1px;
   border-style: outset inset inset outset;
   border: 1px solid #848383;
@@ -70,9 +70,10 @@ input[type="submit"] {
   font-weight: bold;
   color: #cccccc;
   cursor:pointer;
-  border-radius:4px; 
+  border-radius:4px;
+  cursor:pointer;
 }
-input[type="submit"]:hover {
+input[type="submit"]:hover, button:hover {
   color:#FFF;
 }
 input:focus, select:focus, textarea:focus, button:focus {

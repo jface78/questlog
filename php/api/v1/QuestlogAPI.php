@@ -1,4 +1,5 @@
 <?php
+session_start();
 require_once '../../../../questlog_credentials.php';
 require_once 'API.class.php';
 include 'utils.php';
@@ -44,7 +45,6 @@ class QuestlogAPI extends API {
       } else {
         $_SESSION['uid'] = $row['uid'];
         $_SESSION['login'] = $row['login_name'];
-        $_SESSION['group'] = $row['group_name'];
         $_SESSION['last_activity'] = time();
         $query = 'SELECT ip, date FROM user_logins WHERE uid=:uid ORDER BY id DESC LIMIT 1';
         $sth = $dbh -> prepare($query);
@@ -54,8 +54,8 @@ class QuestlogAPI extends API {
           $login_data['ip'] = $_SERVER['REMOTE_ADDR'];
           $login_data['date'] = time();
         }
-        $_SESSION["ip"] = $login_data['ip'];
-        $_SESSION["date"] = $login_data['date'];
+        $_SESSION['ip'] = $login_data['ip'];
+        $_SESSION['date'] = $login_data['date'];
         $query = "INSERT INTO user_logins (uid, date, ip) VALUES (:uid, :time, :ip)";
         $sth = $dbh->prepare($query);
         $sth->execute(array(':uid' => $row['uid'],':time' => time(), ':ip' => $login_data['ip']));
@@ -72,6 +72,21 @@ class QuestlogAPI extends API {
     } catch(PDOException $error) {
       return 'database_error';
     }
+  }
+  
+  public function session() {
+    $json_array = [];
+    $json_array['user_details'] = [];
+    $json_array['user_details']['name'] = $_SESSION['login'];
+    $json_array['user_details']['id'] = $_SESSION['uid'];
+    $json_array['user_details']['ip'] = $_SESSION['ip'];
+    $json_array['user_details']['date'] = $_SESSION['date'];
+    http_response_code(200);
+    return $json_array;
+  }
+  
+  public function logout() {
+    killSession();
   }
 }
 ?>

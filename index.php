@@ -21,16 +21,9 @@
       <div class="leftContent">
         <img id="logo" src="img/logo_day.gif" alt="QuestLog">
         <h4>This is QuestLog. RPGs and collaborative storytelling.</h4>
-        <h3>Current Status: CLOSED BETA</h3>
+        <h3></h3>
       </div>
       <section class="loginBox">
-        <form id="login" method="POST" accept-charset="utf-8">
-          <ul>
-            <li><input type="text" id="user" placeholder="user" required></li>
-            <li><input type="password" id="pass" placeholder="passwd" required></li>
-            <li><input type="submit" value="login"></li>
-          </ul>
-        </form>
       </section>
     </header>
     <main></main>
