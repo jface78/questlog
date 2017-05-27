@@ -70,6 +70,7 @@ class QuestlogAPI extends API {
         return $json_array;
       }
     } catch(PDOException $error) {
+      echo $error;
       return 'database_error';
     }
   }

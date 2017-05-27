@@ -3,8 +3,8 @@ var user;
 
 function drawWelcomeBox() {
   var div = $('<div></div>');
-  $(div).append('<p>Welcome, <b style="color:#FFF;">' + user.name.toUpperCase() + '.</b></p>');
-  $(div).append('<p style="line-height:15px;margin-top:5px;">You last logged in on <b>' + formatFullDate(user.date) + '</b> from <b>' + user.ip + '</b></p>');
+  $(div).append('<p style="margin:0;">Welcome, <b style="color:#FFF;">' + user.name.toUpperCase() + '.</b></p>');
+  $(div).append('<p>You last logged in on <b>' + formatFullDate(user.date) + '</b> from <b>' + user.ip + '</b></p>');
   $(div).append('<p><button>logout</button></p>');
   $('.loginBox').html(div);
   $(div).find('button').click(function() {
@@ -17,7 +17,7 @@ function drawLoginBox() {
   var ul = $('<ul></ul>');
   $(ul).append('<li><input type="text" id="user" placeholder="user" required></li>');
   $(ul).append('<li><input type="password" id="pass" placeholder="passwd" required></li>');
-  $(ul).append('<li><input type="submit" value="login"></li>');
+  $(ul).append('<li style="padding-top:3px;"><input type="submit" value="login"></li>');
   $(form).append(ul);
   $('.loginBox').html(form);
   
