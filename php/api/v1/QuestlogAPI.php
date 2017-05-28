@@ -40,7 +40,7 @@ class QuestlogAPI extends API {
 
       if(!$row) {
         $dbh = null;
-        http_response_code(401);
+        return 'unauthorized';
         exit();
       } else {
         $_SESSION['uid'] = $row['uid'];
@@ -66,28 +66,52 @@ class QuestlogAPI extends API {
         $json_array['user_details']['id'] = $row['uid'];
         $json_array['user_details']['ip'] = $login_data['ip'];
         $json_array['user_details']['date'] = $login_data['date'];
-        http_response_code(200);
         return $json_array;
       }
     } catch(PDOException $error) {
-      echo $error;
       return 'database_error';
     }
   }
   
-  public function session() {
+  protected function session() {
     $json_array = [];
     $json_array['user_details'] = [];
     $json_array['user_details']['name'] = $_SESSION['login'];
     $json_array['user_details']['id'] = $_SESSION['uid'];
     $json_array['user_details']['ip'] = $_SESSION['ip'];
     $json_array['user_details']['date'] = $_SESSION['date'];
-    http_response_code(200);
     return $json_array;
   }
   
-  public function logout() {
+  protected function logout() {
     killSession();
+    return 'success';
+  }
+  
+  protected function quests() {
+    try {
+      $dbh = new PDO('mysql:host=' .DB_HOST . ';dbname=' . DB_DATABASE, DB_USER, DB_PASS);
+      $dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+      $query = 'SELECT qid,quest_name from quests';
+      $sth = $dbh -> prepare($query);
+      $sth -> execute();
+      $rows = $sth -> fetchAll();
+      if(!count($rows)) {
+        $dbh = null;
+        return 'unauthorized';
+        exit();
+      } else {
+        $json_array = [];
+        $json_array['quests'] = [];
+        for ($i=0; $i<count($rows);$i++) {
+          $json_array['quests'][$i]['qid'] = $rows[$i]['qid'];
+          $json_array['quests'][$i]['name'] = $rows[$i]['quest_name'];
+        }
+        return $json_array;
+      }
+    } catch(PDOException $error) {
+      return 'database_error';
+    }
   }
 }
 ?>

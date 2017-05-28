@@ -38,6 +38,7 @@ function checkSession() {
         user = data.user_details;
         $('header h3').text('');
         drawWelcomeBox();
+        fetchQuests();
       },
       401: function() {
         $('header h3').text('Current Status: CLOSED BETA');
@@ -69,6 +70,7 @@ function handleLogin() {
         user = data.user_details;
         drawWelcomeBox();
         $('header h3').text('');
+        fetchQuests();
       },
       401: function() {
         console.log('401');
@@ -78,6 +80,19 @@ function handleLogin() {
       },
       500: function() {
         console.log('500');
+      }
+    }
+  });
+}
+
+function fetchQuests() {
+  $.ajax({
+    type: 'GET',
+    url: './quests',
+    dataType: 'json',
+    statusCode: {
+      200: function(data) {
+        console.log(data);
       }
     }
   });

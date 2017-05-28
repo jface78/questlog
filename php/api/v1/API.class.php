@@ -92,7 +92,10 @@ abstract class API {
           return $this->_response("Invalid parameter(s)", 400);
         }
         break;
-      case 'quest':
+      case 'quests':
+        if (!checkSession()) {
+          return $this->_response("Not logged in.", 401);
+        }
         break;
       case 'users':
         break;
