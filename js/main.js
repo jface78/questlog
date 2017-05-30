@@ -1,4 +1,5 @@
 var SERVICE_BASE = '';
+var TEMPLATE_URL = 'templates/';
 var user;
 
 function drawWelcomeBox() {
@@ -88,12 +89,36 @@ function handleLogin() {
 function fetchQuests() {
   $.ajax({
     type: 'GET',
-    url: './quests',
-    dataType: 'json',
-    statusCode: {
-      200: function(data) {
-        console.log(data);
-      }
+    url: TEMPLATE_URL + 'quests.html',
+    success: function(template) {
+      $('main').html(template);
+      $.ajax({
+        type: 'GET',
+        url: './quests',
+        dataType: 'json',
+        statusCode: {
+          200: function(data) {
+            var quests = data.quests;
+            console.log(quests);
+            $(quests).each(function(index, item) {
+              var tr = $('<tr></tr>');
+              $(tr).attr('data-qid', item.qid);
+              $(tr).attr('data-gid', item.gid);
+              $(tr).append('<td>' + item.name + '</td>');
+              $(tr).append('<td>' + item.gm_name + '</td>');
+              var players = '';
+              $(item.characters).each(function(charIndex, charItem) {
+                players += charItem.char_name;
+                if (charIndex < item.characters.length-1) {
+                  players += ', ';
+                }
+              });
+              $(tr).append('<td>' + players + '</td>');
+              $('#allQuests tbody').append(tr);
+            });
+          }
+        }
+      });
     }
   });
 }

@@ -92,7 +92,7 @@ class QuestlogAPI extends API {
     try {
       $dbh = new PDO('mysql:host=' .DB_HOST . ';dbname=' . DB_DATABASE, DB_USER, DB_PASS);
       $dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-      $query = 'SELECT qid,quest_name from quests';
+      $query = 'SELECT qid,quest_name,uid from quests';
       $sth = $dbh -> prepare($query);
       $sth -> execute();
       $rows = $sth -> fetchAll();
@@ -106,6 +106,22 @@ class QuestlogAPI extends API {
         for ($i=0; $i<count($rows);$i++) {
           $json_array['quests'][$i]['qid'] = $rows[$i]['qid'];
           $json_array['quests'][$i]['name'] = $rows[$i]['quest_name'];
+          $json_array['quests'][$i]['gid'] = $rows[$i]['uid'];
+          $query = 'SELECT login_name from users WHERE uid=:uid';
+          $sth = $dbh -> prepare($query);
+          $sth -> execute(array(':uid' => $rows[$i]['uid']));
+          $json_array['quests'][$i]['gm_name'] = $sth -> fetch()[0];
+          $query = 'SELECT q.cid, c.char_name FROM quest_members q, characters c WHERE q.qid=:qid AND c.cid = q.cid';
+          $sth = $dbh -> prepare($query);
+          $sth -> execute(array(':qid' => $rows[$i]['qid']));
+          $characters = $sth -> fetchAll();
+          if (count($characters)) {
+            $json_array['quests'][$i]['characters'] = [];
+            for ($s=0; $s<count($characters);$s++) {
+              $json_array['quests'][$i]['characters'][$s]['cid'] = $characters[$s]['cid'];
+              $json_array['quests'][$i]['characters'][$s]['char_name'] = $characters[$s]['char_name'];
+            }
+          }
         }
         return $json_array;
       }

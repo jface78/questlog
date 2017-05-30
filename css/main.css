@@ -121,3 +121,7 @@ header .leftContent {
 .loginBox p {
   line-height:15px;margin-top:5px;
 }
+
+main {
+  padding:50px;
+}
