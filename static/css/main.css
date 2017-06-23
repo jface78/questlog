@@ -111,17 +111,84 @@ header {
   display:flex;
   flex-shrink:0;
 }
-header .leftContent {
+
+a {
+  text-decoration:none;
+  color:#ccc;
+}
+a:hover {
+  color:#FFF;
+}
+
+button.smallButton, input[type="submit"].smallButton {
+  padding-top: 1px;
+  padding-bottom: 1px;
+  font-weight: normal;
+}
+
+.leftContent {
   flex-grow:100;
 }
+.rightMenu {
+  width:200px;
+}
+
 .loginBox {
   vertical-align:top;
   width:200px;
+  color:#FFF;
+  text-align:right;
+
 }
 .loginBox p {
   line-height:15px;margin-top:5px;
 }
+.loginBox input {
+  width: 120px;
+  border-radius: 0px;
+}
+
+table.questsTable {
+  border-spacing:0px;
+  width:100%;
+}
+
+table.questsTable th{
+  color: #ccc;
+  text-align: left;
+  cursor: pointer;
+  border-bottom: 1px solid #000;
+  font-weight: normal;
+  white-space: nowrap;
+}
+table.questsTable th:hover {
+  color:#FFF;
+  cursor:pointer;
+}
+
+table.questsTable td {
+  padding: 2px;
+  color: #000;
+  text-overflow: ellipsis;
+  border-bottom: 1px solid #000;
+  border-right: 1px solid #000;
+}
+table.questsTable tr > td:first-child {
+  border-left:1px solid #000;
+}
+table.questsTable tr > td:first-child:hover {
+  color:#FFF;
+  cursor:pointer;
+}
+
+.even {
+  background-color:#535456;
+}
+.odd {
+  background-color:#656566;
+}
 
 main {
-  padding:50px;
+  display:flex;
+  padding-top:50px;
 }

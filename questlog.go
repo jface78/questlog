@@ -3,6 +3,7 @@ package main
 import (
     "fmt"
     "net/http"
+    "github.com/gorilla/mux"
     "github.com/gorilla/sessions"
     "github.com/gorilla/context"
     "log"
@@ -11,7 +12,7 @@ import (
     "encoding/json"
     "golang.org/x/crypto/ripemd160"
     "encoding/hex"
-
+    "strconv"
 )
 
 const (
@@ -19,7 +20,7 @@ const (
   DB_PASSWORD = "Z6c2a2yyb2vG"
   DB_NAME     = "questlog"
   DB_HOST     = "tcp(52.4.79.128:3306)"
-  //DB_HOST     = 'localhost'
+  SERVICE_PATH = "/service"
 )
 
 
@@ -45,46 +46,83 @@ func closeDB(db *sql.DB) {
   defer db.Close()
 }
 
-func table2Map(rows *sql.Rows) interface{} {
-  columns, err := rows.Columns()
-  if err != nil {
-    log.Fatal(err)
-  }
-  count := len(columns)
-  tableData := make([]map[string]interface{}, 0)
-  values := make([]interface{}, count)
-  valuePtrs := make([]interface{}, count)
-  for rows.Next() {
-    for i := 0; i < count; i++ {
-      valuePtrs[i] = &values[i]
-    }
-    rows.Scan(valuePtrs...)
-    entry := make(map[string]interface{})
-    for i, col := range columns {
-      var v interface{}
-      val := values[i]
-      b, ok := val.([]byte)
-      if ok {
-        v = string(b)
-      } else {
-        v = val
-      }
-      entry[col] = v
-    }
-    tableData = append(tableData, entry)
-  }
-  return tableData
+type Character struct {
+  Cid int `json:"cid"`
+  Char_name string `json:"name"`
+  Uid int `json:"uid"`
 }
 
-func getQuests(w http.ResponseWriter) {
+type Quest struct {
+  Qid int `json:"qid"`
+  Gmid int `json:"gmid"`
+  Gm_name string `json:"gmname"`
+  Name string `json:"name"`
+  Stamp int `json:"timestamp"`
+  Characters []Character `json:"players"`
+  Count int `json:"count"`
+  Last string `json:"last"`
+}
+
+type QuestInfo struct {
+  Qid int `json:"qid"`
+  Description string `json:"name"`
+}
+
+func getQuestInfo(w http.ResponseWriter, qid int) {
+  var info = QuestInfo{}
   db := openDB();
-  rows, err := db.Query("select quest_name from quests where status = ?", 1)
+  db.QueryRow("select qid,preface_text from quest_prefaces WHERE qid = ?", qid).Scan(&info.Qid, &info.Description)
+  jsonData, err := json.Marshal(info)
+  if err != nil {
+      log.Fatal(err)
+  }
+  closeDB(db)
+  fmt.Fprintf(w, string(jsonData))
+}
+
+func getAllQuests(w http.ResponseWriter) {
+  db := openDB();
+  rows, err := db.Query("select q.qid,q.uid,u.login_name,q.quest_name,UNIX_TIMESTAMP(q.timestamp) from quests as q, users as u where status = ? AND u.uid=q.uid", 1)
   if err != nil {
     log.Fatal(err)
   }
   defer rows.Close()
-  tableData := table2Map(rows)
-  jsonData, err := json.Marshal(tableData)
+  var quests []Quest
+  for rows.Next() {
+    quest := Quest{}
+    err := rows.Scan(&quest.Qid, &quest.Gmid, &quest.Gm_name, &quest.Name, &quest.Stamp)
+    if err != nil {
+        log.Fatal(err)
+    }
+    db.QueryRow("select count(*) from posts where qid = ?", quest.Qid).Scan(&quest.Count)
+    var lastCID int
+    var lastUID int
+    db.QueryRow("select cid,uid from posts where qid = ? order by timestamp desc limit 1", quest.Qid).Scan(&lastCID, &lastUID)
+    if (lastCID == 0) {
+      db.QueryRow("select login_name from users where uid = ?", lastUID).Scan(&quest.Last);
+    } else {
+      db.QueryRow("select char_name from characters where cid = ?", lastCID).Scan(&quest.Last);
+    }
+    
+    rows2, err := db.Query("select c.uid, qm.cid, c.char_name from quest_members as qm, characters as c WHERE qm.qid = ? AND c.cid=qm.cid", quest.Qid)
+    if err != nil {
+      log.Fatal(err)
+    }
+    defer rows2.Close()
+
+    var characters []Character
+    for rows2.Next() {
+      character := Character{}
+      err := rows2.Scan(&character.Uid, &character.Cid, &character.Char_name)
+      if err != nil {
+        fmt.Println(err)
+      }
+      characters = append(characters, character)
+    }
+    quest.Characters = characters
+    quests = append(quests, quest)
+  }
+  jsonData, err := json.Marshal(quests)
   if err != nil {
       log.Fatal(err)
   }
@@ -101,7 +139,7 @@ func hashPass(user string, pass string) string {
   return hex.EncodeToString(hash.Sum(nil))
 }
 
-func setSession(w http.ResponseWriter, r *http.Request, userID string, username string, timestamp string) {
+func setSession(w http.ResponseWriter, r *http.Request, userID int, username string, timestamp int) {
   session, err := sessionStore.Get(r, "questlog-user")
   if err != nil {
     http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -136,37 +174,34 @@ func checkSession(w http.ResponseWriter, r *http.Request) {
   }
 }
 
+type LoginModel struct {
+  Uid int `json:"uid"`
+  Name string `json:"name"`
+  Stamp int `json:"last_login_time"`
+}
+
 func login(w http.ResponseWriter, r *http.Request) {
   r.ParseForm()
   user := r.Form["user"][0]
   pass := r.Form["pass"][0]
   hash := hashPass(user, pass)
   db := openDB()
-  rows, err := db.Query("select uid,login_name,timestamp from users where login_hash = ?", hash)
+  rows, err := db.Query("select uid,login_name,UNIX_TIMESTAMP(timestamp) from users where login_hash = ?", hash)
   if err != nil {
     log.Fatal(err)
   }
-
-  var (
-    uid string
-    login_name string
-    timestamp string
-  )
+  defer rows.Close()
+  login := LoginModel{}
   for rows.Next() {
-    err := rows.Scan(&uid, &login_name, &timestamp)
+    err := rows.Scan(&login.Uid, &login.Name, &login.Stamp)
     if err != nil {
       log.Fatal(err)
     }
   }
-  rows, err = db.Query("select uid,login_name,timestamp from users where login_hash = ?", hash)
-  if err != nil {
-    log.Fatal(err)
-  }
-  tableData := table2Map(rows)
-  defer rows.Close()
-  jsonData, err := json.Marshal(tableData)
+  
+  jsonData, err := json.Marshal(login)
   closeDB(db) 
-  setSession(w, r, uid, login_name, timestamp)
+  setSession(w, r, login.Uid, login.Name, login.Stamp)
   w.WriteHeader(http.StatusOK)
   fmt.Fprintf(w, string(jsonData))
 }
@@ -185,7 +220,16 @@ func logout(w http.ResponseWriter, r *http.Request) {
 
 func handleQuests(w http.ResponseWriter, r *http.Request) {
   log.Println("get quests")
-  getQuests(w)
+  getAllQuests(w)
+}
+
+func handleQuestInfo(w http.ResponseWriter, r *http.Request) {
+  log.Println("get quest info")
+  qid, err := strconv.Atoi(mux.Vars(r)["[a-z0-9]+"])
+  if (err != nil) {
+    log.Fatal(err)
+  }
+  getQuestInfo(w, qid)
 }
 
 func handleSessionCheck(w http.ResponseWriter, r *http.Request) {
@@ -202,12 +246,17 @@ func handleLogout(w http.ResponseWriter, r *http.Request) {
   logout(w, r)
 }
 
+
 func main() {
-  http.Handle("/", http.FileServer(http.Dir("./static")))
-  http.HandleFunc("questlog.net", handleQuests)
-  http.HandleFunc("/quests", handleQuests)
-  http.HandleFunc("/login", handleLogin)
-  http.HandleFunc("/logout", handleLogout)
-  http.HandleFunc("/checkSession", handleSessionCheck)
+  rtr := mux.NewRouter()
+  rtr.HandleFunc(SERVICE_PATH + "/quest/{[a-z0-9]+}/info", handleQuestInfo).Methods("GET")
+  rtr.HandleFunc(SERVICE_PATH + "/quests", handleQuests).Methods("GET")
+  rtr.HandleFunc(SERVICE_PATH + "/login", handleLogin).Methods("POST")
+  rtr.HandleFunc(SERVICE_PATH + "/logout", handleLogout).Methods("GET")
+  rtr.HandleFunc(SERVICE_PATH + "/checkSession", handleSessionCheck).Methods("GET")
+  
+  http.Handle("/", http.FileServer(http.Dir("./static/")))
+  http.Handle("/service/", rtr);
+
   http.ListenAndServe(PORT, context.ClearHandler(http.DefaultServeMux))
 }
