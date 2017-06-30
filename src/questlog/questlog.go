@@ -20,7 +20,8 @@ import (
 const (
   SERVICE_PATH = "/service"
   QUESTLOG_SESSION_ID = "questlog-user"
-  PORT = ":80"
+  PORT = ":1337"
+  DEFAULT_QUEST_PAGE_LENGTH = 50
 )
 
 type LoginModel struct {
@@ -132,7 +133,7 @@ func handleQuests(w http.ResponseWriter, r *http.Request) {
 
 func handleQuest(w http.ResponseWriter, r *http.Request) {
   log.Println("get quest")
-  qid, err := strconv.Atoi(mux.Vars(r)["[a-z0-9]+"])
+  qid, err := strconv.Atoi(mux.Vars(r)["[0-9]+"])
   if (err != nil) {
     log.Fatal(err)
   }
@@ -142,9 +143,18 @@ func handleQuest(w http.ResponseWriter, r *http.Request) {
   }
   length, err := strconv.Atoi(r.URL.Query()["length"][0])
   if (err != nil) {
-    log.Fatal(err)
+    length = DEFAULT_QUEST_PAGE_LENGTH
+    log.Println(err)
   }
-  jsonData, err := json.Marshal(Posts.GetPosts(w, qid, start, length))
+  order := r.URL.Query().Get("order")
+  if len(order) == 0 {
+    order = "DESC"
+  }
+  log.Println(order)
+  log.Println(start)
+  log.Println(length)
+  
+  jsonData, err := json.Marshal(Posts.GetPosts(w, qid, start, length, order))
   if (err != nil) {
     log.Fatal(err)
   }
@@ -153,7 +163,7 @@ func handleQuest(w http.ResponseWriter, r *http.Request) {
 
 func handleQuestInfo(w http.ResponseWriter, r *http.Request) {
   log.Println("get quest info")
-  qid, err := strconv.Atoi(mux.Vars(r)["[a-z0-9]+"])
+  qid, err := strconv.Atoi(mux.Vars(r)["[0-9]+"])
   if (err != nil) {
     log.Fatal(err)
   }
@@ -193,18 +203,37 @@ func handleLogout(w http.ResponseWriter, r *http.Request) {
   logout(w, r)
 }
 
+func handleViewQuest(w http.ResponseWriter, r *http.Request) {
+  log.Println("handle view quest")
+  qid, err := strconv.Atoi(mux.Vars(r)["[0-9]+"])
+  if (err != nil) {
+    log.Fatal(err)
+  }
+  log.Println(qid)
+  db := DBUtils.OpenDB();
+  var count int
+  db.QueryRow("select count(qid) FROM quests WHERE qid = ?", qid).Scan(&count)
+  log.Println(count)
+  if count > 0 {
+    http.ServeFile(w, r, "./static/")
+  } else {
+    log.Println("Not found")
+    w.WriteHeader(http.StatusNotFound)
+  }
+}
+
 
 func main() {
   rtr := mux.NewRouter()
   rtr.HandleFunc(SERVICE_PATH + "/quests", handleQuests).Methods("GET")
-  rtr.HandleFunc(SERVICE_PATH + "/quest/{[a-z0-9]+}", handleQuest).Methods("GET")
-  rtr.HandleFunc(SERVICE_PATH + "/quest/{[a-z0-9]+}/info", handleQuestInfo).Methods("GET")
+  rtr.HandleFunc(SERVICE_PATH + "/quest/{[0-9]+}", handleQuest).Methods("GET")
+  rtr.HandleFunc(SERVICE_PATH + "/quest/{[0-9]+}/info", handleQuestInfo).Methods("GET")
   rtr.HandleFunc(SERVICE_PATH + "/login", handleLogin).Methods("POST")
   rtr.HandleFunc(SERVICE_PATH + "/logout", handleLogout).Methods("GET")
   rtr.HandleFunc(SERVICE_PATH + "/checkSession", handleSessionCheck).Methods("GET")
+  rtr.HandleFunc("/quest/{[0-9]+}/", handleViewQuest).Methods("GET")
+  rtr.PathPrefix("/").Handler(http.FileServer(http.Dir("./static/")))
   
-  http.Handle("/", http.FileServer(http.Dir("./static")))
-  http.Handle(SERVICE_PATH + "/", rtr);
-
+  http.Handle("/", rtr)
   http.ListenAndServe(PORT, context.ClearHandler(http.DefaultServeMux))
 }

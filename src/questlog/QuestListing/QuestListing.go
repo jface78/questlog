@@ -117,7 +117,7 @@ func GetGroupedQuests(id int) []Quest {
       var qid int
       rows.Scan(&qid)
       quest := Quest{}
-      db.QueryRow("select q.qid,q.uid,u.login_name,q.quest_name,UNIX_TIMESTAMP(q.timestamp) from quests as q, users as u where quest_status < 4 AND q.qid = ? AND u.uid = ? ORDER BY q.timestamp DESC", qid, id).Scan(&quest.Qid, &quest.Gmid, &quest.Gm_name, &quest.Name, &quest.Stamp)
+      db.QueryRow("select q.qid,q.uid,u.login_name,q.quest_name,UNIX_TIMESTAMP(q.timestamp) from quests as q, users as u where quest_status < 4 AND q.qid = ?  AND u.uid=q.uid ORDER BY q.timestamp DESC", qid).Scan(&quest.Qid, &quest.Gmid, &quest.Gm_name, &quest.Name, &quest.Stamp)
       quest.Type = "player"   
       db.QueryRow("select count(*) from posts where qid = ?", quest.Qid).Scan(&quest.Count)
       var lastCID int
@@ -166,7 +166,7 @@ func GetGroupedQuests(id int) []Quest {
     }
     quest := Quest{}
     quest.Type = "other"
-    db.QueryRow("select q.qid,q.uid,u.login_name,q.quest_name,UNIX_TIMESTAMP(q.timestamp) from quests as q, users as u where q.quest_status < 4 AND q.qid = ? ORDER BY q.timestamp DESC", qid).Scan(&quest.Qid, &quest.Gmid, &quest.Gm_name, &quest.Name, &quest.Stamp)
+    db.QueryRow("select q.qid,q.uid,u.login_name,q.quest_name,UNIX_TIMESTAMP(q.timestamp) from quests as q, users as u where q.quest_status < 4 AND q.qid = ? AND u.uid=q.uid ORDER BY q.timestamp DESC", qid).Scan(&quest.Qid, &quest.Gmid, &quest.Gm_name, &quest.Name, &quest.Stamp)
     db.QueryRow("select count(*) from posts where qid = ?", quest.Qid).Scan(&quest.Count)
     var lastCID int
     var lastUID int

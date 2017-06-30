@@ -5,12 +5,12 @@
 html {
   overflow-x:hidden;
   overflow-y:scroll;
+  height:100%;
 }
 
 html, body {
   margin:0;
   width:100%;
-  height:100%;
   min-width:1024px;
 }
 
@@ -22,8 +22,9 @@ body {
   letter-spacing: 0.1mm;
   line-height: 20px;
   padding:40px;
-  padding-top:10px;
   padding-bottom:0px;
+  padding-top:0px;
+  min-height:100%;
 }
 
 p {
@@ -42,6 +43,7 @@ h3 {
   margin:0;
 }
 header section {
+  padding-top:10px;
   display:inline-block;
 }
 header section:first-child {
@@ -110,9 +112,8 @@ textarea {
   outline:none;
 }
 .wrapper {
-  min-height: 100%;
-  margin: 0 auto -30px;
   position:relative;
+  min-height: calc(100vh - 40px);
 }
 
 footer {
@@ -121,6 +122,8 @@ footer {
   width: 100%;
   line-height:15px;
   vertical-align:middle;
+  margin-bottom:5px;
+  margin-top:5px;
 }
 header {
   
@@ -212,7 +215,7 @@ main {
   width:calc(100% - 200px);
   position:relative;
 }
-nav {
+nav.rightNav {
   width: 200px;
   display: inline-block;
   position: absolute;
@@ -221,9 +224,32 @@ nav {
   text-align: right;
 }
 
+nav.postNav {
+  color:#FFF;
+  font-weight:bold;
+  font-size:1.2em;
+}
+
+nav.postNav ul {
+  list-style:none;
+}
+nav.postNav ul > li {
+  display:inline-block;
+  cursor:pointer;
+  border:none;
+  border-right:1px solid #FFF;
+  margin-right:20px;
+  padding-right:20px;
+}
+nav.postNav ul > li:last-child {
+  border-right:none;
+  margin-right:none;
+  padding-right:none;
+}
+
 .icon {
   cursor:pointer;
-  padding:4px;
+  padding:2px;
   padding-top:0px;
   padding-bottom:0px;
   vertical-align:middle;
@@ -234,7 +260,7 @@ nav {
 
 .preloaderBG {
   display:none;
-  position: absolute;
+  position: fixed;
   top: 0px;
   left:0px;
   width: 100%;
@@ -255,5 +281,43 @@ nav {
 
 .preloaderFG img {
   height:100px;
-  margin-top:200px;
+  position: fixed;
+  top: calc(50% - 100px);
+}
+.postBubble {
+  display:none;
+}
+.postBubble header {
+  height: 20px;
+  width: 100%;
+  color: #1F1F1F;
+  line-height: 20px;
+  vertical-align: middle;
+  background-image: url(../img/barbg_2.gif);
+  background-repeat: repeat-x;
+  border: 1px solid #000;
+  border-bottom: none;
+  padding-left:10px;
+  padding-right:10px;
+  position:relative;
+}
+.postBubble header .controls {
+  position:absolute;
+  right:10px;
+  vertical-align:middle;
+  font-size:1.2em;
+}
+
+.postBubble content {
+  width: 100%;
+  border: 1px solid #000;
+  word-wrap: break-word;
+  border-bottom: none;
+  padding: 20px;
+  display:inline-block;
+  color:#000;
+}
+
+.postBubble.endPost content {
+  border-bottom:1px solid #000;
 }

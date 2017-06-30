@@ -9,6 +9,7 @@ const (
   DB_USER     = "questlog"
   DB_PASSWORD = "Z6c2a2yyb2vG"
   DB_NAME     = "questlog"
+  //DB_HOST     = "tcp(localhost:3306)"
   DB_HOST     = "tcp(52.4.79.128:3306)"
 )
 func OpenDB() *sql.DB {
