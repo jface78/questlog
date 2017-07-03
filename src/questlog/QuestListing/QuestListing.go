@@ -24,11 +24,40 @@ type QuestInfo struct {
   Description string `json:"description"`
   Title string `json:"title"`
 }
+type QuestMember struct {
+  Uid int `json:"uid"`
+  Cid int `json:"cid"`
+}
+type QuestPermissions struct {
+  GMid int `json:"gmid"`
+  Members []QuestMember `json:"members"`
+}
 
 type Character struct {
   Cid int `json:"cid"`
   Char_name string `json:"name"`
   Uid int `json:"uid"`
+}
+
+func GetQuestPermissions(qid int) QuestPermissions {
+  var permissions = QuestPermissions{}
+  db := DBUtils.OpenDB();
+  db.QueryRow("select uid from quests WHERE qid = ?", qid).Scan(&permissions.GMid)
+  rows, err := db.Query("select qm.cid,c.uid from quest_members as qm, characters as c where qm.qid = ? and qm.cid=c.cid", qid)
+  if err != nil {
+    log.Fatal(err)
+  }
+  defer rows.Close()
+  for rows.Next() {
+    member := QuestMember{}
+    err := rows.Scan(&member.Uid, &member.Cid)
+    if err != nil {
+      log.Println(err)
+    }
+    permissions.Members = append(permissions.Members, member)
+  }
+  DBUtils.CloseDB(db)
+  return permissions
 }
 
 func GetQuestInfo(qid int) QuestInfo {

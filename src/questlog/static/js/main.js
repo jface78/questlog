@@ -35,19 +35,22 @@ $(document).ready(function() {
 })(window.history);
 
 function changeLocation() {
+  $(window).off('scroll');
+  window.scrollTo(0,0);
   $('main').fadeOut('fast', function() {
     var dir_parts = window.location.pathname.split('/');
     switch(dir_parts[1]) {
       case 'quest':
         if (parseInt(dir_parts[2])) {
-          currentQuestPage = 0;
+          
           $.get(TEMPLATE_URL + 'posts.html', function(template) {
-            currentPageOrder = 'DESC';
+            currentPageOrder = DEFAULT_PAGE_ORDER;
             currentQuestPage = 0;
             $('main').html(template);
             $('.backBtn').click(function() {
               history.pushState({}, 'quest', '/');
             });
+            fetchAndRenderQuestPermissions(parseInt(dir_parts[2]));
             $('.fa-rotate-right').click(function() {
               if (currentPageOrder == 'DESC') {
                 currentPageOrder = 'ASC';
@@ -74,6 +77,7 @@ function changeLocation() {
         }
         break;
       default:
+        $(window).off('scroll');
         $('main').empty();
         $('main').fadeIn('fast', function() {
           fetchAndRenderQuests();
@@ -167,6 +171,31 @@ function renderEndPost() {
   $(div).fadeIn('fast');
 }
 
+function drawParticipantControls() {
+  $('.postNav ul').append('<li>|&nbsp;&nbsp;&nbsp;post&nbsp;&nbsp;&nbsp;</li>');
+}
+
+function fetchAndRenderQuestPermissions(qid) {
+  $.ajax({
+    url: SERVICE_URL + 'quest/' + qid + '/permissions',
+    dataType: 'json',
+    statusCode: {
+      200: function(data) {
+        if (parseInt(data.gmid) == userID) {
+          drawParticipantControls();
+          return;
+        }
+        $(data.members).each(function(index, item) {
+          if (parseInt(item.uid) == userID) {
+            drawParticipantControls();
+            return;
+          }
+        });
+      }
+    }
+  });
+}
+
 function fetchAndRenderPosts(qid, start, length, order) {
   if (!start) {
     start = 0;
@@ -193,8 +222,8 @@ function fetchAndRenderPosts(qid, start, length, order) {
           var header = $('<header>Posted on ' + formatDate(item.stamp) + ' by ' + item.poster + '</header>');
           if (parseInt(item.uid) == userID) {
             var span = $('<span class="controls"></span>');
-            $(span).append('<i class="icon fa fa-pencil-square-o" alt="edit" title="edit"></i>');
-            $(span).append('<i class="icon fa fa-times-rectangle-o" alt="delete" title="delete"></i>');
+            $(span).append('<a class="icon" href=""><img src="/img/icon.edit_dark.gif" alt="edit" title="edit"></a>');
+            $(span).append('<a class="icon" href=""><img src="/img/icon.delete_dark.gif" alt="delete" title="delete"></a>');
             $(header).append(span);
           }
           $(div).append(header);
@@ -207,7 +236,6 @@ function fetchAndRenderPosts(qid, start, length, order) {
           }
           $('.posts section').append(div);
           queuedPosts.push(div);
-          console.log(index);
           if (index == data.length-1 && (index+1) < DEFAULT_PAGE_LENGTH) {
             renderEndPost();
           }
@@ -253,7 +281,7 @@ function fetchAndRenderQuests() {
               $(tr).append('<td>' + item.last + ' on ' + formatDate(item.timestamp) +  '</td><td><a href="#">' + item.gmname + '</a></td>');
               var playersStr = '';
               $(item.players).each(function(playerIndex, playerItem) {
-                playersStr += '<a href="#">' + playerItem.name + '</a>';
+                playersStr += '<a class="character" data-cid="' + playerItem.cid + '" href="#">' + playerItem.name + '</a>';
                 if (playerIndex < item.players.length-1) {
                   playersStr += ', ';
                 }
@@ -263,7 +291,7 @@ function fetchAndRenderQuests() {
               $(controls).css('width', '25px');
               if (item.type == 'gm') {
                 $(controls).css('width', '55px');
-                $(controls).append('<i class="icon fa fa-pencil-square-o" title="edit"></i><i class="icon fa fa-times-rectangle-o" title="delete"></i>');
+                $(controls).append('<a class="icon" href=""><img src="/img/icon.edit_dark.gif" alt="edit" title="edit"></a><a class="icon" href=""><img src="/img/icon.delete_dark.gif" alt="delete" title="delete"></a>');
               }
               $(tr).append(controls);
               $(controls).find('.fa-clone').click(function(event) {
@@ -273,10 +301,6 @@ function fetchAndRenderQuests() {
               });
               $('#' + item.type + 'Quests tbody').append(tr);
               queuedRows.push(tr);
-              if (index == $(data).length-1) {
-                clearPreloader();
-                fadeInRows(queuedRows);
-              }
             });
             if (!totalGM) {
               $('#gmQuests tbody').append('<tr class="odd" style="display:table-row;"><td colspan="6">None</td></tr>');
@@ -294,6 +318,15 @@ function fetchAndRenderQuests() {
                 history.pushState({}, 'quest', '/quest/' + $(this).closest('tr').data('qid') + '/');
               });
             });
+            $('.questsTable').find('.character').each(function(index, item) {
+              $(item).click(function(event) {
+                event.preventDefault();
+                event.stopPropagation();
+                showCharacterInfo($(this).attr('data-cid'));
+              });
+            });
+            clearPreloader();
+            fadeInRows(queuedRows);
           }
         }
       });
@@ -320,18 +353,18 @@ function fetchAndRenderQuests() {
               $(tr).append('<td>' + item.last + ' on ' + formatDate(item.timestamp) +  '</td><td><a href="#">' + item.gmname + '</a></td>');
               var playersStr = '';
               $(item.players).each(function(playerIndex, playerItem) {
-                playersStr += '<a href="#">' + playerItem.name + '</a>';
+                playersStr += '<a class="character" data-cid="' + playerItem.cid + '" href="#">' + playerItem.name + '</a>';
                 if (playerIndex < item.players.length-1) {
                   playersStr += ', ';
                 }
               });
               $(tr).append('<td>' + playersStr + '</td>');
-              var controls = $('<td style="text-align:center;"><i class="icon fa fa-info" title="info"></i></td>');
+              var controls = $('<td style="text-align:center;"><i class="icon fa fa-clone" title="preface"></i></td>');
               if (userID) {
-                $(controls).append('<i class="icon fa fa-pencil-square-o" title="edit"></i><i class="icon fa fa-times-rectangle-o" title="delete"></i>');
+                $(controls).append('<a class="icon" href=""><img src="/img/icon.edit_dark.gif" alt="edit" title="edit"></a><a class="icon" href=""><img src="/img/icon.delete_dark.gif" alt="delete" title="delete"></a>');
               }
               $(tr).append(controls);
-              $(controls).find('.fa-info').click(function(event) {
+              $(controls).find('.fa-clone').click(function(event) {
                 event.preventDefault();
                 event.stopPropagation();
                 showQuestInfo(this);
@@ -346,6 +379,13 @@ function fetchAndRenderQuests() {
                 history.pushState({}, 'quest', '/quest/' + $(this).closest('tr').data('qid') + '/');
               });
             });
+            $('.questsTable').find('.character').each(function(index, item) {
+              $(item).click(function(event) {
+                event.preventDefault();
+                event.stopPropagation();
+                showCharacterInfo($(this).attr('data-cid'));
+              });
+            });
             clearPreloader();
             if (queuedRows.length) {
               fadeInRows(queuedRows);
@@ -355,6 +395,46 @@ function fetchAndRenderQuests() {
       });
     });
   }
+}
+
+function fetchCharacterInfo(box, id) {
+  $.ajax({
+    url: SERVICE_URL + 'character/' + id,
+    dataType: 'json',
+    statusCode: {
+      200: function(data) {
+        box.setTitle(data.name);
+        $.get(TEMPLATE_URL + 'character.html', [], function(template) {
+          box.setContent(template);
+          $('#character').find('#title').html(data.title);
+          $('#character').find('#preface').html(data.preface);
+          $('#character').find('#profile').html(data.profile);
+          $(data.quests).each(function(index, item) {
+            $('#character').find('#quests').append('<a href="" data-qid="' + item.qid + '">' + item.name + '</a><br>');
+          });
+          $('#character').find('#quests a').each(function(index, item) {
+            $(item).click(function(event) {
+              event.preventDefault();
+              event.stopPropagation();
+              box.destroy();
+              history.pushState({}, 'quest', '/quest/' + $(item).attr('data-qid') + '/');
+            });
+          });
+        });
+      },
+      404: function() {
+        $(box.foreground).find('content').text('No description provided.');
+      }
+    }
+  });
+}
+
+function showCharacterInfo(cid) {
+  var box = new QuestlogOverlay(fetchCharacterInfo, cid);
+  $(box).on(EVENT_LOADED, function() {
+    fetchCharacterInfo(box, cid);
+  });
+  box.setup();
 }
 
 function fetchQuestInfo(box, id) {
@@ -384,8 +464,9 @@ function showQuestInfo(button) {
 
 function scrollQuest(qid) {
   if ($(window).scrollTop() + $(window).height() == $(document).height()) {
+    console.log('scroll');
     currentQuestPage++;
-    fetchAndRenderPosts(qid, (currentQuestPage * DEFAULT_PAGE_LENGTH), DEFAULT_PAGE_LENGTH, DEFAULT_PAGE_ORDER);
+    fetchAndRenderPosts(qid, (currentQuestPage * DEFAULT_PAGE_LENGTH), DEFAULT_PAGE_LENGTH);
   }
 }
 

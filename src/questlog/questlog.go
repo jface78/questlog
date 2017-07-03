@@ -14,6 +14,7 @@ import (
     "questlog/QuestListing"
     "questlog/Posts"
     "questlog/DBUtils"
+    "questlog/Character"
     "encoding/json"
 )
 
@@ -150,9 +151,6 @@ func handleQuest(w http.ResponseWriter, r *http.Request) {
   if len(order) == 0 {
     order = "DESC"
   }
-  log.Println(order)
-  log.Println(start)
-  log.Println(length)
   
   jsonData, err := json.Marshal(Posts.GetPosts(w, qid, start, length, order))
   if (err != nil) {
@@ -173,6 +171,39 @@ func handleQuestInfo(w http.ResponseWriter, r *http.Request) {
     w.Write([]byte("404 - File Not Found"))
     return
   }
+  jsonData, err := json.Marshal(info)
+  if (err != nil) {
+    log.Fatal(err)
+  }
+  fmt.Fprintf(w, string(jsonData))
+}
+
+func handleQuestPermissions(w http.ResponseWriter, r *http.Request) {
+  log.Println("get quest permission")
+  qid, err := strconv.Atoi(mux.Vars(r)["[0-9]+"])
+  if (err != nil) {
+    log.Fatal(err)
+  }
+  var permission = QuestListing.GetQuestPermissions(qid)
+  if permission.GMid == 0 {
+    w.WriteHeader(http.StatusNotFound)
+    w.Write([]byte("404 - File Not Found"))
+    return
+  }
+  jsonData, err := json.Marshal(permission)
+  if (err != nil) {
+    log.Fatal(err)
+  }
+  fmt.Fprintf(w, string(jsonData))
+}
+
+func handleCharacterInfo(w http.ResponseWriter, r *http.Request) {
+  log.Println("get character info")
+  cid, err := strconv.Atoi(mux.Vars(r)["[0-9]+"])
+  if (err != nil) {
+    log.Fatal(err)
+  }
+  var info = Character.GetCharacterInfo(cid)
   jsonData, err := json.Marshal(info)
   if (err != nil) {
     log.Fatal(err)
@@ -213,7 +244,6 @@ func handleViewQuest(w http.ResponseWriter, r *http.Request) {
   db := DBUtils.OpenDB();
   var count int
   db.QueryRow("select count(qid) FROM quests WHERE qid = ?", qid).Scan(&count)
-  log.Println(count)
   if count > 0 {
     http.ServeFile(w, r, "./static/")
   } else {
@@ -228,9 +258,11 @@ func main() {
   rtr.HandleFunc(SERVICE_PATH + "/quests", handleQuests).Methods("GET")
   rtr.HandleFunc(SERVICE_PATH + "/quest/{[0-9]+}", handleQuest).Methods("GET")
   rtr.HandleFunc(SERVICE_PATH + "/quest/{[0-9]+}/info", handleQuestInfo).Methods("GET")
+  rtr.HandleFunc(SERVICE_PATH + "/quest/{[0-9]+}/permissions", handleQuestPermissions).Methods("GET")
   rtr.HandleFunc(SERVICE_PATH + "/login", handleLogin).Methods("POST")
   rtr.HandleFunc(SERVICE_PATH + "/logout", handleLogout).Methods("GET")
   rtr.HandleFunc(SERVICE_PATH + "/checkSession", handleSessionCheck).Methods("GET")
+  rtr.HandleFunc(SERVICE_PATH + "/character/{[0-9]+}", handleCharacterInfo).Methods("GET")
   rtr.HandleFunc("/quest/{[0-9]+}/", handleViewQuest).Methods("GET")
   rtr.PathPrefix("/").Handler(http.FileServer(http.Dir("./static/")))
   
