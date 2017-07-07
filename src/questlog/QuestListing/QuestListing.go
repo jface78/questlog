@@ -50,7 +50,7 @@ func GetQuestPermissions(qid int) QuestPermissions {
   defer rows.Close()
   for rows.Next() {
     member := QuestMember{}
-    err := rows.Scan(&member.Uid, &member.Cid)
+    err := rows.Scan(&member.Cid, &member.Uid)
     if err != nil {
       log.Println(err)
     }

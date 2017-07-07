@@ -6,7 +6,7 @@ function QuestlogOverlay(source, parameter) {
   
   this.setup = function() {
     var box = this;
-    this.background = $('<div class="overlay background"></div>');
+    this.background = $('<div class="overlay_background"></div>');
     $(document.body).append(this.background);
     $.get(TEMPLATE_URL + 'questlogOverlay.html', [], function(template) {
       $(document.body).append(template);
@@ -17,6 +17,7 @@ function QuestlogOverlay(source, parameter) {
       $(box.background).click(function() {
         box.destroy();
       });
+      $(box.foreground).mCustomScrollbar();
       $(box).trigger(EVENT_LOADED);
     });
   };
@@ -28,6 +29,10 @@ function QuestlogOverlay(source, parameter) {
   this.setContent = function(content) {
     $(this.foreground).find('content').html(content);
   };
+  
+  this.setThinking = function() {
+    this.setContent('<img src="/img/preloader.gif">');
+  }
   
   this.destroy = function() {
     var box = this;

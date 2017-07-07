@@ -104,12 +104,24 @@ input:-webkit-autofill {
   -webkit-text-fill-color: #FFF !important;
 }
 
+select {
+  background-color: #545454;
+  color: white;
+  border: none;
+  outline:none;
+  font-size: 10px !important;
+  padding: 2px;
+  border-radius: 3px;
+  letter-spacing: 0.1mm;
+}
+
 
 textarea {
   resize:none;
   background-color:#000;
   color:#fff;
   outline:none;
+  border:1px solid gray;
 }
 .wrapper {
   position:relative;
@@ -328,6 +340,7 @@ nav.postNav ul > li:last-child {
 
 #character p{
   margin-bottom:30px;
+  display:flex;
 }
 
 #character label {
@@ -335,6 +348,9 @@ nav.postNav ul > li:last-child {
   font-weight:bold;
   display:inline-block;
   width:20%;
+  word-break:break-word;
+  margin-right:10px;
+  min-width:120px;
 }
 #character label + span {
   width:80%;
@@ -344,4 +360,14 @@ nav.postNav ul > li:last-child {
 #character #quests {
   padding:30px;
   padding-top:0px;
+}
+
+.edit_post {
+  width:400px;
+  display:inline-block;
+}
+
+.edit_post textarea {
+  width:100%;
+  min-height:300px;
 }

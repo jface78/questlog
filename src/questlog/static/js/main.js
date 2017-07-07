@@ -172,7 +172,12 @@ function renderEndPost() {
 }
 
 function drawParticipantControls() {
-  $('.postNav ul').append('<li>|&nbsp;&nbsp;&nbsp;post&nbsp;&nbsp;&nbsp;</li>');
+  $('.postNav ul').append('<li id="createPostBtn">|&nbsp;&nbsp;&nbsp;post&nbsp;&nbsp;&nbsp;</li>');
+  $('#createPostBtn').click(function(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    renderPostWindow(window.location.pathname.split('/')[2]);
+  });
 }
 
 function fetchAndRenderQuestPermissions(qid) {
@@ -181,11 +186,13 @@ function fetchAndRenderQuestPermissions(qid) {
     dataType: 'json',
     statusCode: {
       200: function(data) {
+        console.log(data);
         if (parseInt(data.gmid) == userID) {
           drawParticipantControls();
           return;
         }
         $(data.members).each(function(index, item) {
+          console.log(userID);
           if (parseInt(item.uid) == userID) {
             drawParticipantControls();
             return;
@@ -222,8 +229,8 @@ function fetchAndRenderPosts(qid, start, length, order) {
           var header = $('<header>Posted on ' + formatDate(item.stamp) + ' by ' + item.poster + '</header>');
           if (parseInt(item.uid) == userID) {
             var span = $('<span class="controls"></span>');
-            $(span).append('<a class="icon" href=""><img src="/img/icon.edit_dark.gif" alt="edit" title="edit"></a>');
-            $(span).append('<a class="icon" href=""><img src="/img/icon.delete_dark.gif" alt="delete" title="delete"></a>');
+            $(span).append('<a class="icon edit" href=""><img src="/img/icon.edit_dark.gif" alt="edit" title="edit"></a>');
+            $(span).append('<a class="icon delete" href=""><img src="/img/icon.delete_dark.gif" alt="delete" title="delete"></a>');
             $(header).append(span);
           }
           $(div).append(header);
@@ -239,6 +246,11 @@ function fetchAndRenderPosts(qid, start, length, order) {
           if (index == data.length-1 && (index+1) < DEFAULT_PAGE_LENGTH) {
             renderEndPost();
           }
+          $(div).find('.edit').click(function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            renderPostWindow(item.qid, item.pid, item.text);
+          });
         });
         if (queuedPosts.length) {
           fadeInRows(queuedPosts);
@@ -505,5 +517,85 @@ function logout() {
     userID = null;
     renderLoginBox();
     //history.pushState({}, 'quest', '/');
+  });
+}
+
+function addPost(data) {
+  var div = $('<div class="postBubble" data-pid="' + data.pid + '"></div>');
+  var header = $('<header>Posted on ' + formatDate(data.stamp) + ' by ' + data.poster + '</header>');
+  var span = $('<span class="controls"></span>');
+  var a = $('<a class="icon edit" href=""><img src="/img/icon.edit_dark.gif" alt="edit" title="edit"></a>');
+  $(span).append(a);
+  a = $('<a class="icon delete" href=""><img src="/img/icon.delete_dark.gif" alt="delete" title="delete"></a>');
+  $(span).append(a);
+  $(header).append(span);
+  $(div).append(header);
+  $(div).append('<content>' + data.text + '</content>');
+  if ($($('.posts').find('.postBubble')[0]).hasClass('even')) {
+    $(div).addClass('odd');
+  } else {
+    $(div).addClass('even');
+  }
+  $('.posts section').prepend(div);
+  $(div).find('.edit').click(function(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    renderPostWindow(data.qid, data.pid, data.text);
+  });
+  fadeInRows([div]);
+}
+
+function saveOrEditPost(qid, cid, text, pid) {
+  if (pid) {
+    $.ajax({
+      data: {pid:pid, cid:cid, uid: userID, text:text}, 
+      url: SERVICE_URL + 'post/' + pid + '/edit',
+      type: 'PUT',
+      success: function(result) {
+        $('.postBubble[data-pid="' + pid + '"]').find('content').html(text);
+      }
+    });
+  } else {
+    $.ajax({
+      data: {qid:qid, cid:cid, uid: userID, text:text}, 
+      url: SERVICE_URL + 'quest/' + qid + '/post',
+      type: 'POST',
+      dataType: 'json',
+      success: function(result) {
+        console.log(result);
+        addPost(result)
+      }
+    });
+  }
+}
+
+function renderPostWindow(qid, pid, text) {
+  $.getJSON(SERVICE_URL + 'post/' + qid + '/permissions', [], function(data) {
+    var box = new QuestlogOverlay();
+    $(box).on(EVENT_LOADED, function() {
+      $.get(TEMPLATE_URL + 'editPost.html', [], function(template) {
+        var html = $(template);
+        if (data.gm) {
+          $(html).find('#postAs').append('<option value="' + userID + '">' + username + ' - GM</option>');
+        }
+        $(data.characters).each(function(index, item) {
+          $(html).find('#postAs').append('<option value="' + item.cid + '">' + item.name + '</option>');
+        });
+        if (pid) {
+          box.setTitle('Editing post #' + pid);
+          $(html).find('textarea').val(text);
+        } else {
+          box.setTitle('New post');
+        }
+        $(html).find('button').click(function() {
+          var cid = $('#postAs').val();
+          console.log('cid: ' + cid);
+          saveOrEditPost(qid, cid, $(html).find('textarea').val(), pid);
+          box.destroy();
+        });
+        box.setContent(html);
+      });
+    });
+    box.setup();
   });
 }

@@ -132,6 +132,45 @@ func handleQuests(w http.ResponseWriter, r *http.Request) {
   fmt.Fprintf(w, string(jsonData))
 }
 
+func handlePostPermissions(w http.ResponseWriter, r *http.Request) {
+  log.Println("get post permissions")
+  qid, err := strconv.Atoi(mux.Vars(r)["[0-9]+"])
+  if (err != nil) {
+    log.Fatal(err)
+    http.Error(w, err.Error(), http.StatusBadRequest)
+  }
+  session, err := sessionStore.Get(r, QUESTLOG_SESSION_ID)
+  if err != nil {
+    log.Fatal(err)
+    http.Error(w, err.Error(), http.StatusInternalServerError)
+    return
+  }
+  jsonData, err := json.Marshal(Posts.GetPostPermissions(qid, session.Values["id"].(int)))
+  if (err != nil) {
+    log.Fatal(err)
+  }
+  fmt.Fprintf(w, string(jsonData))
+}
+
+func handleQuestPermissions(w http.ResponseWriter, r *http.Request) {
+  log.Println("get quest permission")
+  qid, err := strconv.Atoi(mux.Vars(r)["[0-9]+"])
+  if (err != nil) {
+    log.Fatal(err)
+  }
+  var permission = QuestListing.GetQuestPermissions(qid)
+  if permission.GMid == 0 {
+    w.WriteHeader(http.StatusNotFound)
+    w.Write([]byte("404 - File Not Found"))
+    return
+  }
+  jsonData, err := json.Marshal(permission)
+  if (err != nil) {
+    log.Fatal(err)
+  }
+  fmt.Fprintf(w, string(jsonData))
+}
+
 func handleQuest(w http.ResponseWriter, r *http.Request) {
   log.Println("get quest")
   qid, err := strconv.Atoi(mux.Vars(r)["[0-9]+"])
@@ -152,7 +191,7 @@ func handleQuest(w http.ResponseWriter, r *http.Request) {
     order = "DESC"
   }
   
-  jsonData, err := json.Marshal(Posts.GetPosts(w, qid, start, length, order))
+  jsonData, err := json.Marshal(Posts.GetPosts(qid, start, length, order))
   if (err != nil) {
     log.Fatal(err)
   }
@@ -178,20 +217,52 @@ func handleQuestInfo(w http.ResponseWriter, r *http.Request) {
   fmt.Fprintf(w, string(jsonData))
 }
 
-func handleQuestPermissions(w http.ResponseWriter, r *http.Request) {
-  log.Println("get quest permission")
-  qid, err := strconv.Atoi(mux.Vars(r)["[0-9]+"])
+func handlePostEdit(w http.ResponseWriter, r *http.Request) {
+  log.Println("put post edit")
+  pid, err := strconv.Atoi(mux.Vars(r)["[0-9]+"])
   if (err != nil) {
     log.Fatal(err)
   }
-  var permission = QuestListing.GetQuestPermissions(qid)
-  if permission.GMid == 0 {
-    w.WriteHeader(http.StatusNotFound)
-    w.Write([]byte("404 - File Not Found"))
-    return
+  log.Println(pid)
+  r.ParseForm()
+  text := r.Form["text"][0]
+  log.Println(text);
+  success := Posts.EditPost(pid, text)
+  if (success) {
+    w.WriteHeader(http.StatusOK)
+    w.Write([]byte("200 - Success"))
+  } else {
+    w.WriteHeader(http.StatusInternalServerError)
+    w.Write([]byte("500 - Fatal Error"))
   }
-  jsonData, err := json.Marshal(permission)
+  return
+}
+
+func handleNewPost(w http.ResponseWriter, r *http.Request) {
+  log.Println("post create")
+  qid, err := strconv.Atoi(mux.Vars(r)["[0-9]+"])
   if (err != nil) {
+    w.WriteHeader(http.StatusBadRequest)
+    w.Write([]byte("400 - Bad Request"))
+    log.Fatal(err)
+  }
+  log.Println(qid)
+  r.ParseForm()
+  uid, err := strconv.Atoi(r.Form["uid"][0])
+  if (err != nil) {
+    w.WriteHeader(http.StatusBadRequest)
+    w.Write([]byte("400 - Bad Request"))
+    log.Fatal(err)
+  }
+  cid, err := strconv.Atoi(r.Form["cid"][0])
+  if (err != nil) {
+    w.WriteHeader(http.StatusBadRequest)
+    w.Write([]byte("400 - Bad Request"))
+    log.Fatal(err)
+  }
+  text := r.Form["text"][0]
+  jsonData, err := json.Marshal(Posts.CreatePost(qid, uid, cid, text))
+  if err != nil {
     log.Fatal(err)
   }
   fmt.Fprintf(w, string(jsonData))
@@ -263,9 +334,14 @@ func main() {
   rtr.HandleFunc(SERVICE_PATH + "/logout", handleLogout).Methods("GET")
   rtr.HandleFunc(SERVICE_PATH + "/checkSession", handleSessionCheck).Methods("GET")
   rtr.HandleFunc(SERVICE_PATH + "/character/{[0-9]+}", handleCharacterInfo).Methods("GET")
+  rtr.HandleFunc(SERVICE_PATH + "/quest/{[0-9]+}/post", handleNewPost).Methods("POST")
+  rtr.HandleFunc(SERVICE_PATH + "/post/{[0-9]+}/permissions", handlePostPermissions).Methods("GET")
+  rtr.HandleFunc(SERVICE_PATH + "/post/{[0-9]+}/edit", handlePostEdit).Methods("PUT")
+  
   rtr.HandleFunc("/quest/{[0-9]+}/", handleViewQuest).Methods("GET")
-  rtr.PathPrefix("/").Handler(http.FileServer(http.Dir("./static/")))
+  rtr.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("static/")))) 
   
   http.Handle("/", rtr)
   http.ListenAndServe(PORT, context.ClearHandler(http.DefaultServeMux))
+  log.Println("listening on " + PORT)
 }
