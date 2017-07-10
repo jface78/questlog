@@ -186,7 +186,6 @@ function fetchAndRenderQuestPermissions(qid) {
     dataType: 'json',
     statusCode: {
       200: function(data) {
-        console.log(data);
         if (parseInt(data.gmid) == userID) {
           drawParticipantControls();
           return;
@@ -226,13 +225,24 @@ function fetchAndRenderPosts(qid, start, length, order) {
         }
         $(data).each(function(index, item) {
           var div = $('<div class="postBubble" data-pid="' + item.pid + '"></div>');
-          var header = $('<header>Posted on ' + formatDate(item.stamp) + ' by ' + item.poster + '</header>');
+          var a;
+          if (!item.gmPost) {
+            a = '<a class="character" data-cid="' + item.cid + '" href="#">' + item.poster + '</a>';
+          } else {
+            a = '<a href="#">' + item.poster + '</a>'
+          }
+          var header = $('<header>#' + item.pid + '&nbsp;Posted on ' + formatDate(item.stamp) + ' by ' + a + '</header>');
           if (parseInt(item.uid) == userID) {
             var span = $('<span class="controls"></span>');
             $(span).append('<a class="icon edit" href=""><img src="/img/icon.edit_dark.gif" alt="edit" title="edit"></a>');
             $(span).append('<a class="icon delete" href=""><img src="/img/icon.delete_dark.gif" alt="delete" title="delete"></a>');
             $(header).append(span);
           }
+          $(header).find('.character').click(function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            showCharacterInfo(item.cid);
+          });
           $(div).append(header);
           var content = $('<content>' + item.text + '</content>');
           $(div).append(content);
@@ -250,6 +260,11 @@ function fetchAndRenderPosts(qid, start, length, order) {
             event.preventDefault();
             event.stopPropagation();
             renderPostWindow(item.qid, item.pid, item.text);
+          });
+          $(div).find('.delete').click(function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            promptToDeletePost(item.pid);
           });
         });
         if (queuedPosts.length) {
@@ -522,7 +537,7 @@ function logout() {
 
 function addPost(data) {
   var div = $('<div class="postBubble" data-pid="' + data.pid + '"></div>');
-  var header = $('<header>Posted on ' + formatDate(data.stamp) + ' by ' + data.poster + '</header>');
+  var header = $('<header>#' + data.pid + '&nbsp;Posted on ' + formatDate(data.stamp) + ' by <a href="">' + data.poster + '</a></header>');
   var span = $('<span class="controls"></span>');
   var a = $('<a class="icon edit" href=""><img src="/img/icon.edit_dark.gif" alt="edit" title="edit"></a>');
   $(span).append(a);
@@ -542,7 +557,31 @@ function addPost(data) {
     event.stopPropagation();
     renderPostWindow(data.qid, data.pid, data.text);
   });
+  $(div).find('.delete').click(function(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    promptToDeletePost(data.pid);
+  });
   fadeInRows([div]);
+}
+
+function promptToDeletePost(pid) {
+  var box = new QuestlogOverlay();
+  $(box).on(EVENT_LOADED, function() {
+    box.setTitle('Delete Post #' + pid);
+    box.setContent('Are you sure?');
+  });
+  box.setup(function(){ return deletePost(pid);});
+}
+
+function deletePost(pid) {
+  $.ajax({
+    url: SERVICE_URL + '/post/' + pid + '/delete',
+    type: 'DELETE',
+    success: function(result) {
+      $('.postBubble[data-pid="' + pid + '"]').remove();
+    }
+  });
 }
 
 function saveOrEditPost(qid, cid, text, pid) {

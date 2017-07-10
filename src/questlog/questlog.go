@@ -223,7 +223,6 @@ func handlePostEdit(w http.ResponseWriter, r *http.Request) {
   if (err != nil) {
     log.Fatal(err)
   }
-  log.Println(pid)
   r.ParseForm()
   text := r.Form["text"][0]
   log.Println(text);
@@ -236,6 +235,26 @@ func handlePostEdit(w http.ResponseWriter, r *http.Request) {
     w.Write([]byte("500 - Fatal Error"))
   }
   return
+}
+
+func handlePostDelete(w http.ResponseWriter, r *http.Request) {
+  log.Println("delete post")
+  pid, err := strconv.Atoi(mux.Vars(r)["[0-9]+"])
+  if (err != nil) {
+    log.Fatal(err)
+  }
+  session, err := sessionStore.Get(r, QUESTLOG_SESSION_ID)
+  if (err != nil) {
+    log.Fatal(err)
+  }
+  success := Posts.DeletePost(pid, session.Values["id"].(int))
+  if (success) {
+    w.WriteHeader(http.StatusOK)
+    w.Write([]byte("200 - Success"))
+  } else {
+    w.WriteHeader(http.StatusInternalServerError)
+    w.Write([]byte("500 - Fatal Error"))
+  }
 }
 
 func handleNewPost(w http.ResponseWriter, r *http.Request) {
@@ -337,6 +356,7 @@ func main() {
   rtr.HandleFunc(SERVICE_PATH + "/quest/{[0-9]+}/post", handleNewPost).Methods("POST")
   rtr.HandleFunc(SERVICE_PATH + "/post/{[0-9]+}/permissions", handlePostPermissions).Methods("GET")
   rtr.HandleFunc(SERVICE_PATH + "/post/{[0-9]+}/edit", handlePostEdit).Methods("PUT")
+  rtr.HandleFunc(SERVICE_PATH + "/post/{[0-9]+}/delete", handlePostDelete).Methods("DELETE")
   
   rtr.HandleFunc("/quest/{[0-9]+}/", handleViewQuest).Methods("GET")
   rtr.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("static/")))) 

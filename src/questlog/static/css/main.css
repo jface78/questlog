@@ -318,6 +318,13 @@ nav.postNav ul > li:last-child {
   position:relative;
   font-size:0.9em;
 }
+.postBubble header a {
+  color:initial;
+  font-weight:bold;
+}
+.postBubble header a:hover {
+  opacity:0.8;
+}
 .postBubble header .controls {
   position:absolute;
   right:3px;

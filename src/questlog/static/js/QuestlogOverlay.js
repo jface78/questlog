@@ -4,7 +4,7 @@ function QuestlogOverlay(source, parameter) {
   this.foreground;
   this.background;
   
-  this.setup = function() {
+  this.setup = function(confirm) {
     var box = this;
     this.background = $('<div class="overlay_background"></div>');
     $(document.body).append(this.background);
@@ -17,6 +17,16 @@ function QuestlogOverlay(source, parameter) {
       $(box.background).click(function() {
         box.destroy();
       });
+      if (confirm) {
+        $(box.foreground).append('<footer><button>Yes</button>&nbsp;<button>No</button></footer>');
+        $($(box.foreground).find('footer button')[0]).click(function() {
+          confirm();
+          box.destroy();
+        });
+        $($(box.foreground).find('footer button')[1]).click(function() {
+          box.destroy();
+        });
+      }
       $(box.foreground).mCustomScrollbar();
       $(box).trigger(EVENT_LOADED);
     });

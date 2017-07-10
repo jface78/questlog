@@ -14,6 +14,7 @@ type Post struct {
   Poster string `json:"poster"`
   Text string `json:"text"`
   Stamp int `json:"stamp"`
+  GmPost bool `json:"gmPost"`
 }
 
 type Character struct {
@@ -37,6 +38,30 @@ func EditPost(pid int, text string) bool {
   _, err = stmt.Exec(text, pid)
   if (err != nil) {
     return false
+  }
+  DBUtils.CloseDB(db)
+  return true
+}
+
+func DeletePost(pid int, uid int) bool {
+  db := DBUtils.OpenDB();
+  stmt, err := db.Prepare("delete from posts where pid=? and uid=?")
+  if (err != nil) {
+    return false
+  }
+  defer stmt.Close()
+  _, err = stmt.Exec(pid, uid)
+  if (err != nil) {
+    return false
+  }
+  stmt, err = db.Prepare("delete from rolls where pid=?")
+  if (err != nil) {
+    log.Println("error deleting roll for post")
+  }
+  defer stmt.Close()
+  _, err = stmt.Exec(pid)
+  if (err != nil) {
+    log.Println("error deleting roll for post")
   }
   DBUtils.CloseDB(db)
   return true
@@ -85,14 +110,7 @@ func CreatePost(qid int, uid int, cid int, text string) Post {
   DBUtils.CloseDB(db)
   return GetPost(id)
 }
-/*
-Pid int `json:"pid"`
-  Qid int `json:"qid"`
-  Uid int `json:"uid"`
-  Cid int `json:"cid"`
-  Poster string `json:"poster"`
-  Text string `json:"text"`
-  Stamp int `json:"stamp"`*/
+
 func GetPost(pid int64) Post {
   db := DBUtils.OpenDB();
   post := Post{}
@@ -125,8 +143,10 @@ func GetPosts(qid int, start int, length int, order string) []Post {
     }
     if post.Cid == 0 {
       db.QueryRow("select login_name from users where uid = ?", post.Uid).Scan(&post.Poster)
+      post.GmPost = true
       post.Poster += " - GM"
     } else {
+      post.GmPost = false
       db.QueryRow("select char_name from characters where cid = ?", post.Cid).Scan(&post.Poster) 
     }
     posts = append(posts, post)
