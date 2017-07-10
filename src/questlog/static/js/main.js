@@ -13,6 +13,15 @@ var EVENT_URL_UPDATED = 'eventUrlUpdated';
 
 var currentQuestPage = 0;
 
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-27020062-2', 'auto');
+ga('send', 'pageview');
+
+
 $(document).ready(function() {
   if (new Date().getHours > 18 || new Date().getHours < 6) {
     $('#logo').attr('src', 'img/logo_night.gif');
@@ -264,7 +273,7 @@ function fetchAndRenderPosts(qid, start, length, order) {
           $(div).find('.delete').click(function(event) {
             event.preventDefault();
             event.stopPropagation();
-            promptToDeletePost(item.pid);
+            promptToDeletePost(item.pid, item.qid);
           });
         });
         if (queuedPosts.length) {
@@ -560,23 +569,23 @@ function addPost(data) {
   $(div).find('.delete').click(function(event) {
     event.preventDefault();
     event.stopPropagation();
-    promptToDeletePost(data.pid);
+    promptToDeletePost(data.pid, data.qid);
   });
   fadeInRows([div]);
 }
 
-function promptToDeletePost(pid) {
+function promptToDeletePost(pid, qid) {
   var box = new QuestlogOverlay();
   $(box).on(EVENT_LOADED, function() {
     box.setTitle('Delete Post #' + pid);
     box.setContent('Are you sure?');
   });
-  box.setup(function(){ return deletePost(pid);});
+  box.setup(function(){ return deletePost(pid, qid);});
 }
 
-function deletePost(pid) {
+function deletePost(pid, qid) {
   $.ajax({
-    url: SERVICE_URL + '/post/' + pid + '/delete',
+    url: SERVICE_URL + '/post/' + pid + '/delete?qid=' + qid,
     type: 'DELETE',
     success: function(result) {
       $('.postBubble[data-pid="' + pid + '"]').remove();
@@ -587,7 +596,7 @@ function deletePost(pid) {
 function saveOrEditPost(qid, cid, text, pid) {
   if (pid) {
     $.ajax({
-      data: {pid:pid, cid:cid, uid: userID, text:text}, 
+      data: {qid:qid, pid:pid, cid:cid, uid: userID, text:text}, 
       url: SERVICE_URL + 'post/' + pid + '/edit',
       type: 'PUT',
       success: function(result) {
@@ -615,7 +624,7 @@ function renderPostWindow(qid, pid, text) {
       $.get(TEMPLATE_URL + 'editPost.html', [], function(template) {
         var html = $(template);
         if (data.gm) {
-          $(html).find('#postAs').append('<option value="' + userID + '">' + username + ' - GM</option>');
+          $(html).find('#postAs').append('<option value="0">' + username + ' - GM</option>');
         }
         $(data.characters).each(function(index, item) {
           $(html).find('#postAs').append('<option value="' + item.cid + '">' + item.name + '</option>');
@@ -628,7 +637,6 @@ function renderPostWindow(qid, pid, text) {
         }
         $(html).find('button').click(function() {
           var cid = $('#postAs').val();
-          console.log('cid: ' + cid);
           saveOrEditPost(qid, cid, $(html).find('textarea').val(), pid);
           box.destroy();
         });

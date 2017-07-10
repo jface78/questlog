@@ -43,14 +43,14 @@ func EditPost(pid int, text string) bool {
   return true
 }
 
-func DeletePost(pid int, uid int) bool {
+func DeletePost(pid int) bool {
   db := DBUtils.OpenDB();
-  stmt, err := db.Prepare("delete from posts where pid=? and uid=?")
+  stmt, err := db.Prepare("delete from posts where pid=?")
   if (err != nil) {
     return false
   }
   defer stmt.Close()
-  _, err = stmt.Exec(pid, uid)
+  _, err = stmt.Exec(pid)
   if (err != nil) {
     return false
   }

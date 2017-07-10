@@ -31,6 +31,80 @@ type LoginModel struct {
   Stamp int `json:"last_login_time"`
 }
 
+// this still allows quest members to edit other members posts
+// need to fix
+func verifyWritePermission (r *http.Request, qid int) bool {
+  session, err := sessionStore.Get(r, QUESTLOG_SESSION_ID)
+  if err != nil {
+    return false
+  }
+  uid := session.Values["id"].(int)
+  db := DBUtils.OpenDB()
+  var currentID int
+  db.QueryRow("select uid from quests where qid = ?", qid).Scan(&currentID)
+  if (currentID == uid) {
+    DBUtils.CloseDB(db)
+    return true;
+  }
+  rows, err := db.Query("select cid from quest_members where qid = ?", qid)
+  if err != nil {
+    log.Fatal(err)
+  }
+  defer rows.Close()
+  var cid int
+  var matchedCids []int
+  for rows.Next() {
+    err := rows.Scan(&cid)
+    if err != nil {
+      log.Fatal(err)
+    }
+    log.Println(currentID)
+    log.Println(cid)
+    rows2, err2 := db.Query("select uid from characters where cid = ?", cid)
+    if err2 != nil {
+      log.Fatal(err)
+    }
+    defer rows2.Close()
+    var cuid int
+    for rows2.Next() {
+      err := rows2.Scan(&cuid)
+      if err != nil {
+        log.Fatal(err)
+      }
+      if (cuid == uid) {
+        matchedCids = append(matchedCids, cid)
+      }
+    }
+  }
+  DBUtils.CloseDB(db)
+  if (len(matchedCids) > 0) {
+    return true
+  } else {
+    return false
+  }
+}
+
+func forbidden (w http.ResponseWriter, err string) {
+  http.Error(w, err, http.StatusForbidden)
+}
+
+func serverError (w http.ResponseWriter, err string) {
+  http.Error(w, err, http.StatusInternalServerError)
+}
+
+func fileNotFound (w http.ResponseWriter, err string) {
+  http.Error(w, err, http.StatusNotFound)
+}
+
+func badRequest (w http.ResponseWriter, err string) {
+  http.Error(w, err, http.StatusBadRequest)
+}
+
+func writeSuccess(w http.ResponseWriter) {
+  w.WriteHeader(http.StatusOK)
+  w.Write([]byte("200 - Success"))
+}
+
 var sessionStore = sessions.NewCookieStore([]byte(QUESTLOG_SESSION_ID))
 
 func hashPass(user string, pass string) string {
@@ -45,7 +119,7 @@ func hashPass(user string, pass string) string {
 func setSession(w http.ResponseWriter, r *http.Request, userID int, username string, timestamp int) {
   session, err := sessionStore.Get(r, QUESTLOG_SESSION_ID)
   if err != nil {
-    http.Error(w, err.Error(), http.StatusInternalServerError)
+    serverError(w, err.Error())
     return
   }
   session.Values["id"] = userID
@@ -57,7 +131,7 @@ func setSession(w http.ResponseWriter, r *http.Request, userID int, username str
 func checkSession(w http.ResponseWriter, r *http.Request) {
   session, err := sessionStore.Get(r, QUESTLOG_SESSION_ID)
   if err != nil {
-    http.Error(w, err.Error(), http.StatusInternalServerError)
+    serverError(w, err.Error())
     return
   }
   if len(session.Values) > 0 {
@@ -67,13 +141,14 @@ func checkSession(w http.ResponseWriter, r *http.Request) {
     entry["timestamp"] = session.Values["timestamp"]
     jsonData, err := json.Marshal(entry)
     if err != nil {
-      http.Error(w, err.Error(), http.StatusInternalServerError)
+      serverError(w, err.Error())
       return
     }
     w.WriteHeader(http.StatusOK)
     fmt.Fprintf(w, string(jsonData))
   } else {
-    w.WriteHeader(http.StatusNotFound)
+    fileNotFound(w, "session is empty")
+    return
   }
 }
 
@@ -85,14 +160,15 @@ func login(w http.ResponseWriter, r *http.Request) {
   db := DBUtils.OpenDB()
   rows, err := db.Query("select uid,login_name,UNIX_TIMESTAMP(timestamp) from users where login_hash = ?", hash)
   if err != nil {
-    log.Fatal(err)
+    serverError(w, err.Error())
   }
   defer rows.Close()
   login := LoginModel{}
   for rows.Next() {
     err := rows.Scan(&login.Uid, &login.Name, &login.Stamp)
     if err != nil {
-      log.Fatal(err)
+      serverError(w, err.Error())
+      return
     }
   }
   
@@ -106,13 +182,13 @@ func login(w http.ResponseWriter, r *http.Request) {
 func logout(w http.ResponseWriter, r *http.Request) {
   session, err := sessionStore.Get(r, QUESTLOG_SESSION_ID)
   if err != nil {
-    http.Error(w, err.Error(), http.StatusInternalServerError)
+    fileNotFound(w, err.Error())
     return
   }
   delete(session.Values, QUESTLOG_SESSION_ID)
   session.Options.MaxAge = -1
   _ = session.Save(r, w)
-  w.WriteHeader(http.StatusOK)
+  writeSuccess(w)
 }
 
 func handleQuests(w http.ResponseWriter, r *http.Request) {
@@ -120,14 +196,15 @@ func handleQuests(w http.ResponseWriter, r *http.Request) {
   session, err := sessionStore.Get(r, QUESTLOG_SESSION_ID)
   var jsonData [] byte
   if err != nil {
-    log.Println(err)
+    serverError(w, err.Error())
+    return
   } else if len(session.Values) > 0 {
     jsonData, err = json.Marshal(QuestListing.GetGroupedQuests(session.Values["id"].(int)))
   } else {
     jsonData, err = json.Marshal(QuestListing.GetAllQuests())
   }
   if (err != nil) {
-    log.Fatal(err)
+    serverError(w, err.Error())
   }
   fmt.Fprintf(w, string(jsonData))
 }
@@ -136,18 +213,16 @@ func handlePostPermissions(w http.ResponseWriter, r *http.Request) {
   log.Println("get post permissions")
   qid, err := strconv.Atoi(mux.Vars(r)["[0-9]+"])
   if (err != nil) {
-    log.Fatal(err)
-    http.Error(w, err.Error(), http.StatusBadRequest)
+    badRequest(w, err.Error())
   }
   session, err := sessionStore.Get(r, QUESTLOG_SESSION_ID)
   if err != nil {
-    log.Fatal(err)
-    http.Error(w, err.Error(), http.StatusInternalServerError)
+    serverError(w, err.Error())
     return
   }
   jsonData, err := json.Marshal(Posts.GetPostPermissions(qid, session.Values["id"].(int)))
   if (err != nil) {
-    log.Fatal(err)
+    serverError(w, err.Error())
   }
   fmt.Fprintf(w, string(jsonData))
 }
@@ -156,17 +231,17 @@ func handleQuestPermissions(w http.ResponseWriter, r *http.Request) {
   log.Println("get quest permission")
   qid, err := strconv.Atoi(mux.Vars(r)["[0-9]+"])
   if (err != nil) {
-    log.Fatal(err)
+    badRequest(w, err.Error())
   }
   var permission = QuestListing.GetQuestPermissions(qid)
   if permission.GMid == 0 {
-    w.WriteHeader(http.StatusNotFound)
-    w.Write([]byte("404 - File Not Found"))
+    fileNotFound(w, "No gm permission")
     return
   }
   jsonData, err := json.Marshal(permission)
   if (err != nil) {
-    log.Fatal(err)
+    serverError(w, err.Error())
+    return
   }
   fmt.Fprintf(w, string(jsonData))
 }
@@ -175,16 +250,19 @@ func handleQuest(w http.ResponseWriter, r *http.Request) {
   log.Println("get quest")
   qid, err := strconv.Atoi(mux.Vars(r)["[0-9]+"])
   if (err != nil) {
-    log.Fatal(err)
+    badRequest(w, err.Error())
+    return
   }
   start, err := strconv.Atoi(r.URL.Query()["start"][0])
   if (err != nil) {
-    log.Fatal(err)
+    badRequest(w, err.Error())
+    return
   }
   length, err := strconv.Atoi(r.URL.Query()["length"][0])
   if (err != nil) {
     length = DEFAULT_QUEST_PAGE_LENGTH
-    log.Println(err)
+    badRequest(w, err.Error())
+    return
   }
   order := r.URL.Query().Get("order")
   if len(order) == 0 {
@@ -194,6 +272,8 @@ func handleQuest(w http.ResponseWriter, r *http.Request) {
   jsonData, err := json.Marshal(Posts.GetPosts(qid, start, length, order))
   if (err != nil) {
     log.Fatal(err)
+    serverError(w, err.Error())
+    return
   }
   fmt.Fprintf(w, string(jsonData))
 }
@@ -203,16 +283,18 @@ func handleQuestInfo(w http.ResponseWriter, r *http.Request) {
   qid, err := strconv.Atoi(mux.Vars(r)["[0-9]+"])
   if (err != nil) {
     log.Fatal(err)
+    badRequest(w, err.Error())
+    return
   }
   var info = QuestListing.GetQuestInfo(qid)
   if len(info.Description) == 0 {
-    w.WriteHeader(http.StatusNotFound)
-    w.Write([]byte("404 - File Not Found"))
+    fileNotFound(w, "No description")
     return
   }
   jsonData, err := json.Marshal(info)
   if (err != nil) {
-    log.Fatal(err)
+    serverError(w, err.Error())
+    return
   }
   fmt.Fprintf(w, string(jsonData))
 }
@@ -221,18 +303,27 @@ func handlePostEdit(w http.ResponseWriter, r *http.Request) {
   log.Println("put post edit")
   pid, err := strconv.Atoi(mux.Vars(r)["[0-9]+"])
   if (err != nil) {
-    log.Fatal(err)
+    badRequest(w, err.Error())
+    return
   }
   r.ParseForm()
+  qid, err := strconv.Atoi(r.Form["qid"][0])
+  if (err != nil) {
+    badRequest(w, err.Error())
+    return
+  }
+  if (!verifyWritePermission(r, qid)) {
+    forbidden(w, "Forbidden")
+  }
+  
   text := r.Form["text"][0]
   log.Println(text);
   success := Posts.EditPost(pid, text)
   if (success) {
-    w.WriteHeader(http.StatusOK)
-    w.Write([]byte("200 - Success"))
+    writeSuccess(w)
   } else {
-    w.WriteHeader(http.StatusInternalServerError)
-    w.Write([]byte("500 - Fatal Error"))
+    serverError(w, "server error")
+    return
   }
   return
 }
@@ -241,19 +332,24 @@ func handlePostDelete(w http.ResponseWriter, r *http.Request) {
   log.Println("delete post")
   pid, err := strconv.Atoi(mux.Vars(r)["[0-9]+"])
   if (err != nil) {
-    log.Fatal(err)
+    badRequest(w, err.Error())
+    return
   }
-  session, err := sessionStore.Get(r, QUESTLOG_SESSION_ID)
+  r.ParseForm()
+  qid, err := strconv.Atoi(r.Form["qid"][0])
   if (err != nil) {
-    log.Fatal(err)
+    badRequest(w, err.Error())
+    return
   }
-  success := Posts.DeletePost(pid, session.Values["id"].(int))
+  if (!verifyWritePermission(r, qid)) {
+    forbidden(w, "Forbidden")
+    return
+  }
+  success := Posts.DeletePost(pid)
   if (success) {
-    w.WriteHeader(http.StatusOK)
-    w.Write([]byte("200 - Success"))
+    writeSuccess(w)
   } else {
-    w.WriteHeader(http.StatusInternalServerError)
-    w.Write([]byte("500 - Fatal Error"))
+    serverError(w, err.Error())
   }
 }
 
@@ -261,28 +357,28 @@ func handleNewPost(w http.ResponseWriter, r *http.Request) {
   log.Println("post create")
   qid, err := strconv.Atoi(mux.Vars(r)["[0-9]+"])
   if (err != nil) {
-    w.WriteHeader(http.StatusBadRequest)
-    w.Write([]byte("400 - Bad Request"))
-    log.Fatal(err)
+    badRequest(w, err.Error())
+    return
   }
-  log.Println(qid)
   r.ParseForm()
   uid, err := strconv.Atoi(r.Form["uid"][0])
   if (err != nil) {
-    w.WriteHeader(http.StatusBadRequest)
-    w.Write([]byte("400 - Bad Request"))
-    log.Fatal(err)
+    badRequest(w, err.Error())
+    return
   }
   cid, err := strconv.Atoi(r.Form["cid"][0])
   if (err != nil) {
-    w.WriteHeader(http.StatusBadRequest)
-    w.Write([]byte("400 - Bad Request"))
-    log.Fatal(err)
+    badRequest(w, err.Error())
+    return
+  }
+  if (!verifyWritePermission(r, qid)) {
+    forbidden(w, "Forbidden")
   }
   text := r.Form["text"][0]
   jsonData, err := json.Marshal(Posts.CreatePost(qid, uid, cid, text))
   if err != nil {
-    log.Fatal(err)
+    serverError(w, err.Error())
+    return
   }
   fmt.Fprintf(w, string(jsonData))
 }
@@ -291,12 +387,13 @@ func handleCharacterInfo(w http.ResponseWriter, r *http.Request) {
   log.Println("get character info")
   cid, err := strconv.Atoi(mux.Vars(r)["[0-9]+"])
   if (err != nil) {
-    log.Fatal(err)
+    badRequest(w, err.Error())
+    return
   }
   var info = Character.GetCharacterInfo(cid)
   jsonData, err := json.Marshal(info)
   if (err != nil) {
-    log.Fatal(err)
+    serverError(w, err.Error())
   }
   fmt.Fprintf(w, string(jsonData))
 }
@@ -312,8 +409,7 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
   user := r.Form["user"][0]
   pass := r.Form["pass"][0]
   if len(user) == 0 || len(pass) == 0 {
-    w.WriteHeader(http.StatusBadRequest)
-    w.Write([]byte("400 - Bad Request"))
+    badRequest(w, "missing username or pass")
     return
   } else {
     login(w, r)
@@ -328,17 +424,15 @@ func handleViewQuest(w http.ResponseWriter, r *http.Request) {
   log.Println("handle view quest")
   qid, err := strconv.Atoi(mux.Vars(r)["[0-9]+"])
   if (err != nil) {
-    log.Fatal(err)
+    badRequest(w, err.Error())
   }
-  log.Println(qid)
   db := DBUtils.OpenDB();
   var count int
   db.QueryRow("select count(qid) FROM quests WHERE qid = ?", qid).Scan(&count)
   if count > 0 {
     http.ServeFile(w, r, "./static/")
   } else {
-    log.Println("Not found")
-    w.WriteHeader(http.StatusNotFound)
+    fileNotFound(w, "No such quest")
   }
 }
 
