@@ -3,7 +3,7 @@ package QuestListing
 import (
   "log"
   _ "github.com/go-sql-driver/mysql"
-  "questlog/DBUtils"
+  "bitbucket.org/holodog/questlog/DBUtils"
   "strconv"
 )
 

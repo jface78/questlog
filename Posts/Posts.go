@@ -3,7 +3,7 @@ package Posts
 import (
   "log"
   _ "github.com/go-sql-driver/mysql"
-  "questlog/DBUtils"
+  "bitbucket.org/holodog/questlog/DBUtils"
 )
 
 type Post struct {

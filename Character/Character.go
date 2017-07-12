@@ -2,7 +2,7 @@ package Character
 
 import (
   "log"
-  "questlog/DBUtils"
+  "bitbucket.org/holodog/questlog/DBUtils"
 )
 
 type Quest struct {
