@@ -273,3 +273,17 @@ func GetAllQuests() []Quest {
   DBUtils.CloseDB(db)
   return quests;
 }
+
+func DeleteQuest(qid int) bool {
+  db := DBUtils.OpenDB();
+  stmt, err := db.Prepare("update quests set quest_status=4 where qid=?")
+  if (err != nil) {
+    log.Println("can't delete quest")
+    DBUtils.CloseDB(db)
+    return false
+  }
+  defer stmt.Close()
+  _, err = stmt.Exec(qid)
+  DBUtils.CloseDB(db)
+  return true
+}

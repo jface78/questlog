@@ -6,6 +6,7 @@ import (
     "github.com/gorilla/mux"
     "github.com/gorilla/sessions"
     "github.com/gorilla/context"
+    "github.com/kennygrant/sanitize"
     "log"
     _ "github.com/go-sql-driver/mysql"
     "golang.org/x/crypto/ripemd160"
@@ -16,6 +17,8 @@ import (
     "questlog/DBUtils"
     "questlog/Character"
     "encoding/json"
+    "strings"
+    "regexp"
 )
 
 const (
@@ -29,59 +32,109 @@ type LoginModel struct {
   Uid int `json:"uid"`
   Name string `json:"name"`
   Stamp int `json:"last_login_time"`
+  Ip string `json:"ip"`
 }
 
-// this still allows quest members to edit other members posts
-// need to fix
-func verifyWritePermission (r *http.Request, qid int) bool {
+
+func sanitizeTextForDB(input string) string {
+  input = sanitize.HTML(input)
+  var re = regexp.MustCompile(`\[b\](.+)?\[\/b\]`)
+  input = re.ReplaceAllString(input, `<b>$1</b>`)
+  re = regexp.MustCompile(`\[i\](.+)?\[\/i\]`)
+  input = re.ReplaceAllString(input, `<i>$1</i>`)
+  re = regexp.MustCompile(`\[u\](.+)?\[\/u\]`)
+  input = re.ReplaceAllString(input, `<u>$1</u>`)
+  return input
+}
+
+func isUserGM(r *http.Request, qid int) bool {
   session, err := sessionStore.Get(r, QUESTLOG_SESSION_ID)
   if err != nil {
     return false
   }
   uid := session.Values["id"].(int)
   db := DBUtils.OpenDB()
-  var currentID int
-  db.QueryRow("select uid from quests where qid = ?", qid).Scan(&currentID)
-  if (currentID == uid) {
-    DBUtils.CloseDB(db)
-    return true;
-  }
-  rows, err := db.Query("select cid from quest_members where qid = ?", qid)
-  if err != nil {
-    log.Fatal(err)
-  }
-  defer rows.Close()
-  var cid int
-  var matchedCids []int
-  for rows.Next() {
-    err := rows.Scan(&cid)
-    if err != nil {
-      log.Fatal(err)
-    }
-    log.Println(currentID)
-    log.Println(cid)
-    rows2, err2 := db.Query("select uid from characters where cid = ?", cid)
-    if err2 != nil {
-      log.Fatal(err)
-    }
-    defer rows2.Close()
-    var cuid int
-    for rows2.Next() {
-      err := rows2.Scan(&cuid)
-      if err != nil {
-        log.Fatal(err)
-      }
-      if (cuid == uid) {
-        matchedCids = append(matchedCids, cid)
-      }
-    }
-  }
-  DBUtils.CloseDB(db)
-  if (len(matchedCids) > 0) {
+  var gmID int
+  db.QueryRow("select uid from quests where qid = ?", qid).Scan(&gmID)
+  if gmID == uid {
     return true
   } else {
     return false
   }
+}
+
+func verifyWritePermission (r *http.Request, typeOf string, id int) bool {
+  session, err := sessionStore.Get(r, QUESTLOG_SESSION_ID)
+  if err != nil {
+    return false
+  }
+  uid := session.Values["id"].(int)
+  db := DBUtils.OpenDB()
+  if typeOf == "create" {
+    var gmID int
+    db.QueryRow("select uid from quests where qid = ?", id).Scan(&gmID)
+    if gmID == uid {
+      DBUtils.CloseDB(db)
+      return true;
+    }
+    rows, err := db.Query("select cid from quest_members where qid = ?", id)
+    if err != nil {
+      log.Fatal(err)
+    }
+    defer rows.Close()
+    var cid int
+    var matchedCids []int
+    for rows.Next() {
+      err := rows.Scan(&cid)
+      if err != nil {
+        log.Fatal(err)
+      }
+      rows2, err2 := db.Query("select uid from characters where cid = ?", cid)
+      if err2 != nil {
+        log.Fatal(err)
+      }
+      defer rows2.Close()
+      var cuid int
+      for rows2.Next() {
+        err := rows2.Scan(&cuid)
+        if err != nil {
+          log.Fatal(err)
+        }
+        if cuid == uid {
+          matchedCids = append(matchedCids, cid)
+        }
+      }
+    }
+    DBUtils.CloseDB(db)
+    if len(matchedCids) > 0 {
+      return true
+    } else {
+      return false
+    }
+  } else {
+    var posterID int
+    db.QueryRow("select uid from posts where pid = ?", id).Scan(&posterID)
+    DBUtils.CloseDB(db)
+    log.Println(posterID)
+    log.Println(uid)
+    if posterID == uid {
+      return true
+    } else {
+      return false
+    }
+  }
+}
+
+func getIPAddress(r *http.Request) string {
+    var ipAddress string
+    for _, h := range []string{"X-Forwarded-For", "X-Real-Ip"} {
+        for _, ip := range strings.Split(r.Header.Get(h), ",") {
+            // header can contain spaces too, strip those out.
+            //realIP := net.ParseIP(strings.Replace(ip, " ", "", -1))
+            ipAddress = ip
+        }
+    }
+    return ipAddress
 }
 
 func forbidden (w http.ResponseWriter, err string) {
@@ -125,6 +178,7 @@ func setSession(w http.ResponseWriter, r *http.Request, userID int, username str
   session.Values["id"] = userID
   session.Values["name"] = username
   session.Values["timestamp"] = timestamp
+  session.Values["ip"] = r.RemoteAddr
   session.Save(r, w)
 }
 
@@ -139,6 +193,7 @@ func checkSession(w http.ResponseWriter, r *http.Request) {
     entry["uid"] = session.Values["id"];
     entry["login_name"] = session.Values["name"]
     entry["timestamp"] = session.Values["timestamp"]
+    entry["ip"] = session.Values["ip"]
     jsonData, err := json.Marshal(entry)
     if err != nil {
       serverError(w, err.Error())
@@ -158,20 +213,33 @@ func login(w http.ResponseWriter, r *http.Request) {
   pass := r.Form["pass"][0]
   hash := hashPass(user, pass)
   db := DBUtils.OpenDB()
-  rows, err := db.Query("select uid,login_name,UNIX_TIMESTAMP(timestamp) from users where login_hash = ?", hash)
+  rows, err := db.Query("select u.uid,u.login_name,ul.date,ul.ip from users as u, user_logins as ul where u.login_hash = ? and ul.uid = u.uid ORDER BY DATE asc LIMIT 1", hash)
   if err != nil {
     serverError(w, err.Error())
   }
   defer rows.Close()
+  
   login := LoginModel{}
   for rows.Next() {
-    err := rows.Scan(&login.Uid, &login.Name, &login.Stamp)
+    err := rows.Scan(&login.Uid, &login.Name, &login.Stamp, &login.Ip)
     if err != nil {
       serverError(w, err.Error())
       return
     }
   }
-  
+
+  address := r.RemoteAddr
+  log.Println(r.Header.Get("x-forwarded-for"))
+  log.Println(address)
+  stmt, err := db.Prepare("update user_logins set date=UNIX_TIMESTAMP(now()),ip = ? where uid=?")
+  if (err != nil) {
+    log.Println("can't update login")
+  }
+  defer stmt.Close()
+  _, err = stmt.Exec(address, login.Uid)
+  if (err != nil) {
+    log.Println("can't update login")
+  }
   jsonData, err := json.Marshal(login)
   DBUtils.CloseDB(db) 
   setSession(w, r, login.Uid, login.Name, login.Stamp)
@@ -264,6 +332,15 @@ func handleQuest(w http.ResponseWriter, r *http.Request) {
     badRequest(w, err.Error())
     return
   }
+  db := DBUtils.OpenDB();
+  var status int
+  db.QueryRow("select quest_status from quests where qid = ?").Scan(&status)
+  DBUtils.CloseDB(db)
+  log.Println(status)
+  if status >= 4 {
+    forbidden(w, err.Error())
+    return
+  }
   order := r.URL.Query().Get("order")
   if len(order) == 0 {
     order = "DESC"
@@ -306,16 +383,11 @@ func handlePostEdit(w http.ResponseWriter, r *http.Request) {
     badRequest(w, err.Error())
     return
   }
-  r.ParseForm()
-  qid, err := strconv.Atoi(r.Form["qid"][0])
-  if (err != nil) {
-    badRequest(w, err.Error())
+  if (!verifyWritePermission(r, "edit", pid)) {
+    forbidden(w, "Forbidden")
     return
   }
-  if (!verifyWritePermission(r, qid)) {
-    forbidden(w, "Forbidden")
-  }
-  
+  r.ParseForm()
   text := r.Form["text"][0]
   log.Println(text);
   success := Posts.EditPost(pid, text)
@@ -328,6 +400,26 @@ func handlePostEdit(w http.ResponseWriter, r *http.Request) {
   return
 }
 
+func handleQuestDelete(w http.ResponseWriter, r *http.Request) {
+  log.Println("delete quest")
+  qid, err := strconv.Atoi(mux.Vars(r)["[0-9]+"])
+  if (err != nil) {
+    badRequest(w, err.Error())
+    return
+  }
+  if !isUserGM(r, qid) {
+    forbidden(w, err.Error())
+    return
+  } else {
+    success := QuestListing.DeleteQuest(qid)
+    if (success) {
+      writeSuccess(w)
+    } else {
+      serverError(w, err.Error())
+    }
+  }
+}
+
 func handlePostDelete(w http.ResponseWriter, r *http.Request) {
   log.Println("delete post")
   pid, err := strconv.Atoi(mux.Vars(r)["[0-9]+"])
@@ -336,12 +428,7 @@ func handlePostDelete(w http.ResponseWriter, r *http.Request) {
     return
   }
   r.ParseForm()
-  qid, err := strconv.Atoi(r.Form["qid"][0])
-  if (err != nil) {
-    badRequest(w, err.Error())
-    return
-  }
-  if (!verifyWritePermission(r, qid)) {
+  if (!verifyWritePermission(r, "delete", pid)) {
     forbidden(w, "Forbidden")
     return
   }
@@ -371,10 +458,11 @@ func handleNewPost(w http.ResponseWriter, r *http.Request) {
     badRequest(w, err.Error())
     return
   }
-  if (!verifyWritePermission(r, qid)) {
+  if (!verifyWritePermission(r, "create", qid)) {
     forbidden(w, "Forbidden")
+    return
   }
-  text := r.Form["text"][0]
+  text := sanitizeTextForDB(r.Form["text"][0])
   jsonData, err := json.Marshal(Posts.CreatePost(qid, uid, cid, text))
   if err != nil {
     serverError(w, err.Error())
@@ -428,7 +516,7 @@ func handleViewQuest(w http.ResponseWriter, r *http.Request) {
   }
   db := DBUtils.OpenDB();
   var count int
-  db.QueryRow("select count(qid) FROM quests WHERE qid = ?", qid).Scan(&count)
+  db.QueryRow("select count(qid) FROM quests WHERE qid = ? and quest_status < 4", qid).Scan(&count)
   if count > 0 {
     http.ServeFile(w, r, "./static/")
   } else {
@@ -443,6 +531,7 @@ func main() {
   rtr.HandleFunc(SERVICE_PATH + "/quest/{[0-9]+}", handleQuest).Methods("GET")
   rtr.HandleFunc(SERVICE_PATH + "/quest/{[0-9]+}/info", handleQuestInfo).Methods("GET")
   rtr.HandleFunc(SERVICE_PATH + "/quest/{[0-9]+}/permissions", handleQuestPermissions).Methods("GET")
+  rtr.HandleFunc(SERVICE_PATH + "/quest/{[0-9]+}/delete", handleQuestDelete).Methods("DELETE")
   rtr.HandleFunc(SERVICE_PATH + "/login", handleLogin).Methods("POST")
   rtr.HandleFunc(SERVICE_PATH + "/logout", handleLogout).Methods("GET")
   rtr.HandleFunc(SERVICE_PATH + "/checkSession", handleSessionCheck).Methods("GET")

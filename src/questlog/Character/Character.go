@@ -27,7 +27,7 @@ func GetCharacterInfo(cid int) CharacterInfo {
   db.QueryRow("select cid,uid,char_name,char_title,UNIX_TIMESTAMP(created) from characters where cid = ?", cid).Scan(&info.Cid, &info.Uid, &info.Char_name, &info.Char_title, &info.Stamp)
   db.QueryRow("select history from character_prefaces where cid = ?", cid).Scan(&info.Preface)
   db.QueryRow("select profile from character_profiles where cid = ?", cid).Scan(&info.Profile)
-  rows, err := db.Query("select q.qid, q.quest_name from quests q, quest_members qm where qm.cid=? and q.qid=qm.qid", cid);
+  rows, err := db.Query("select q.qid, q.quest_name from quests q, quest_members qm where qm.cid=? and q.qid=qm.qid and quest_status < 4", cid);
   if err != nil {
     log.Fatal(err)
   }

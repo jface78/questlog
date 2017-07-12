@@ -1,6 +1,6 @@
 var SERVICE_URL = '/service/';
 var TEMPLATE_URL = '/templates/';
-var userID, username, lastLoginTime;
+var userID, username, userip, lastLoginTime;
 
 var DEFAULT_PAGE_LENGTH = 50;
 var DEFAULT_PAGE_ORDER = 'DESC';
@@ -42,6 +42,13 @@ $(document).ready(function() {
     return pushState.apply(history, arguments);
   }
 })(window.history);
+
+$(window).on(EVENT_URL_UPDATED, function() {
+  changeLocation();
+});
+$(window).on('popstate', function(event) {
+  changeLocation();
+});
 
 function changeLocation() {
   $(window).off('scroll');
@@ -95,20 +102,14 @@ function changeLocation() {
   });
 }
 
-$(window).on(EVENT_URL_UPDATED, function() {
-  changeLocation();
-});
-$(window).on('popstate', function(event) {
-  changeLocation();
-});
 
 function renderUserBox() {
   var form = $('<form method="GET"></form>');
   $(form).append('<p>Welcome, ' + username + '</p>');
-  if (lastLoginTime != null) {
-    $(form).append('<p>You last logged in on ' + formatDate(lastLoginTime) + '</p>');
+  if (lastLoginTime != 0) {
+    $(form).append('<p>You last logged in on ' + formatDate(lastLoginTime) + ' from ' + userip + '</p>');
   }
-  $(form).append('<p><button>LOGOUT</button></p>');
+  $(form).append('<p style="margin-top:5px;"><button>LOGOUT</button></p>');
   $('.loginBox').html(form);
   $(form).submit(function(event) {
     event.preventDefault();
@@ -129,19 +130,6 @@ function renderLoginBox() {
     event.stopPropagation();
     login();
   });
-}
-
-function formatDate(date) {
-  date = new Date(parseInt(date)*1000);
-  return date.toDateString() + ' at ' + prependZero(date.getHours()) + ':' + prependZero(date.getMinutes());
-}
-
-function prependZero(string) {
-  if (parseInt(string) < 10) {
-    return '0' + string;
-  } else {
-    return string;
-  }
 }
 
 function fadeInRows(array) {
@@ -165,347 +153,6 @@ function clearPreloader() {
   });
 }
 
-function renderEndPost() {
-  $(window).off('scroll');
-  var div = $('<div class="postBubble endPost"></div>');
-  var content = $('<content>No more posts.</content>');
-  $(div).append(content);
-  var totalPosts = $('.postBubble').length;
-  if ($($('.postBubble')[totalPosts-1]).hasClass('odd')) {
-    $(div).addClass('even');
-  } else {
-    $(div).addClass('odd');
-  }
-  $('.posts section').append(div);
-  $(div).fadeIn('fast');
-}
-
-function drawParticipantControls() {
-  $('.postNav ul').append('<li id="createPostBtn">|&nbsp;&nbsp;&nbsp;post&nbsp;&nbsp;&nbsp;</li>');
-  $('#createPostBtn').click(function(event) {
-    event.preventDefault();
-    event.stopPropagation();
-    renderPostWindow(window.location.pathname.split('/')[2]);
-  });
-}
-
-function fetchAndRenderQuestPermissions(qid) {
-  $.ajax({
-    url: SERVICE_URL + 'quest/' + qid + '/permissions',
-    dataType: 'json',
-    statusCode: {
-      200: function(data) {
-        if (parseInt(data.gmid) == userID) {
-          drawParticipantControls();
-          return;
-        }
-        $(data.members).each(function(index, item) {
-          console.log(userID);
-          if (parseInt(item.uid) == userID) {
-            drawParticipantControls();
-            return;
-          }
-        });
-      }
-    }
-  });
-}
-
-function fetchAndRenderPosts(qid, start, length, order) {
-  if (!start) {
-    start = 0;
-  }
-  if (!length) {
-    length = DEFAULT_PAGE_LENGTH;
-  }
-  if (!order) {
-    order = currentPageOrder;
-  }
-  drawPreloader();
-  
-  $.ajax({
-    url: SERVICE_URL + 'quest/' + qid + '?start=' + start + '&length=' + length + '&order=' + order,
-    dataType: 'json',
-    statusCode: {
-      200: function(data) {
-        var queuedPosts = [];
-        if (!data) {
-          renderEndPost();
-        }
-        $(data).each(function(index, item) {
-          var div = $('<div class="postBubble" data-pid="' + item.pid + '"></div>');
-          var a;
-          if (!item.gmPost) {
-            a = '<a class="character" data-cid="' + item.cid + '" href="#">' + item.poster + '</a>';
-          } else {
-            a = '<a href="#">' + item.poster + '</a>'
-          }
-          var header = $('<header>#' + item.pid + '&nbsp;Posted on ' + formatDate(item.stamp) + ' by ' + a + '</header>');
-          if (parseInt(item.uid) == userID) {
-            var span = $('<span class="controls"></span>');
-            $(span).append('<a class="icon edit" href=""><img src="/img/icon.edit_dark.gif" alt="edit" title="edit"></a>');
-            $(span).append('<a class="icon delete" href=""><img src="/img/icon.delete_dark.gif" alt="delete" title="delete"></a>');
-            $(header).append(span);
-          }
-          $(header).find('.character').click(function(event) {
-            event.preventDefault();
-            event.stopPropagation();
-            showCharacterInfo(item.cid);
-          });
-          $(div).append(header);
-          var content = $('<content>' + item.text + '</content>');
-          $(div).append(content);
-          if (index % 2 === 0) {
-            $(div).addClass('even');
-          } else {
-            $(div).addClass('odd');
-          }
-          $('.posts section').append(div);
-          queuedPosts.push(div);
-          if (index == data.length-1 && (index+1) < DEFAULT_PAGE_LENGTH) {
-            renderEndPost();
-          }
-          $(div).find('.edit').click(function(event) {
-            event.preventDefault();
-            event.stopPropagation();
-            renderPostWindow(item.qid, item.pid, item.text);
-          });
-          $(div).find('.delete').click(function(event) {
-            event.preventDefault();
-            event.stopPropagation();
-            promptToDeletePost(item.pid, item.qid);
-          });
-        });
-        if (queuedPosts.length) {
-          fadeInRows(queuedPosts);
-        }
-        clearPreloader();
-      }
-    }
-  });
-}
-
-function fetchAndRenderQuests() {
-  if (userID) {
-    var queuedRows = [];
-    $.get(TEMPLATE_URL + 'quests_loggedin.html', function(template) {
-      $('main').html(template);
-      drawPreloader();
-      $.ajax({
-        url: SERVICE_URL + 'quests',
-        dataType: 'json',
-        statusCode: {
-          200: function(data) {
-            var totalGM = 0, totalPlayer = 0, totalOther = 0;
-            $.each(data, function(index, item) {
-              if (item.type == 'gm') {
-                totalGM++;
-              }
-              if (item.type == 'player') {
-                totalPlayer++;
-              }
-              if (item.type == 'other') {
-                totalOther++;
-              }
-              var tr = $('<tr data-qid="' + item.qid + '"></tr>');
-              if (index % 2 === 0) {
-                $(tr).addClass('even');
-              } else {
-                $(tr).addClass('odd');
-              }
-              $(tr).append('<td><a href="" class="questClick">' + item.name + '</a></td><td>' + item.count + '</td>');
-              $(tr).append('<td>' + item.last + ' on ' + formatDate(item.timestamp) +  '</td><td><a href="#">' + item.gmname + '</a></td>');
-              var playersStr = '';
-              $(item.players).each(function(playerIndex, playerItem) {
-                playersStr += '<a class="character" data-cid="' + playerItem.cid + '" href="#">' + playerItem.name + '</a>';
-                if (playerIndex < item.players.length-1) {
-                  playersStr += ', ';
-                }
-              });
-              $(tr).append('<td>' + playersStr + '</td>');
-              var controls = $('<td style="text-align:center;"><i class="icon fa fa-clone" title="preface"></i></td>');
-              $(controls).css('width', '25px');
-              if (item.type == 'gm') {
-                $(controls).css('width', '55px');
-                $(controls).append('<a class="icon" href=""><img src="/img/icon.edit_dark.gif" alt="edit" title="edit"></a><a class="icon" href=""><img src="/img/icon.delete_dark.gif" alt="delete" title="delete"></a>');
-              }
-              $(tr).append(controls);
-              $(controls).find('.fa-clone').click(function(event) {
-                event.preventDefault();
-                event.stopPropagation();
-                showQuestInfo(this);
-              });
-              $('#' + item.type + 'Quests tbody').append(tr);
-              queuedRows.push(tr);
-            });
-            if (!totalGM) {
-              $('#gmQuests tbody').append('<tr class="odd" style="display:table-row;"><td colspan="6">None</td></tr>');
-            }
-            if (!totalPlayer) {
-              $('#playerQuests tbody').append('<tr class="odd" style="display:table-row;"><td colspan="6">None</td></tr>');
-            }
-            if (!totalOther) {
-              $('#otherQuests tbody').append('<tr class="odd" style="display:table-row;"><td colspan="6">None</td></tr>');
-            }
-            $('.questsTable').find('.questClick').each(function(index, item) {
-              $(item).click(function(event) {
-                event.preventDefault();
-                event.stopPropagation();
-                history.pushState({}, 'quest', '/quest/' + $(this).closest('tr').data('qid') + '/');
-              });
-            });
-            $('.questsTable').find('.character').each(function(index, item) {
-              $(item).click(function(event) {
-                event.preventDefault();
-                event.stopPropagation();
-                showCharacterInfo($(this).attr('data-cid'));
-              });
-            });
-            clearPreloader();
-            fadeInRows(queuedRows);
-          }
-        }
-      });
-    });
-  } else {
-    var queuedRows = [];
-    $.get(TEMPLATE_URL + 'quests.html', function(template) {
-      $('main > .leftContent').html(template);
-      drawPreloader();
-      $.ajax({
-        url: SERVICE_URL + 'quests',
-        dataType: 'json',
-        statusCode: {
-          200: function(data) {
-            $('main').html(template);
-            $.each(data, function(index, item) {
-              var tr = $('<tr data-qid="' + item.qid + '"></tr>');
-              if (index % 2 === 0) {
-                $(tr).addClass('even');
-              } else {
-                $(tr).addClass('odd');
-              }
-              $(tr).append('<td><a href="" class="questClick">' + item.name + '</a></td><td>' + item.count + '</td>');
-              $(tr).append('<td>' + item.last + ' on ' + formatDate(item.timestamp) +  '</td><td><a href="#">' + item.gmname + '</a></td>');
-              var playersStr = '';
-              $(item.players).each(function(playerIndex, playerItem) {
-                playersStr += '<a class="character" data-cid="' + playerItem.cid + '" href="#">' + playerItem.name + '</a>';
-                if (playerIndex < item.players.length-1) {
-                  playersStr += ', ';
-                }
-              });
-              $(tr).append('<td>' + playersStr + '</td>');
-              var controls = $('<td style="text-align:center;"><i class="icon fa fa-clone" title="preface"></i></td>');
-              if (userID) {
-                $(controls).append('<a class="icon" href=""><img src="/img/icon.edit_dark.gif" alt="edit" title="edit"></a><a class="icon" href=""><img src="/img/icon.delete_dark.gif" alt="delete" title="delete"></a>');
-              }
-              $(tr).append(controls);
-              $(controls).find('.fa-clone').click(function(event) {
-                event.preventDefault();
-                event.stopPropagation();
-                showQuestInfo(this);
-              });
-              $('#allQuests tbody').append(tr);
-              queuedRows.push(tr);
-            });
-            $('.questsTable').find('.questClick').each(function(index, item) {
-              $(item).click(function(event) {
-                event.preventDefault();
-                event.stopPropagation();
-                history.pushState({}, 'quest', '/quest/' + $(this).closest('tr').data('qid') + '/');
-              });
-            });
-            $('.questsTable').find('.character').each(function(index, item) {
-              $(item).click(function(event) {
-                event.preventDefault();
-                event.stopPropagation();
-                showCharacterInfo($(this).attr('data-cid'));
-              });
-            });
-            clearPreloader();
-            if (queuedRows.length) {
-              fadeInRows(queuedRows);
-            }
-          }
-        }
-      });
-    });
-  }
-}
-
-function fetchCharacterInfo(box, id) {
-  $.ajax({
-    url: SERVICE_URL + 'character/' + id,
-    dataType: 'json',
-    statusCode: {
-      200: function(data) {
-        box.setTitle(data.name);
-        $.get(TEMPLATE_URL + 'character.html', [], function(template) {
-          box.setContent(template);
-          $('#character').find('#title').html(data.title);
-          $('#character').find('#preface').html(data.preface);
-          $('#character').find('#profile').html(data.profile);
-          $(data.quests).each(function(index, item) {
-            $('#character').find('#quests').append('<a href="" data-qid="' + item.qid + '">' + item.name + '</a><br>');
-          });
-          $('#character').find('#quests a').each(function(index, item) {
-            $(item).click(function(event) {
-              event.preventDefault();
-              event.stopPropagation();
-              box.destroy();
-              history.pushState({}, 'quest', '/quest/' + $(item).attr('data-qid') + '/');
-            });
-          });
-        });
-      },
-      404: function() {
-        $(box.foreground).find('content').text('No description provided.');
-      }
-    }
-  });
-}
-
-function showCharacterInfo(cid) {
-  var box = new QuestlogOverlay(fetchCharacterInfo, cid);
-  $(box).on(EVENT_LOADED, function() {
-    fetchCharacterInfo(box, cid);
-  });
-  box.setup();
-}
-
-function fetchQuestInfo(box, id) {
-  $.ajax({
-    url: SERVICE_URL + 'quest/' + id + '/info',
-    dataType: 'json',
-    statusCode: {
-      200: function(data) {
-        box.setTitle(data.title + ' &mdash; Preface');
-        box.setContent(data.description);
-      },
-      404: function() {
-        $(box.foreground).find('content').text('No description provided.');
-      }
-    }
-  });
-}
-
-function showQuestInfo(button) {
-  var id = $(button).parent().parent().data('qid');
-  var box = new QuestlogOverlay(fetchQuestInfo, id);
-  $(box).on(EVENT_LOADED, function() {
-    fetchQuestInfo(box, id);
-  });
-  box.setup();
-}
-
-function scrollQuest(qid) {
-  if ($(window).scrollTop() + $(window).height() == $(document).height()) {
-    console.log('scroll');
-    currentQuestPage++;
-    fetchAndRenderPosts(qid, (currentQuestPage * DEFAULT_PAGE_LENGTH), DEFAULT_PAGE_LENGTH);
-  }
-}
-
 function checkSession() {
   $.ajax({
     url: SERVICE_URL + 'checkSession',
@@ -514,6 +161,7 @@ function checkSession() {
       200: function(data) {
         userID = data.uid;
         username = data.login_name;
+        userip = data.ip;
         lastLoginTime = data.timestamp;
         renderUserBox();
         changeLocation();
@@ -530,6 +178,7 @@ function login() {
   $.post(SERVICE_URL + 'login',  { user: 'holodog', pass: 'liches'}, function( data ) {
     userID = data.uid;
     username = data.name;
+    userip = data.ip;
     lastLoginTime = data.last_login_time;
     renderUserBox();
     fetchAndRenderQuests();
@@ -540,109 +189,43 @@ function logout() {
   $.get(SERVICE_URL + 'logout', [], function(data) {
     userID = null;
     renderLoginBox();
-    //history.pushState({}, 'quest', '/');
+    history.pushState({}, 'quest', '/');
   });
 }
 
-function addPost(data) {
-  var div = $('<div class="postBubble" data-pid="' + data.pid + '"></div>');
-  var header = $('<header>#' + data.pid + '&nbsp;Posted on ' + formatDate(data.stamp) + ' by <a href="">' + data.poster + '</a></header>');
-  var span = $('<span class="controls"></span>');
-  var a = $('<a class="icon edit" href=""><img src="/img/icon.edit_dark.gif" alt="edit" title="edit"></a>');
-  $(span).append(a);
-  a = $('<a class="icon delete" href=""><img src="/img/icon.delete_dark.gif" alt="delete" title="delete"></a>');
-  $(span).append(a);
-  $(header).append(span);
-  $(div).append(header);
-  $(div).append('<content>' + data.text + '</content>');
-  if ($($('.posts').find('.postBubble')[0]).hasClass('even')) {
-    $(div).addClass('odd');
+function sanitizeTextForDB(text) {
+  return text.replace(new RegExp('(?:\r\n|\r|\n)','g'), '<br>');
+  //return text.replace(new RegExp('\/', 'g'), '|');
+}
+
+function sanitizeTextForUI(text) {
+  //text = text.replace(/<br ?\/?>/gi, '\n')
+  text = text.replace(/\<(.+?)\>/g, "[$1]");
+  var toHTML = $('<output>' + text + '</output>');
+  $(toHTML).find('.roll').each(function(index, item) {
+    console.log('ITEM: ' + item);
+    var id = $(item).attr('id');
+    $(item).replaceWith('[DICE_ROLL]' + id + '[/DICE_ROLL]');
+  });
+  return $(toHTML).text();
+}
+
+function sanitizeHTML(text) {
+  text = text.replace(/<br ?\/?>/gi, '\n')
+  var tags = text.match(/\<(.*?)\>/);
+  console.log(tags)
+  return text;
+}
+
+function formatDate(date) {
+  date = new Date(parseInt(date)*1000);
+  return date.toDateString() + ' at ' + prependZero(date.getHours()) + ':' + prependZero(date.getMinutes());
+}
+
+function prependZero(string) {
+  if (parseInt(string) < 10) {
+    return '0' + string;
   } else {
-    $(div).addClass('even');
+    return string;
   }
-  $('.posts section').prepend(div);
-  $(div).find('.edit').click(function(event) {
-    event.preventDefault();
-    event.stopPropagation();
-    renderPostWindow(data.qid, data.pid, data.text);
-  });
-  $(div).find('.delete').click(function(event) {
-    event.preventDefault();
-    event.stopPropagation();
-    promptToDeletePost(data.pid, data.qid);
-  });
-  fadeInRows([div]);
-}
-
-function promptToDeletePost(pid, qid) {
-  var box = new QuestlogOverlay();
-  $(box).on(EVENT_LOADED, function() {
-    box.setTitle('Delete Post #' + pid);
-    box.setContent('Are you sure?');
-  });
-  box.setup(function(){ return deletePost(pid, qid);});
-}
-
-function deletePost(pid, qid) {
-  $.ajax({
-    url: SERVICE_URL + '/post/' + pid + '/delete?qid=' + qid,
-    type: 'DELETE',
-    success: function(result) {
-      $('.postBubble[data-pid="' + pid + '"]').remove();
-    }
-  });
-}
-
-function saveOrEditPost(qid, cid, text, pid) {
-  if (pid) {
-    $.ajax({
-      data: {qid:qid, pid:pid, cid:cid, uid: userID, text:text}, 
-      url: SERVICE_URL + 'post/' + pid + '/edit',
-      type: 'PUT',
-      success: function(result) {
-        $('.postBubble[data-pid="' + pid + '"]').find('content').html(text);
-      }
-    });
-  } else {
-    $.ajax({
-      data: {qid:qid, cid:cid, uid: userID, text:text}, 
-      url: SERVICE_URL + 'quest/' + qid + '/post',
-      type: 'POST',
-      dataType: 'json',
-      success: function(result) {
-        console.log(result);
-        addPost(result)
-      }
-    });
-  }
-}
-
-function renderPostWindow(qid, pid, text) {
-  $.getJSON(SERVICE_URL + 'post/' + qid + '/permissions', [], function(data) {
-    var box = new QuestlogOverlay();
-    $(box).on(EVENT_LOADED, function() {
-      $.get(TEMPLATE_URL + 'editPost.html', [], function(template) {
-        var html = $(template);
-        if (data.gm) {
-          $(html).find('#postAs').append('<option value="0">' + username + ' - GM</option>');
-        }
-        $(data.characters).each(function(index, item) {
-          $(html).find('#postAs').append('<option value="' + item.cid + '">' + item.name + '</option>');
-        });
-        if (pid) {
-          box.setTitle('Editing post #' + pid);
-          $(html).find('textarea').val(text);
-        } else {
-          box.setTitle('New post');
-        }
-        $(html).find('button').click(function() {
-          var cid = $('#postAs').val();
-          saveOrEditPost(qid, cid, $(html).find('textarea').val(), pid);
-          box.destroy();
-        });
-        box.setContent(html);
-      });
-    });
-    box.setup();
-  });
 }

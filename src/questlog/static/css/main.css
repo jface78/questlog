@@ -162,7 +162,7 @@ button.smallButton, input[type="submit"].smallButton {
   text-align:right;
 }
 .loginBox p {
-  line-height:15px;margin-top:5px;
+  line-height:15px;
 }
 .loginBox input {
   width: 120px;
