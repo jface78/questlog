@@ -4,6 +4,9 @@ import (
   "log"
   _ "github.com/go-sql-driver/mysql"
   "bitbucket.org/holodog/questlog/DBUtils"
+  "github.com/kennygrant/sanitize"
+  "regexp"
+  "strings"
 )
 
 type Post struct {
@@ -92,7 +95,22 @@ func GetPostPermissions(qid int, uid int) PostPermissions {
 }
 
 
+func sanitizeTextForDB(text string) string {
+  text = sanitize.Accents(text)
+  text = sanitize.HTML(text)
+  text = strings.Replace(text,"\n","<br>",-1)
+  var re = regexp.MustCompile(`\[b\](.+)?\[\/b\]`)
+  text = re.ReplaceAllString(text, `<b>$1</b>`)
+  re = regexp.MustCompile(`\[i\](.+)?\[\/i\]`)
+  text = re.ReplaceAllString(text, `<i>$1</i>`)
+  re = regexp.MustCompile(`\[u\](.+)?\[\/u\]`)
+  text = re.ReplaceAllString(text, `<u>$1</u>`)
+  return text
+}
+
+
 func CreatePost(qid int, uid int, cid int, text string) Post {
+  text = sanitizeTextForDB(text)
   db := DBUtils.OpenDB();
   stmt, err := db.Prepare("INSERT INTO posts (qid,cid,uid,post_text,post_status,post_date) VALUES(?,?,?,?,0,now())")
   if (err != nil) {

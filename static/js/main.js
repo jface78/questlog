@@ -193,13 +193,9 @@ function logout() {
   });
 }
 
-function sanitizeTextForDB(text) {
-  return text.replace(new RegExp('(?:\r\n|\r|\n)','g'), '<br>');
-  //return text.replace(new RegExp('\/', 'g'), '|');
-}
 
 function sanitizeTextForUI(text) {
-  //text = text.replace(/<br ?\/?>/gi, '\n')
+  text = text.replace(/<br ?\/?>/gi, '\n')
   text = text.replace(/\<(.+?)\>/g, "[$1]");
   var toHTML = $('<output>' + text + '</output>');
   $(toHTML).find('.roll').each(function(index, item) {

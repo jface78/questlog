@@ -6,7 +6,6 @@ import (
     "github.com/gorilla/mux"
     "github.com/gorilla/sessions"
     "github.com/gorilla/context"
-    "github.com/kennygrant/sanitize"
     "log"
     _ "github.com/go-sql-driver/mysql"
     "golang.org/x/crypto/ripemd160"
@@ -18,7 +17,6 @@ import (
     "bitbucket.org/holodog/questlog/Character"
     "encoding/json"
     "strings"
-    "regexp"
 )
 
 const (
@@ -33,18 +31,6 @@ type LoginModel struct {
   Name string `json:"name"`
   Stamp int `json:"last_login_time"`
   Ip string `json:"ip"`
-}
-
-
-func sanitizeTextForDB(input string) string {
-  input = sanitize.HTML(input)
-  var re = regexp.MustCompile(`\[b\](.+)?\[\/b\]`)
-  input = re.ReplaceAllString(input, `<b>$1</b>`)
-  re = regexp.MustCompile(`\[i\](.+)?\[\/i\]`)
-  input = re.ReplaceAllString(input, `<i>$1</i>`)
-  re = regexp.MustCompile(`\[u\](.+)?\[\/u\]`)
-  input = re.ReplaceAllString(input, `<u>$1</u>`)
-  return input
 }
 
 func isUserGM(r *http.Request, qid int) bool {
@@ -462,7 +448,7 @@ func handleNewPost(w http.ResponseWriter, r *http.Request) {
     forbidden(w, "Forbidden")
     return
   }
-  text := sanitizeTextForDB(r.Form["text"][0])
+  text := r.Form["text"][0]
   jsonData, err := json.Marshal(Posts.CreatePost(qid, uid, cid, text))
   if err != nil {
     serverError(w, err.Error())

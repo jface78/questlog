@@ -137,7 +137,6 @@ function deletePost(pid, qid) {
 }
 
 function saveOrEditPost(qid, cid, text, pid) {
-  text = sanitizeTextForDB(text);
   if (pid) {
     $.ajax({
       data: {qid:qid, pid:pid, cid:cid, uid: userID, text:text}, 
