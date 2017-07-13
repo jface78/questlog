@@ -7,13 +7,18 @@ import (
   "github.com/kennygrant/sanitize"
   "regexp"
   "strings"
+  "strconv"
+  "math/rand"
+  "time"
+  "golang.org/x/crypto/ripemd160"
+  "encoding/hex"
 )
 
 type Post struct {
-  Pid int64 `json:"pid"`
-  Qid int64 `json:"qid"`
-  Uid int64 `json:"uid"`
-  Cid int64 `json:"cid"`
+  Pid int `json:"pid"`
+  Qid int `json:"qid"`
+  Uid int `json:"uid"`
+  Cid int `json:"cid"`
   Poster string `json:"poster"`
   Text string `json:"text"`
   Stamp int `json:"stamp"`
@@ -31,19 +36,113 @@ type PostPermissions struct {
   Gm bool `json:"gm"`
 }
 
-func EditPost(pid int, text string) bool {
+func random(min, max int) int {
+  rand.Seed(time.Now().Unix())
+  return rand.Intn(max - min) + min
+}
+
+func restoreDiceRolls(pid int, text string) string {
+  rgx, _ := regexp.Compile(`\[DICE_ROLL\](\S+)\[/DICE_ROLL\]`)
+  var stored_rolls []string
+  db := DBUtils.OpenDB()
+  for _, match := range rgx.FindStringSubmatch(text) {
+    var roll int
+    var dieType string
+    rows, err := db.Query("select roll,type from rolls where pid = ? and location_hash = ?", pid, match)
+    if (err != nil) {
+      log.Fatal("Error checking gm")
+    }
+    for rows.Next() {
+      err = rows.Scan(&roll, &dieType)
+      if err != nil {
+        log.Fatal(err)
+      }
+      finalRoll := "<div class=\"roll\" data-id=\"" + match + "\">*** " + dieType + " roll:" + strconv.Itoa(roll) + " ***</div>"
+      text = rgx.ReplaceAllString(text, finalRoll)
+      stored_rolls = append(stored_rolls, match)
+    }
+  }
+  var notStr = "'0'"
+  for i:=0; i < len(stored_rolls); i++ {
+    notStr += ",'" + stored_rolls[i] + "'";
+  }
+  rows, err := db.Query("SELECT roll,type,location_hash FROM rolls WHERE location_hash NOT IN (" + notStr + ") AND pid = ?", pid)
+  if err != nil {
+    log.Fatal(err)
+  }
+  for rows.Next() {
+    var roll int
+    var dieType string
+    var hash string
+    rows.Scan(&roll, &dieType, &hash)
+    text += "<div class=\"roll\" data-id=\"" + hash + "\">*** " + dieType + " roll:" + strconv.Itoa(roll) + " ***</div>"
+  }
+  log.Println("--------------")
+  log.Println(text)
+  log.Println("--------------")
+  DBUtils.CloseDB(db)
+  return text
+}
+
+func findAndGenerateDiceRolls(pid int, text string) string {
+  rgx, _ := regexp.Compile(`(?i)/r(oll)?(\s*)(\d+d\d+)`)
+  for index, match := range rgx.FindStringSubmatch(text) {
+    if (index == 3) {
+      var results = 0
+      var hexed = ""
+      var amount int
+      var diceType int
+      pos := strings.Split(match, "d")
+      amount, err := strconv.Atoi(pos[0])
+      if err != nil {
+        log.Fatal("dice amount not int")
+      }
+      diceType, err = strconv.Atoi(pos[1])
+      if err != nil {
+        log.Fatal("dice type not int")
+      }
+      for i:=0; i < amount; i++ {
+        results += random(1, diceType)
+      }
+      hash := ripemd160.New()
+      hashNum := pid + random(1,999) + int(time.Now().Unix())
+      hash.Write([]byte(strconv.Itoa(hashNum)))
+      hexed = hex.EncodeToString(hash.Sum(nil))
+      hexedStr := "<div class=\"roll\" data-id=\"" + hexed + "\">*** " + match + " roll:" + strconv.Itoa(results) + " ***</div>"
+      db := DBUtils.OpenDB();
+      stmt, err := db.Prepare("INSERT INTO rolls (pid,roll,type,location_hash) VALUES(?,?,?,?)")
+      if (err != nil) {
+        log.Fatal(err)
+      }
+      defer stmt.Close()
+      _, err = stmt.Exec(pid, results, match, hexed)
+      if (err != nil) {
+        log.Fatal(err)
+      }
+      DBUtils.CloseDB(db)
+      text = rgx.ReplaceAllString(text, hexedStr)
+    }
+  }
+  return text
+}
+
+
+
+func EditPost(pid int, text string) Post {
+  text = restoreDiceRolls(pid, text)
+  text = findAndGenerateDiceRolls(pid, text)
   db := DBUtils.OpenDB();
   stmt, err := db.Prepare("update posts set post_text=? where pid=?")
   if (err != nil) {
-    return false
+    log.Fatal("can't update post")
   }
   defer stmt.Close()
   _, err = stmt.Exec(text, pid)
   if (err != nil) {
-    return false
+    log.Fatal("can't update post")
   }
   DBUtils.CloseDB(db)
-  return true
+  return GetPost(pid)
 }
 
 func DeletePost(pid int) bool {
@@ -126,10 +225,11 @@ func CreatePost(qid int, uid int, cid int, text string) Post {
     log.Fatal(err)
   }
   DBUtils.CloseDB(db)
-  return GetPost(id)
+  EditPost(int(id), findAndGenerateDiceRolls(int(id), text))
+  return GetPost(int(id))
 }
 
-func GetPost(pid int64) Post {
+func GetPost(pid int) Post {
   db := DBUtils.OpenDB();
   post := Post{}
   post.Pid = pid
@@ -147,7 +247,6 @@ func GetPost(pid int64) Post {
 func GetPosts(qid int, start int, length int, order string) []Post {
   var posts []Post
   db := DBUtils.OpenDB();
-  log.Println(order);
   rows, err := db.Query("select pid,qid,uid,cid,post_text,UNIX_TIMESTAMP(post_date) from posts WHERE qid = ? ORDER BY post_date " + order + " LIMIT ?, ?", qid, start, length)
   if err != nil {
     log.Fatal(err)

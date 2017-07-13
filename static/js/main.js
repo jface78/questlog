@@ -196,20 +196,21 @@ function logout() {
 
 function sanitizeTextForUI(text) {
   text = text.replace(/<br ?\/?>/gi, '\n')
-  text = text.replace(/\<(.+?)\>/g, "[$1]");
+  
   var toHTML = $('<output>' + text + '</output>');
   $(toHTML).find('.roll').each(function(index, item) {
     console.log('ITEM: ' + item);
-    var id = $(item).attr('id');
+    var id = $(item).attr('data-id');
     $(item).replaceWith('[DICE_ROLL]' + id + '[/DICE_ROLL]');
   });
+  text = text.replace(/\<(.+?)\>/g, "[$1]");
   return $(toHTML).text();
 }
 
-function sanitizeHTML(text) {
-  text = text.replace(/<br ?\/?>/gi, '\n')
-  var tags = text.match(/\<(.*?)\>/);
-  console.log(tags)
+function sanitizeTextForDB(text) {
+  //text = text.replace(/<br ?\/?>/gi, '\n')
+  //var tags = text.match(/\<(.*?)\>/);
+  
   return text;
 }
 

@@ -87,9 +87,16 @@ function fetchAndRenderPosts(qid, start, length, order) {
   });
 }
 
+function updatePost(data) {
+  console.log(data)
+  var bubble = $('.postBubble[data-pid="' + data.pid + '"]');
+  $(bubble).find('header a.postedBy').text(data.poster);
+  $(bubble).find('content').html(data.text);
+}
+
 function addPost(data) {
   var div = $('<div class="postBubble" data-pid="' + data.pid + '"></div>');
-  var header = $('<header>#' + data.pid + '&nbsp;Posted on ' + formatDate(data.stamp) + ' by <a href="">' + data.poster + '</a></header>');
+  var header = $('<header>#' + data.pid + '&nbsp;Posted on ' + formatDate(data.stamp) + ' by <a class="postedBy" href="">' + data.poster + '</a></header>');
   var span = $('<span class="controls"></span>');
   var a = $('<a class="icon edit" href=""><img src="/img/icon.edit_dark.gif" alt="edit" title="edit"></a>');
   $(span).append(a);
@@ -137,13 +144,15 @@ function deletePost(pid, qid) {
 }
 
 function saveOrEditPost(qid, cid, text, pid) {
+  text = sanitizeTextForDB(text)
   if (pid) {
     $.ajax({
       data: {qid:qid, pid:pid, cid:cid, uid: userID, text:text}, 
       url: SERVICE_URL + 'post/' + pid + '/edit',
       type: 'PUT',
+      dataType: 'json',
       success: function(result) {
-        $('.postBubble[data-pid="' + pid + '"]').find('content').html(text);
+        updatePost(result)
       }
     });
   } else {

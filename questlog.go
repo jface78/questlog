@@ -376,14 +376,12 @@ func handlePostEdit(w http.ResponseWriter, r *http.Request) {
   r.ParseForm()
   text := r.Form["text"][0]
   log.Println(text);
-  success := Posts.EditPost(pid, text)
-  if (success) {
-    writeSuccess(w)
-  } else {
-    serverError(w, "server error")
+  jsonData, err := json.Marshal(Posts.EditPost(pid, text))
+  if err != nil {
+    serverError(w, err.Error())
     return
   }
-  return
+  fmt.Fprintf(w, string(jsonData))
 }
 
 func handleQuestDelete(w http.ResponseWriter, r *http.Request) {
