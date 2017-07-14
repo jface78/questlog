@@ -37,12 +37,15 @@ type PostPermissions struct {
 }
 
 func random(min, max int) int {
-  rand.Seed(time.Now().Unix())
-  return rand.Intn(max - min) + min
+  var genned = rand.Intn(max - min) + min
+  return genned
 }
 
 func restoreDiceRolls(pid int, text string) string {
-  rgx, _ := regexp.Compile(`\[DICE_ROLL\](\S+)\[/DICE_ROLL\]`)
+  rgx, _ := regexp.Compile(`\<div class="roll" data-id=".*"\>.*\</div\>`)
+  text = rgx.ReplaceAllString(text, ``)
+  log.Println(text)
+  rgx, _ = regexp.Compile(`\[DICE_ROLL\](\S+)\[/DICE_ROLL\]`)
   var stored_rolls []string
   db := DBUtils.OpenDB()
   for _, match := range rgx.FindStringSubmatch(text) {
@@ -77,51 +80,56 @@ func restoreDiceRolls(pid int, text string) string {
     rows.Scan(&roll, &dieType, &hash)
     text += "<div class=\"roll\" data-id=\"" + hash + "\">*** " + dieType + " roll:" + strconv.Itoa(roll) + " ***</div>"
   }
-  log.Println("--------------")
-  log.Println(text)
-  log.Println("--------------")
   DBUtils.CloseDB(db)
   return text
 }
 
 func findAndGenerateDiceRolls(pid int, text string) string {
-  rgx, _ := regexp.Compile(`(?i)/r(oll)?(\s*)(\d+d\d+)`)
-  for index, match := range rgx.FindStringSubmatch(text) {
-    if (index == 3) {
-      var results = 0
-      var hexed = ""
-      var amount int
-      var diceType int
-      pos := strings.Split(match, "d")
-      amount, err := strconv.Atoi(pos[0])
+  rgx, _ := regexp.Compile(`(?i)/r(oll)?(\s*)(\d*d\d+)`)
+  matches := rgx.FindAllStringSubmatch(text,-1)
+  for i:=0; i < len(matches); i++ {
+    match := matches[i][3]
+    var results int
+    var hexed string
+    var amount int
+    var diceType int
+    var err error
+    pos := strings.Split(match, "d")
+    if len(pos[0]) > 0 {
+      amount, err = strconv.Atoi(pos[0])
       if err != nil {
         log.Fatal("dice amount not int")
       }
-      diceType, err = strconv.Atoi(pos[1])
-      if err != nil {
-        log.Fatal("dice type not int")
-      }
-      for i:=0; i < amount; i++ {
-        results += random(1, diceType)
-      }
-      hash := ripemd160.New()
-      hashNum := pid + random(1,999) + int(time.Now().Unix())
-      hash.Write([]byte(strconv.Itoa(hashNum)))
-      hexed = hex.EncodeToString(hash.Sum(nil))
-      hexedStr := "<div class=\"roll\" data-id=\"" + hexed + "\">*** " + match + " roll:" + strconv.Itoa(results) + " ***</div>"
-      db := DBUtils.OpenDB();
-      stmt, err := db.Prepare("INSERT INTO rolls (pid,roll,type,location_hash) VALUES(?,?,?,?)")
-      if (err != nil) {
-        log.Fatal(err)
-      }
-      defer stmt.Close()
-      _, err = stmt.Exec(pid, results, match, hexed)
-      if (err != nil) {
-        log.Fatal(err)
-      }
-      DBUtils.CloseDB(db)
-      text = rgx.ReplaceAllString(text, hexedStr)
+    } else {
+      amount = 1
     }
+    diceType, err = strconv.Atoi(pos[1])
+    if err != nil {
+      log.Fatal("dice type not int")
+    }
+    for i:=0; i < amount; i++ {
+      results += random(1, diceType)
+    }
+    hash := ripemd160.New()
+    hashNum := pid + random(1,999) + int(time.Now().Unix())
+    log.Println(hashNum)
+    hash.Write([]byte(strconv.Itoa(hashNum)))
+    hexed = hex.EncodeToString(hash.Sum(nil))
+    var backToText = strconv.Itoa(amount) + "d" + strconv.Itoa(diceType)
+    hexedStr := "<div class=\"roll\" data-id=\"" + hexed + "\">*** " + backToText + " roll:" + strconv.Itoa(results) + " ***</div>"
+    log.Println(hexedStr)
+    db := DBUtils.OpenDB();
+    stmt, err := db.Prepare("INSERT INTO rolls (pid,roll,type,location_hash) VALUES(?,?,?,?)")
+    if (err != nil) {
+      log.Fatal(err)
+    }
+    defer stmt.Close()
+    _, err = stmt.Exec(pid, results, backToText, hexed)
+    if (err != nil) {
+      log.Fatal(err)
+    }
+    DBUtils.CloseDB(db)
+    text = strings.Replace(text, matches[i][0], hexedStr, 1)
   }
   return text
 }
@@ -129,7 +137,11 @@ func findAndGenerateDiceRolls(pid int, text string) string {
 
 
 func EditPost(pid int, text string) Post {
+log.Println("---------- ")
+log.Println(text)
+  text = sanitizeTextForDB(text)
   text = restoreDiceRolls(pid, text)
+  log.Println(text)
   text = findAndGenerateDiceRolls(pid, text)
   db := DBUtils.OpenDB();
   stmt, err := db.Prepare("update posts set post_text=? where pid=?")
@@ -197,6 +209,7 @@ func GetPostPermissions(qid int, uid int) PostPermissions {
 func sanitizeTextForDB(text string) string {
   text = sanitize.Accents(text)
   text = sanitize.HTML(text)
+  //\[(i|u|b)\](.+)?\[\/(i|u|b)\]
   text = strings.Replace(text,"\n","<br>",-1)
   var re = regexp.MustCompile(`\[b\](.+)?\[\/b\]`)
   text = re.ReplaceAllString(text, `<b>$1</b>`)
@@ -224,8 +237,14 @@ func CreatePost(qid int, uid int, cid int, text string) Post {
   if (err != nil) {
     log.Fatal(err)
   }
+  text = findAndGenerateDiceRolls(int(id), text)
+  stmt, err = db.Prepare("update posts set post_text=? where pid=?")
+  if (err != nil) {
+    log.Fatal("can't update post")
+  }
+  defer stmt.Close()
+  _, err = stmt.Exec(text, id)
   DBUtils.CloseDB(db)
-  EditPost(int(id), findAndGenerateDiceRolls(int(id), text))
   return GetPost(int(id))
 }
 

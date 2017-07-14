@@ -17,6 +17,8 @@ import (
     "bitbucket.org/holodog/questlog/Character"
     "encoding/json"
     "strings"
+    "math/rand"
+    "time"
 )
 
 const (
@@ -510,6 +512,7 @@ func handleViewQuest(w http.ResponseWriter, r *http.Request) {
 
 
 func main() {
+  rand.Seed(time.Now().Unix())
   rtr := mux.NewRouter()
   rtr.HandleFunc(SERVICE_PATH + "/quests", handleQuests).Methods("GET")
   rtr.HandleFunc(SERVICE_PATH + "/quest/{[0-9]+}", handleQuest).Methods("GET")
