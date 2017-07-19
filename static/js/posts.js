@@ -70,12 +70,12 @@ function fetchAndRenderPosts(qid, start, length, order) {
           $(div).find('.edit').click(function(event) {
             event.preventDefault();
             event.stopPropagation();
-            renderPostWindow(item.qid, item.pid, item.text);
+            renderPostWindow(item.qid, item.pid);
           });
           $(div).find('.delete').click(function(event) {
             event.preventDefault();
             event.stopPropagation();
-            promptToDeletePost(item.pid, item.qid);
+            prompt('Delete Post #' + item.pid, 'Are you sure?', function() {return deletePost(item.pid, item.qid)});
           });
         });
         if (queuedPosts.length) {
@@ -88,7 +88,6 @@ function fetchAndRenderPosts(qid, start, length, order) {
 }
 
 function updatePost(data) {
-  console.log(data)
   var bubble = $('.postBubble[data-pid="' + data.pid + '"]');
   $(bubble).find('header a.postedBy').text(data.poster);
   $(bubble).find('content').html(data.text);
@@ -114,36 +113,34 @@ function addPost(data) {
   $(div).find('.edit').click(function(event) {
     event.preventDefault();
     event.stopPropagation();
-    renderPostWindow(data.qid, data.pid, data.text);
+    renderPostWindow(data.qid, data.pid);
   });
   $(div).find('.delete').click(function(event) {
     event.preventDefault();
     event.stopPropagation();
-    promptToDeletePost(data.pid, data.qid);
+    prompt('Delete Post #' + data.pid, 'Are you sure?', function() {return deletePost(data.pid, data.qid)});
   });
   fadeInRows([div]);
 }
 
-function promptToDeletePost(pid, qid) {
-  var box = new QuestlogOverlay();
-  $(box).on(EVENT_LOADED, function() {
-    box.setTitle('Delete Post #' + pid);
-    box.setContent('Are you sure?');
-  });
-  box.setup(function(){ return deletePost(pid, qid);});
-}
-
 function deletePost(pid, qid) {
+  console.log('delete');
+  drawPreloader();
   $.ajax({
     url: SERVICE_URL + '/post/' + pid + '/delete',
     type: 'DELETE',
     success: function(result) {
       $('.postBubble[data-pid="' + pid + '"]').remove();
+      clearPreloader();
+    }, error: function() {
+      clearPreloader();
+      warn('Error', 'Unable to delete your post at this time.');
     }
   });
 }
 
 function saveOrEditPost(qid, cid, text, pid) {
+  drawPreloader();
   text = sanitizeTextForDB(text)
   if (pid) {
     $.ajax({
@@ -153,6 +150,10 @@ function saveOrEditPost(qid, cid, text, pid) {
       dataType: 'json',
       success: function(result) {
         updatePost(result)
+        clearPreloader();
+      }, error: function() {
+        clearPreloader();
+        warn('Error', 'Unable to edit your post at this time.');
       }
     });
   } else {
@@ -163,12 +164,18 @@ function saveOrEditPost(qid, cid, text, pid) {
       dataType: 'json',
       success: function(result) {
         addPost(result)
+        clearPreloader();
+      }, error: function() {
+        clearPreloader();
+        warn('Error', 'Unable to create your post at this time.');
       }
     });
   }
 }
 
-function renderPostWindow(qid, pid, text) {
+function renderPostWindow(qid, pid) {
+  drawPreloader();
+  var text =  $('.postBubble[data-pid="' + pid + '"]').find('content').html();
   $.getJSON(SERVICE_URL + 'post/' + qid + '/permissions', [], function(data) {
     var box = new QuestlogOverlay();
     $(box).on(EVENT_LOADED, function() {
@@ -196,5 +203,6 @@ function renderPostWindow(qid, pid, text) {
       });
     });
     box.setup();
+    clearPreloader();
   });
 }

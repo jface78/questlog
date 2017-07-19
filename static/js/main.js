@@ -153,6 +153,24 @@ function clearPreloader() {
   });
 }
 
+function warn(title, message) {
+  var box = new QuestlogOverlay();
+  $(box).on(EVENT_LOADED, function() {
+    box.setTitle(title);
+    box.setContent(message);
+  });
+  box.setup();
+}
+
+function prompt(title, message, func) {
+  var box = new QuestlogOverlay();
+  $(box).on(EVENT_LOADED, function() {
+    box.setTitle(title);
+    box.setContent(message);
+  });
+  box.setup(func);
+}
+
 function checkSession() {
   $.ajax({
     url: SERVICE_URL + 'checkSession',
@@ -196,14 +214,12 @@ function logout() {
 
 function sanitizeTextForUI(text) {
   text = text.replace(/<br ?\/?>/gi, '\n')
-  
+  text = text.replace(/<(.+)>(.*)<\/\1>/ig, "\[$1\]$2\[\/$1\]")
   var toHTML = $('<output>' + text + '</output>');
   $(toHTML).find('.roll').each(function(index, item) {
-    console.log('ITEM: ' + item);
     var id = $(item).attr('data-id');
     $(item).replaceWith('[DICE_ROLL]' + id + '[/DICE_ROLL]');
   });
-  text = text.replace(/\<(.+?)\>/g, "[$1]");
   return $(toHTML).text();
 }
 

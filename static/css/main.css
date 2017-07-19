@@ -298,7 +298,7 @@ nav.postNav ul > li:last-child {
 .preloaderFG img {
   height:100px;
   position: fixed;
-  top: calc(50% - 100px);
+  top: calc(50% - 50px);
 }
 .postBubble {
   display:none;
