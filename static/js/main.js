@@ -1,15 +1,15 @@
-var SERVICE_URL = '/service/';
-var TEMPLATE_URL = '/templates/';
+const SERVICE_URL = '/service/';
+const TEMPLATE_URL = '/templates/';
 var userID, username, userip, lastLoginTime;
 
-var DEFAULT_PAGE_LENGTH = 50;
-var DEFAULT_PAGE_ORDER = 'DESC';
+const DEFAULT_PAGE_LENGTH = 50;
+const DEFAULT_PAGE_ORDER = 'DESC';
 
 var currentPageOrder = DEFAULT_PAGE_ORDER;
 
-var EVENT_DESTROYED = 'eventDestroyed';
-var EVENT_LOADED = 'eventLoaded';
-var EVENT_URL_UPDATED = 'eventUrlUpdated';
+const EVENT_DESTROYED = 'eventDestroyed';
+const EVENT_LOADED = 'eventLoaded';
+const EVENT_URL_UPDATED = 'eventUrlUpdated';
 
 var currentQuestPage = 0;
 
@@ -23,7 +23,8 @@ ga('send', 'pageview');
 
 
 $(document).ready(function() {
-  if (new Date().getHours > 18 || new Date().getHours < 6) {
+  var hour = new Date().getHours();
+  if (hour > 18 || hour < 6) {
     $('#logo').attr('src', 'img/logo_night.gif');
   }
   $('#logo').click(function() {
