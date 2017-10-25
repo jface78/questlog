@@ -2,7 +2,7 @@ package Posts_test
 
 import (
   "testing"
-  "github.org/jonathanface/holodog/questlog/Posts"
+  "github.com/jonathanface/holodog/questlog/Posts"
   "fmt"
 )
 /*

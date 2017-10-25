@@ -31,10 +31,8 @@ function fetchCharacterInfo(box, id) {
 }
 
 function showCharacterInfo(cid) {
-  console.log('showing');
   var box = new QuestlogOverlay(fetchCharacterInfo, cid);
   $(box).on(EVENT_LOADED, function() {
-    console.log('loaded');
     fetchCharacterInfo(box, cid);
   });
   box.setup();

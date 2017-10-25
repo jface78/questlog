@@ -528,6 +528,7 @@ func handleUserInfo(w http.ResponseWriter, r *http.Request) {
   fmt.Fprintf(w, string(jsonData))
 }
 
+
 func main() {
   rand.Seed(time.Now().Unix())
   rtr := mux.NewRouter()
