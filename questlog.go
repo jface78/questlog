@@ -530,7 +530,9 @@ func handleUserInfo(w http.ResponseWriter, r *http.Request) {
 
 
 func main() {
+  log.Println("listening on " + PORT)
   rand.Seed(time.Now().Unix())
+  
   rtr := mux.NewRouter()
   rtr.HandleFunc(SERVICE_PATH + "/quests", handleQuests).Methods("GET")
   rtr.HandleFunc(SERVICE_PATH + "/quest/{[0-9]+}", handleQuest).Methods("GET")
@@ -546,11 +548,9 @@ func main() {
   rtr.HandleFunc(SERVICE_PATH + "/post/{[0-9]+}/edit", handlePostEdit).Methods("PUT")
   rtr.HandleFunc(SERVICE_PATH + "/post/{[0-9]+}/delete", handlePostDelete).Methods("DELETE")
   rtr.HandleFunc(SERVICE_PATH + "/user/{[0-9]+}", handleUserInfo).Methods("GET")
-  
   rtr.HandleFunc("/quest/{[0-9]+}/", handleViewQuest).Methods("GET")
   rtr.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("static/")))) 
-  
   http.Handle("/", rtr)
   http.ListenAndServe(PORT, context.ClearHandler(http.DefaultServeMux))
-  log.Println("listening on " + PORT)
+  
 }
