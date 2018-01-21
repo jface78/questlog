@@ -22,10 +22,15 @@ ga('create', 'UA-27020062-2', 'auto');
 ga('send', 'pageview');
 
 
+function getBaseURL() {
+  var getUrl = window.location;
+  return baseUrl = getUrl .protocol + "//" + getUrl.host + "/";
+}
+
 $(document).ready(function() {
   var hour = new Date().getHours();
   if (hour > 18 || hour < 6) {
-    $('#logo').attr('src', 'img/logo_night.gif');
+    $('#logo').attr('src', getBaseURL() + 'img/logo_night.gif');
   }
   $('#logo').click(function() {
     history.pushState({}, 'quest', '/');

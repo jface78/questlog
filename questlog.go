@@ -205,6 +205,7 @@ func login(w http.ResponseWriter, r *http.Request) {
   rows, err := db.Query("select u.uid,u.login_name,ul.date,ul.ip from users as u, user_logins as ul where u.login_hash = ? and ul.uid = u.uid ORDER BY DATE asc LIMIT 1", hash)
   if err != nil {
     serverError(w, err.Error())
+    return
   }
   defer rows.Close()
   
@@ -304,28 +305,43 @@ func handleQuestPermissions(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleQuest(w http.ResponseWriter, r *http.Request) {
-  log.Println("get quest")
   qid, err := strconv.Atoi(mux.Vars(r)["[0-9]+"])
   if (err != nil) {
     badRequest(w, err.Error())
     return
   }
-  start, err := strconv.Atoi(r.URL.Query()["start"][0])
-  if (err != nil) {
-    badRequest(w, err.Error())
-    return
+  var start int
+  if len(r.URL.Query().Get("start")) == 0 {
+    start = 0
+  } else {
+    start, err = strconv.Atoi(r.URL.Query()["start"][0])
+    if err != nil {
+      badRequest(w, err.Error())
+      return
+    }
   }
-  length, err := strconv.Atoi(r.URL.Query()["length"][0])
-  if (err != nil) {
+  
+  var length int
+  if len(r.URL.Query().Get("length")) == 0 {
     length = DEFAULT_QUEST_PAGE_LENGTH
-    badRequest(w, err.Error())
-    return
+  } else {
+    length, err = strconv.Atoi(r.URL.Query()["length"][0])
+    if err != nil {
+      badRequest(w, err.Error())
+      return
+    }
   }
+
   db := DBUtils.OpenDB();
   var status int
-  db.QueryRow("select quest_status from quests where qid = ?").Scan(&status)
+  var count int
+
+  db.QueryRow("select count(qid),quest_status from quests where qid = ?", qid).Scan(&count, &status)
   DBUtils.CloseDB(db)
-  log.Println(status)
+  if count == 0 {
+    fileNotFound(w, "Quest Not Found")
+    return
+  }
   if status >= 4 {
     forbidden(w, err.Error())
     return
