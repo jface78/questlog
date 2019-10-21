@@ -2,7 +2,7 @@ package Character
 
 import (
   "log"
-  "github.com/jonathanface/questlog/DBUtils"
+  "jface/questlog/DBUtils"
 )
 
 type Quest struct {

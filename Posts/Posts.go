@@ -3,7 +3,7 @@ package Posts
 import (
   "log"
   _ "github.com/go-sql-driver/mysql"
-  "github.com/jonathanface/questlog/DBUtils"
+  "jface/questlog/DBUtils"
   "github.com/kennygrant/sanitize"
   "regexp"
   "strings"
