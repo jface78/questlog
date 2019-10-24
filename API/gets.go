@@ -3,24 +3,73 @@ package API
 import (
 	"log"
 	"net/http"
+	"strconv"
+
+	"github.com/gorilla/mux"
 )
 
-type Character struct {
-	Cid       int    `json:"cid"`
-	Char_name string `json:"name"`
-	Uid       int    `json:"uid"`
-}
+func FetchQuest(w http.ResponseWriter, r *http.Request) {
+	//qid int, start int, length int, order string
+	vars := mux.Vars(r)
+	qid, err := strconv.Atoi(vars["qid"])
+	if err != nil || vars["qid"] == "" {
+		RespondWithError(w, http.StatusBadRequest, "Missing Quest ID")
+		return
+	}
+	startStr, ok := r.URL.Query()["start"]
+	if !ok {
+		RespondWithError(w, http.StatusBadRequest, "Missing Start Parameter")
+		return
+	}
+	start, err := strconv.Atoi(startStr[0])
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, "Invalid Start Parameter")
+		return
+	}
+	lengthStr, ok := r.URL.Query()["length"]
+	if !ok {
+		RespondWithError(w, http.StatusBadRequest, "Missing Length Parameter")
+		return
+	}
+	length, err := strconv.Atoi(lengthStr[0])
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, "Invalid Length Parameter")
+		return
+	}
+	orderStr, ok := r.URL.Query()["order"]
+	if !ok {
+		RespondWithError(w, http.StatusBadRequest, "Missing Order Parameter")
+		return
+	}
+	order := orderStr[0]
 
-type Quest struct {
-	Qid        int         `json:"qid"`
-	Gmid       int         `json:"gmid"`
-	Gm_name    string      `json:"gmname"`
-	Name       string      `json:"name"`
-	Stamp      int         `json:"timestamp"`
-	Characters []Character `json:"players"`
-	Count      int         `json:"count"`
-	Last       string      `json:"last"`
-	Type       string      `json:"type"`
+	log.Println("vars", qid, start, length, order)
+
+	var posts []Post
+	db := OpenDB()
+	rows, err := db.Query("select pid,qid,uid,cid,post_text,UNIX_TIMESTAMP(post_date) from posts WHERE qid = ? ORDER BY post_date "+order+" LIMIT ?, ?", qid, start, length)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		post := Post{}
+		err := rows.Scan(&post.Pid, &post.Qid, &post.Uid, &post.Cid, &post.Text, &post.Stamp)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if post.Cid == 0 {
+			db.QueryRow("select login_name from users where uid = ?", post.Uid).Scan(&post.Poster)
+			post.GmPost = true
+			post.Poster += " - GM"
+		} else {
+			post.GmPost = false
+			db.QueryRow("select char_name from characters where cid = ?", post.Cid).Scan(&post.Poster)
+		}
+		posts = append(posts, post)
+	}
+	db.Close()
+	respondWithJson(w, http.StatusOK, posts)
 }
 
 func FetchQuests(w http.ResponseWriter, r *http.Request) {
@@ -65,7 +114,6 @@ func FetchQuests(w http.ResponseWriter, r *http.Request) {
 		quest.Characters = characters
 		quests = append(quests, quest)
 	}
-	CloseDB(db)
+	db.Close()
 	respondWithJson(w, http.StatusOK, quests)
-	//return quests;
 }

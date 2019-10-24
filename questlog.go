@@ -1,9 +1,10 @@
 package main
 
 import (
-	"crypto/tls"
 	"encoding/json"
-	"log"
+	"errors"
+	"fmt"
+	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"os"
@@ -14,7 +15,6 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
-	"golang.org/x/crypto/acme/autocert"
 
 	"jface/questlog/API"
 )
@@ -22,7 +22,7 @@ import (
 const (
 	SERVICE_PATH              = "/service"
 	QUESTLOG_SESSION_ID       = "questlog-user"
-	PORT                      = ":80"
+	PORT                      = ":1337"
 	DEFAULT_QUEST_PAGE_LENGTH = 50
 )
 
@@ -54,7 +54,7 @@ func getConfigurationAndSetDBCredentials() {
 	var db_creds API.Creds
 	err := decoder.Decode(&db_creds)
 	if err != nil {
-		log.Fatal("error:", err)
+		fmt.Println("error:", err)
 	}
 	API.SetCredentials(db_creds)
 	devMachine = db_creds.PcName
@@ -105,18 +105,71 @@ func validationMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	})
 }
 
+func handleViewQuest(w http.ResponseWriter, r *http.Request) {
+	proto := "http://"
+	fmt.Println("wtf", r.URL.Scheme)
+	if len(r.URL.Scheme) > 0 {
+		proto = "https://"
+	}
+	json, code, err := apiRequest(w, r, proto+r.Host+SERVICE_PATH+"/quest/"+mux.Vars(r)["qid"]+"?start=0&length=1&order=ASC", "GET")
+	if err != nil {
+		http.Error(w, "Internal Server Error", code)
+		return
+	}
+	fmt.Println(json)
+	/*
+	  if count > 0 {
+	    http.ServeFile(w, r, "./static/")
+	  } else {
+	    http.Error(w, "No such quest", http.StatusNotFound)
+	  }*/
+}
+
+func apiRequest(w http.ResponseWriter, r *http.Request, url string, typeReq string) (map[string]interface{}, int, error) {
+	fmt.Println("url", url)
+	req, err := http.NewRequest(typeReq, url, nil)
+	req.Header.Add("content-type", "application/json")
+	req.Header.Add("cache-control", "no-cache")
+	if err != nil {
+		fmt.Println(err)
+	}
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	defer res.Body.Close()
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		fmt.Println(err)
+	}
+	jsonmap := make(map[string]interface{})
+	err = json.Unmarshal(body, &jsonmap)
+	if err != nil {
+		fmt.Println("error:", err)
+	}
+	if res.StatusCode != http.StatusOK {
+		return nil, res.StatusCode, errors.New(fmt.Sprintf("%v", jsonmap["error"]))
+	}
+	return jsonmap, http.StatusOK, nil
+}
+
+func serveStatic(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "./static/")
+}
+
 func main() {
-	log.Println("listening on " + PORT)
+
 	rand.Seed(time.Now().Unix())
 
 	getConfigurationAndSetDBCredentials()
-	log.Println("dev", devMachine)
 	rtr := mux.NewRouter()
 
 	//GETs
 	//rtr.HandleFunc(SERVICE_PATH+"/quests", handleQuests).Methods("GET")
 	//rtr.HandleFunc(SERVICE_PATH + "/quests", validationMiddleware(API.FetchQuests)).Methods("GET", "OPTIONS")
 	rtr.HandleFunc(SERVICE_PATH+"/quests", API.FetchQuests).Methods("GET", "OPTIONS")
+	rtr.HandleFunc(SERVICE_PATH+"/quest/{qid:[0-9]+}", API.FetchQuest).Methods("GET", "OPTIONS")
 
 	/*
 		rtr.HandleFunc(SERVICE_PATH+"/quest/{[0-9]+}", handleQuest).Methods("GET")
@@ -133,27 +186,20 @@ func main() {
 		rtr.HandleFunc(SERVICE_PATH+"/post/{[0-9]+}/delete", handlePostDelete).Methods("DELETE")
 		rtr.HandleFunc(SERVICE_PATH+"/user/{[0-9]+}", handleUserInfo).Methods("GET")
 		rtr.HandleFunc("/quest/{[0-9]+}/", handleViewQuest).Methods("GET")*/
+	//rtr.HandleFunc("/quest/{qid:[0-9]+}/", handleViewQuest).Methods("GET")
 
+	rtr.HandleFunc("/quest/{qid:[0-9]+}/", serveStatic)
 	rtr.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("static/"))))
 	http.Handle("/", rtr)
 
 	host, _ := os.Hostname()
 	if host != devMachine {
-		certManager := autocert.Manager{
-			Prompt:     autocert.AcceptTOS,
-			HostPolicy: autocert.HostWhitelist("questlog.net"), //Your domain here
-			Cache:      autocert.DirCache("certs"),             //Folder for storing certificates
-		}
-		server := &http.Server{
-			Addr: ":https",
-			TLSConfig: &tls.Config{
-				GetCertificate: certManager.GetCertificate,
-			},
-		}
-		go http.ListenAndServe(":http", certManager.HTTPHandler(nil))
-		log.Fatal(server.ListenAndServeTLS("", ""))
+		fmt.Println("listening on encrypted " + PORT)
+		cert := "/etc/letsencrypt/live/www.questlog.net/fullchain.pem"
+		prv_key := "/etc/letsencrypt/live/www.questlog.net/privkey.pem"
+		http.ListenAndServeTLS(PORT, cert, prv_key, context.ClearHandler(http.DefaultServeMux))
 	} else {
-		log.Println("non-TLS")
+		fmt.Println("listening on non-SSL " + PORT)
 		http.ListenAndServe(PORT, context.ClearHandler(http.DefaultServeMux))
 	}
 

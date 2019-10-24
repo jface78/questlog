@@ -189,10 +189,11 @@ function checkSession() {
         lastLoginTime = data.timestamp;
         renderUserBox();
         changeLocation();
+        
       },
       404: function() {
         renderLoginBox();
-        fetchAndRenderQuests();
+        changeLocation();
       }
     }
   });

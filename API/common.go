@@ -1,13 +1,68 @@
 package API
 
 import (
+	"database/sql"
 	"encoding/json"
+	"log"
 	"net/http"
 )
 
 const (
 	API_SECRET = "cuO9w51bA&IJ"
 )
+
+type Creds struct {
+	User   string `json:"dbUser"`
+	Pass   string `json:"dbPass"`
+	Name   string `json:"dbName"`
+	Host   string `json:"dbHost"`
+	Port   string `json:"dbPort"`
+	PcName string `json:"pcName"`
+}
+
+type Character struct {
+	Cid       int    `json:"cid"`
+	Char_name string `json:"name"`
+	Uid       int    `json:"uid"`
+}
+
+type Quest struct {
+	Qid        int         `json:"qid"`
+	Gmid       int         `json:"gmid"`
+	Gm_name    string      `json:"gmname"`
+	Name       string      `json:"name"`
+	Stamp      int         `json:"timestamp"`
+	Characters []Character `json:"players"`
+	Count      int         `json:"count"`
+	Last       string      `json:"last"`
+	Type       string      `json:"type"`
+}
+
+type Post struct {
+	Pid    int    `json:"pid"`
+	Qid    int    `json:"qid"`
+	Uid    int    `json:"uid"`
+	Cid    int    `json:"cid"`
+	Poster string `json:"poster"`
+	Text   string `json:"text"`
+	Stamp  int    `json:"stamp"`
+	GmPost bool   `json:"gmPost"`
+}
+
+var db_creds Creds
+
+func SetCredentials(creds Creds) {
+	db_creds = creds
+}
+
+func OpenDB() *sql.DB {
+	dbConnStr := db_creds.User + ":" + db_creds.Pass + "@tcp(" + db_creds.Host + ":" + db_creds.Port + ")/" + db_creds.Name
+	db, err := sql.Open("mysql", dbConnStr)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return db
+}
 
 func GetSecret() string {
 	return API_SECRET
