@@ -89,6 +89,9 @@ function changeLocation() {
                 fetchAndRenderPosts(parseInt(dir_parts[2]), 0, DEFAULT_PAGE_LENGTH, currentPageOrder);
               });
             });
+            $(document.body).on('touchmove', function() {
+              scrollQuest(dir_parts[2]);
+            });
             $(window).scroll(function() {
               scrollQuest(dir_parts[2]);
             });
