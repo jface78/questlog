@@ -86,6 +86,7 @@ function fetchAndRenderPosts(qid, start, length, order) {
           fadeInRows(queuedPosts);
         }
         clearPreloader();
+        questPageLoading = false;
       }
     }
   });

@@ -1,3 +1,4 @@
+
 function fetchQuestInfo(box, id) {
   $.ajax({
     url: SERVICE_URL + 'quest/' + id + '/info',
@@ -27,9 +28,12 @@ function scrollQuest(qid) {
   //console.log("scrolltop", ($(window).scrollTop() + $(window).height()));
   //console.log("docheight", $(document).height()-100);
   if ($(window).scrollTop() + $(window).height() >= $(document).height()-100) {
-    console.log('scroll');
-    currentQuestPage++;
-    fetchAndRenderPosts(qid, (currentQuestPage * DEFAULT_PAGE_LENGTH), DEFAULT_PAGE_LENGTH);
+    if (!questPageLoading) {
+      questPageLoading = true;
+      console.log('scroll');
+      currentQuestPage++;
+      fetchAndRenderPosts(qid, (currentQuestPage * DEFAULT_PAGE_LENGTH), DEFAULT_PAGE_LENGTH);
+    }
   }
 }
 
