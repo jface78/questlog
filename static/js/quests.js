@@ -24,7 +24,9 @@ function showQuestInfo(button) {
 }
 
 function scrollQuest(qid) {
-  if ($(window).scrollTop() + $(window).height() == $(document).height()) {
+  //console.log("scrolltop", ($(window).scrollTop() + $(window).height()));
+  //console.log("docheight", $(document).height()-100);
+  if ($(window).scrollTop() + $(window).height() >= $(document).height()-100) {
     console.log('scroll');
     currentQuestPage++;
     fetchAndRenderPosts(qid, (currentQuestPage * DEFAULT_PAGE_LENGTH), DEFAULT_PAGE_LENGTH);
